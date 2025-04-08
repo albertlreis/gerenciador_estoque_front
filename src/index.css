@@ -1,13 +1,49 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* Layout para páginas autenticadas */
+.layout-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+.layout-header {
+  flex: 0 0 auto;
+}
+
+.layout-container {
+  display: flex;
+  flex: 1 1 auto;
+}
+
+.layout-sidebar {
+  background: #f4f4f4;
+  padding: 1rem;
+}
+
+.layout-content {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+/* Layout para páginas de autenticação */
+.auth-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: #f8f9fa;
+}
+
+.auth-header {
+  margin-bottom: 2rem;
+}
+
+.auth-content {
+  width: 100%;
+  max-width: 400px;
+  padding: 2rem;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
 }

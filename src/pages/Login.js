@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
 import api from '../services/api';
+import AuthLayout from '../layouts/AuthLayout';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -12,33 +13,36 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      // Chamada ao endpoint de login
       const response = await api.post('/login', { email, senha });
       const { user, token } = response.data;
+      // Salva os dados do usuário e o token no localStorage
       localStorage.setItem('user', JSON.stringify({ ...user, token }));
       navigate('/');
     } catch (error) {
       console.error('Erro ao fazer login:', error.response?.data || error.message);
+      // Aqui você pode exibir uma mensagem de erro para o usuário
     }
   };
 
   return (
-    <div className="login-container">
-      <h2>Login</h2>
-      <form onSubmit={handleLogin}>
-        <span className="p-float-label">
-          <InputText id="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-          <label htmlFor="email">Email</label>
-        </span>
-        <br />
-        <span className="p-float-label">
-          <InputText id="senha" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} />
-          <label htmlFor="senha">Senha</label>
-        </span>
-        <br />
-        <Button label="Entrar" type="submit" />
-      </form>
-    </div>
+    <AuthLayout>
+      <div className="login-container">
+        <h2>Login</h2>
+        <form onSubmit={handleLogin}>
+          <span className="p-float-label">
+            <InputText id="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <label htmlFor="email">Email</label>
+          </span>
+          <br/>
+          <span className="p-float-label">
+            <InputText id="senha" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} />
+            <label htmlFor="senha">Senha</label>
+          </span>
+          <br/>
+          <Button label="Entrar" type="submit" />
+        </form>
+      </div>
+    </AuthLayout>
   );
 };
 
