@@ -7,6 +7,7 @@ import Categorias from './pages/Categorias';
 import Produtos from './pages/Produtos';
 import Usuarios from "./pages/Usuarios";
 import Clientes from "./pages/Clientes";
+import Pedidos from "./pages/Pedidos";
 
 const App = () => {
   const isAuthenticated = localStorage.getItem('user');
@@ -23,6 +24,7 @@ const App = () => {
         <Route path="/usuarios" element={isAuthenticated ? <Usuarios /> : <Navigate to="/login" />} />
         <Route path="/categorias" element={isAuthenticated ? <Categorias /> : <Navigate to="/login" />} />
         <Route path="/produtos" element={isAuthenticated ? <Produtos /> : <Navigate to="/login" />} />
+        <Route path="/pedidos" element={isAuthenticated ? <Pedidos /> : <Navigate to="/login" />} />
       </Routes>
     </Router>
   );
