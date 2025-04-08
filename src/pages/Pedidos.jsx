@@ -103,7 +103,7 @@ const Pedidos = () => {
 
   // Formata a data para exibição
   const dateBodyTemplate = (rowData) => {
-    return new Date(rowData.data).toLocaleDateString('pt-BR');
+    return new Date(rowData.data_pedido).toLocaleDateString('pt-BR');
   };
 
   // Exibe o nome do cliente utilizando a lista de clientes buscada
@@ -130,9 +130,14 @@ const Pedidos = () => {
           <Column
             field="total"
             header="Total"
-            body={(rowData) => rowData.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            body={(rowData) =>
+              rowData.total !== undefined && rowData.total !== null
+                ? rowData.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                : 'R$ 0,00'
+            }
             sortable
           />
+
           <Column header="Ações" body={actionBodyTemplate} />
         </DataTable>
       </div>
