@@ -7,7 +7,7 @@ import SakaiLayout from '../layouts/SakaiLayout';
 import apiEstoque from '../services/apiEstoque';
 import ProdutoForm from '../components/ProdutoForm';
 
-const ProdutoGestao = () => {
+const Produtos = () => {
   const [produtos, setProdutos] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [showDialog, setShowDialog] = useState(false);
@@ -142,4 +142,4 @@ const ProdutoGestao = () => {
   );
 };
 
-export default ProdutoGestao;
+export default Produtos;

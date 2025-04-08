@@ -7,7 +7,7 @@ import SakaiLayout from '../layouts/SakaiLayout';
 import CategoriaForm from '../components/CategoriaForm';
 import apiEstoque from '../services/apiEstoque';
 
-const CategoriaGestao = () => {
+const Categorias = () => {
   const [categorias, setCategorias] = useState([]);
   const [showDialog, setShowDialog] = useState(false);
   const [editingCategoria, setEditingCategoria] = useState(null);
@@ -118,4 +118,4 @@ const CategoriaGestao = () => {
   );
 };
 
-export default CategoriaGestao;
+export default Categorias;
