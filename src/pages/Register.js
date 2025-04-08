@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
-import api from '../services/api';
+import apiAuth from '../services/apiAuth';
 import AuthLayout from '../layouts/AuthLayout';
 
 const Register = () => {
@@ -14,7 +14,7 @@ const Register = () => {
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/register', { nome, email, senha });
+      await apiAuth.post('/register', { nome, email, senha });
       navigate('/login');
     } catch (error) {
       console.error('Erro ao registrar:', error.response?.data || error.message);

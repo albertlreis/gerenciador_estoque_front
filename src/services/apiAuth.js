@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const api = axios.create({
+const apiAuth = axios.create({
   baseURL: 'http://localhost:8000/api/',
   timeout: 100000, // Timeout de 1 minuto
   headers: {
@@ -9,7 +9,7 @@ const api = axios.create({
 });
 
 // Interceptor para adicionar o token à requisição, se disponível
-api.interceptors.request.use(
+apiAuth.interceptors.request.use(
   (config) => {
     const user = localStorage.getItem('user');
     if (user) {
@@ -27,4 +27,4 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-export default api;
+export default apiAuth;

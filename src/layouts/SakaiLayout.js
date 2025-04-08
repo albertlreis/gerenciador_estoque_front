@@ -35,6 +35,11 @@ const SakaiLayout = ({ children }) => {
           command: () => navigate('/usuarios')
         },
         {
+          label: 'Categorias',
+          icon: 'pi pi-fw pi-box',
+          command: () => navigate('/categorias')
+        },
+        {
           label: 'Produtos',
           icon: 'pi pi-fw pi-box',
           command: () => navigate('/produtos')

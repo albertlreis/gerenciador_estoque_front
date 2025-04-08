@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
-import api from '../services/api';
+import apiAuth from '../services/apiAuth';
 import AuthLayout from '../layouts/AuthLayout';
 
 const Login = () => {
@@ -13,7 +13,7 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await api.post('/login', { email, senha });
+      const response = await apiAuth.post('/login', { email, senha });
       const { user, token } = response.data;
       // Salva os dados do usuário e o token no localStorage
       localStorage.setItem('user', JSON.stringify({ ...user, token }));
