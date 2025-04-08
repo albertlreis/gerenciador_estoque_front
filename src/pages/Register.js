@@ -2,18 +2,22 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
+import api from '../services/api';
 
 const Register = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [nome, setNome] = useState('');
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
   const navigate = useNavigate();
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
-    // Aqui você pode adicionar a lógica de registro (ex: chamada à API)
-    if(username && password) {
-      // Após registrar, redirecione para a página de login
+    try {
+      // Chamada ao endpoint de registro
+      await api.post('/register', { nome, email, senha });
       navigate('/login');
+    } catch (error) {
+      console.error('Erro ao registrar:', error.response?.data || error.message);
     }
   };
 
@@ -22,15 +26,20 @@ const Register = () => {
       <h2>Registro</h2>
       <form onSubmit={handleRegister}>
         <span className="p-float-label">
-          <InputText id="username" value={username} onChange={(e) => setUsername(e.target.value)} />
-          <label htmlFor="username">Usuário</label>
+          <InputText id="nome" value={nome} onChange={(e) => setNome(e.target.value)} />
+          <label htmlFor="nome">Nome</label>
         </span>
-        <br/>
+        <br />
         <span className="p-float-label">
-          <InputText id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-          <label htmlFor="password">Senha</label>
+          <InputText id="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <label htmlFor="email">Email</label>
         </span>
-        <br/>
+        <br />
+        <span className="p-float-label">
+          <InputText id="senha" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} />
+          <label htmlFor="senha">Senha</label>
+        </span>
+        <br />
         <Button label="Registrar" type="submit" />
       </form>
     </div>
