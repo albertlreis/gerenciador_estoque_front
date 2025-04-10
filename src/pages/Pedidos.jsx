@@ -4,23 +4,24 @@ import { Column } from 'primereact/column';
 import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import SakaiLayout from '../layouts/SakaiLayout';
-import PedidoForm from '../components/PedidoForm';
+import PedidoFormWithItems from '../components/PedidoFormWithItems';
 import apiEstoque from '../services/apiEstoque';
 
 const Pedidos = () => {
   const [pedidos, setPedidos] = useState([]);
   const [clientes, setClientes] = useState([]);
+  const [variacoes, setVariacoes] = useState([]);
   const [showDialog, setShowDialog] = useState(false);
   const [editingPedido, setEditingPedido] = useState(null);
   const [dialogTitle, setDialogTitle] = useState('');
 
-  // Define os status possíveis
+  // Status possíveis para o pedido
   const statusOptions = ['Pendente', 'Confirmado', 'Cancelado'];
 
-  // Carrega pedidos e clientes ao montar o componente
   useEffect(() => {
     fetchPedidos();
     fetchClientes();
+    fetchVariacoes();
   }, []);
 
   const fetchPedidos = async () => {
@@ -41,14 +42,21 @@ const Pedidos = () => {
     }
   };
 
-  // Abre o diálogo para cadastro de novo pedido
+  const fetchVariacoes = async () => {
+    try {
+      const response = await apiEstoque.get('/produto-variacoes');
+      setVariacoes(response.data);
+    } catch (error) {
+      console.error('Erro ao carregar variações:', error.response?.data || error.message);
+    }
+  };
+
   const openNewPedidoDialog = () => {
     setEditingPedido(null);
     setDialogTitle('Cadastrar Pedido');
     setShowDialog(true);
   };
 
-  // Abre o diálogo para edição de pedido existente
   const openEditPedidoDialog = (pedido) => {
     setEditingPedido(pedido);
     setDialogTitle('Editar Pedido');
@@ -69,10 +77,8 @@ const Pedidos = () => {
   const handleFormSubmit = async (pedidoData) => {
     try {
       if (editingPedido) {
-        // Atualiza pedido
         await apiEstoque.put(`/pedidos/${editingPedido.id}`, pedidoData);
       } else {
-        // Cria novo pedido
         await apiEstoque.post('/pedidos', pedidoData);
       }
       setShowDialog(false);
@@ -83,7 +89,6 @@ const Pedidos = () => {
     }
   };
 
-  // Template para ações de cada linha na DataTable
   const actionBodyTemplate = (rowData) => (
     <>
       <Button
@@ -101,14 +106,14 @@ const Pedidos = () => {
     </>
   );
 
-  // Formata a data para exibição
+  // Formata a data do pedido para exibição
   const dateBodyTemplate = (rowData) => {
     return new Date(rowData.data_pedido).toLocaleDateString('pt-BR');
   };
 
-  // Exibe o nome do cliente utilizando a lista de clientes buscada
+  // Exibe o nome do cliente
   const clienteBodyTemplate = (rowData) => {
-    const cliente = clientes.find((c) => c.id === rowData.id_cliente);
+    const cliente = clientes.find(c => c.id === rowData.id_cliente);
     return cliente ? cliente.nome : 'N/D';
   };
 
@@ -127,17 +132,7 @@ const Pedidos = () => {
           <Column header="Cliente" body={clienteBodyTemplate} sortable />
           <Column header="Data" body={dateBodyTemplate} sortable />
           <Column field="status" header="Status" sortable />
-          <Column
-            field="total"
-            header="Total"
-            body={(rowData) =>
-              rowData.total !== undefined && rowData.total !== null
-                ? rowData.total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-                : 'R$ 0,00'
-            }
-            sortable
-          />
-
+          <Column field="observacoes" header="Observações" sortable />
           <Column header="Ações" body={actionBodyTemplate} />
         </DataTable>
       </div>
@@ -145,13 +140,14 @@ const Pedidos = () => {
       <Dialog
         header={dialogTitle}
         visible={showDialog}
-        style={{ width: '500px' }}
+        style={{ width: '800px' }}
         modal
         onHide={() => setShowDialog(false)}
       >
-        <PedidoForm
+        <PedidoFormWithItems
           initialData={editingPedido || {}}
           clientes={clientes}
+          variacoes={variacoes}
           statusOptions={statusOptions}
           onSubmit={handleFormSubmit}
           onCancel={() => setShowDialog(false)}
