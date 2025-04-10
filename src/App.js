@@ -9,6 +9,8 @@ import Usuarios from "./pages/Usuarios";
 import Clientes from "./pages/Clientes";
 import Pedidos from "./pages/Pedidos";
 import ProdutoVariacoes from "./pages/ProdutoVariacoes";
+import Perfis from "./pages/Perfis";
+import Permissoes from "./pages/Permissoes";
 
 const App = () => {
   const isAuthenticated = localStorage.getItem('user');
@@ -27,6 +29,8 @@ const App = () => {
         <Route path="/produtos" element={isAuthenticated ? <Produtos /> : <Navigate to="/login" />} />
         <Route path="/pedidos" element={isAuthenticated ? <Pedidos /> : <Navigate to="/login" />} />
         <Route path="/produto-variacoes" element={isAuthenticated ? <ProdutoVariacoes /> : <Navigate to="/login" />} />
+        <Route path="/perfis" element={isAuthenticated ? <Perfis /> : <Navigate to="/login" />} />
+        <Route path="/permissoes" element={isAuthenticated ? <Permissoes /> : <Navigate to="/login" />} />
       </Routes>
     </Router>
   );
