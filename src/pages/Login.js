@@ -1,48 +1,41 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { InputText } from 'primereact/inputtext';
-import { Button } from 'primereact/button';
-import apiAuth from '../services/apiAuth';
-import AuthLayout from '../layouts/AuthLayout';
+import React from 'react';
+import { FiMail, FiLock } from 'react-icons/fi'; // Ícones
+import '../Login.css'; // Seu CSS personalizado
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [senha, setSenha] = useState('');
-  const navigate = useNavigate();
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await apiAuth.post('/login', { email, senha });
-      const { user, token } = response.data;
-      // Salva os dados do usuário e o token no localStorage
-      localStorage.setItem('user', JSON.stringify({ ...user, token }));
-      navigate('/');
-    } catch (error) {
-      console.error('Erro ao fazer login:', error.response?.data || error.message);
-      // Aqui você pode exibir uma mensagem de erro para o usuário
-    }
-  };
-
   return (
-    <AuthLayout>
-      <div className="login-container">
-        <h2>Login</h2>
-        <form onSubmit={handleLogin}>
-          <span className="p-float-label">
-            <InputText id="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-            <label htmlFor="email">Email</label>
-          </span>
-          <br/>
-          <span className="p-float-label">
-            <InputText id="senha" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} />
-            <label htmlFor="senha">Senha</label>
-          </span>
-          <br/>
-          <Button label="Entrar" type="submit" />
-        </form>
+    <div className="auth-layout">
+      <div className="auth-content">
+        {/* Logo */}
+        <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+          <img src="/logo.png" alt="Logo" style={{ height: 60 }} />
+        </div>
+
+        <h2 className="text-center mb-4">Bem-vindo!!</h2>
+
+        {/* Email */}
+        <label htmlFor="email">E-mail</label>
+        <div className="input-icon">
+          <FiMail className="icon" />
+          <input type="email" id="email" placeholder="Digite seu e-mail" />
+        </div>
+
+        {/* Senha */}
+        <label htmlFor="password">Senha</label>
+        <div className="input-icon">
+          <FiLock className="icon" />
+          <input type="password" id="password" placeholder="Digite sua senha" />
+        </div>
+
+        <div className="remember-me">
+          <input type="checkbox" id="remember" />
+          <label htmlFor="remember"> Lembre-se de mim</label>
+          <a href="#" className="forgot">Esqueceu a senha?</a>
+        </div>
+
+        <button className="login-button">Entrar</button>
       </div>
-    </AuthLayout>
+    </div>
   );
 };
 
