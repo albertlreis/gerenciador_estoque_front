@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 const SakaiLayout = ({ children }) => {
   const navigate = useNavigate();
 
-  // Exemplo de itens do Menubar (cabeçalho)
+  // Itens do cabeçalho (Menubar)
   const menubarItems = [
     {
       label: 'Dashboard',
@@ -23,10 +23,10 @@ const SakaiLayout = ({ children }) => {
     }
   ];
 
-  // Exemplo de itens do PanelMenu (sidebar)
+  // Itens da sidebar (PanelMenu) atualizados com as rotas definidas e ícones relacionados
   const sidebarItems = [
     {
-      label: 'Gerenciamento',
+      label: 'Gestão',
       icon: 'pi pi-fw pi-briefcase',
       items: [
         {
@@ -35,23 +35,38 @@ const SakaiLayout = ({ children }) => {
           command: () => navigate('/usuarios')
         },
         {
+          label: 'Perfis',
+          icon: 'pi pi-fw pi-id-card',
+          command: () => navigate('/perfis')
+        },
+        {
+          label: 'Permissões',
+          icon: 'pi pi-fw pi-lock',
+          command: () => navigate('/permissoes')
+        },
+        {
+          label: 'Clientes',
+          icon: 'pi pi-fw pi-user',
+          command: () => navigate('/clientes')
+        },
+        {
           label: 'Categorias',
-          icon: 'pi pi-fw pi-box',
+          icon: 'pi pi-fw pi-book',
           command: () => navigate('/categorias')
         },
         {
           label: 'Produtos',
-          icon: 'pi pi-fw pi-box',
-          command: () => navigate('/produtos')
+          icon: 'pi pi-fw pi-tags',
+          command: () => navigate('/produtos/gestao')
         },
         {
-          label: 'Cientes',
-          icon: 'pi pi-fw pi-box',
-          command: () => navigate('/clientes')
+          label: 'Variações',
+          icon: 'pi pi-fw pi-clone',
+          command: () => navigate('/produto-variacoes')
         },
         {
           label: 'Pedidos',
-          icon: 'pi pi-fw pi-box',
+          icon: 'pi pi-fw pi-shopping-cart',
           command: () => navigate('/pedidos')
         }
       ]
