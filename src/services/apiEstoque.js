@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const apiEstoque = axios.create({
-  baseURL: process.env.REACT_APP_BASE_URL_ESTOQUE,
+  baseURL: `${process.env.REACT_APP_BASE_URL_ESTOQUE}/api/v1`,
   timeout: Number(process.env.REACT_APP_TIMEOUT),
   headers: {
     'Content-Type': 'application/json'
