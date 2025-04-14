@@ -59,17 +59,6 @@
   margin-bottom: 0.25rem;
 }
 
-
-.auth-content input[type="email"],
-.auth-content input[type="password"] {
-  width: 100%;
-  padding: 0.75rem 1rem; /* <-- padding maior */
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  margin-bottom: 1.2rem;
-  font-size: 1rem;
-}
-
 .auth-remember {
   display: flex;
   justify-content: space-between;

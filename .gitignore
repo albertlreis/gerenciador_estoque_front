@@ -32,3 +32,7 @@ Thumbs.db
 *.ntvs*
 *.njsproj
 *.sln
+
+yarn.lock
+
+package-lock.json
