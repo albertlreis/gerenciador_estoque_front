@@ -9,6 +9,7 @@ import { FileUpload } from 'primereact/fileupload';
 import { Toast } from 'primereact/toast';
 import { ProgressBar } from 'primereact/progressbar';
 import { Tag } from 'primereact/tag';
+import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 import apiEstoque from '../services/apiEstoque';
 
 const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
@@ -30,7 +31,6 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
   const [existingImages, setExistingImages] = useState(initialData.imagens || []);
   const [loading, setLoading] = useState(false);
   const [totalSize, setTotalSize] = useState(0);
-  const [isFileSelectionValid, setIsFileSelectionValid] = useState(true);
 
   // Referências do Toast e do FileUpload
   const toastRef = useRef(null);
@@ -86,13 +86,10 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
 
     // Se algum arquivo for inválido, seta a flag e limpa a seleção para evitar envio
     if (invalidFound) {
-      setIsFileSelectionValid(false);
       if (fileUploadRef && fileUploadRef.current) {
         fileUploadRef.current.clear();
       }
       return;
-    } else {
-      setIsFileSelectionValid(true);
     }
 
     // Atualiza o total de tamanho somente com arquivos válidos
@@ -176,7 +173,7 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
           type="button"
           icon="pi pi-times"
           className="p-button-outlined p-button-rounded p-button-danger ml-auto"
-          onClick={() => onTemplateRemove(file, props.onRemove)}
+          onClick={() => confirmDelete(file)} // Chama a confirmação para exclusão do arquivo
         />
       </div>
     );
@@ -207,6 +204,36 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
   const uploadOptions = { icon: 'pi pi-fw pi-cloud-upload', iconOnly: true, className: 'custom-upload-btn p-button-success p-button-rounded p-button-outlined' };
   const cancelOptions = { icon: 'pi pi-fw pi-times', iconOnly: true, className: 'custom-cancel-btn p-button-danger p-button-rounded p-button-outlined' };
 
+  // Função que abre a confirmação antes de excluir uma imagem
+  const confirmDelete = (imageOrFile) => {
+    // Caso queira confirmar exclusão de imagem já cadastrada ou ainda em seleção,
+    // você pode diferenciar pelo tipo (exemplo, se imageOrFile possui uma propriedade "id")
+    const isExistingImage = imageOrFile && imageOrFile.id;
+    let message = isExistingImage
+      ? 'Tem certeza que deseja excluir esta imagem?'
+      : 'Tem certeza que deseja remover este arquivo da seleção?';
+
+    confirmDialog({
+      message,
+      header: 'Confirmação',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sim',
+      rejectLabel: 'Não',
+      accept: () => {
+        if (isExistingImage) {
+          handleDeleteImage(imageOrFile.id);
+        } else {
+          // Se for um arquivo na fila, remova-o
+          onTemplateRemove(imageOrFile, () => {});
+        }
+      },
+      reject: () => {
+        // Pode ser deixado vazio ou adicionar ação se necessário
+      }
+    });
+  };
+
+  // Handler para upload customizado: Continua enviando para o backend e exibe mensagem via Toast.
   const uploadHandler = async (event) => {
     // Validação extra: filtra os arquivos de imagem
     const validFiles = event.files.filter(file => file.type && file.type.startsWith("image/"));
@@ -255,8 +282,7 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
     }
   };
 
-
-  // Handler para exclusão de imagem (permanece igual)
+  // Handler para exclusão de imagem já cadastrada
   const handleDeleteImage = async (imageId) => {
     try {
       await apiEstoque.delete(`/produtos/${initialData.id}/imagens/${imageId}`);
@@ -307,6 +333,7 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
   return (
     <>
       <Toast ref={toastRef} position="top-center" />
+      <ConfirmDialog />
       <form onSubmit={handleSubmit} className="p-fluid p-formgrid p-grid" style={{ gap: '1rem' }}>
         {/* Campo Nome */}
         <div className="p-field p-col-12">
@@ -371,10 +398,10 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
                       style={{ width: '100px', height: '100px', objectFit: 'cover' }}
                     />
                     <Button
+                      type="button"
                       icon="pi pi-times"
                       className="p-button-rounded p-button-danger"
-                      style={{ position: 'absolute', top: 0, right: 0 }}
-                      onClick={() => handleDeleteImage(img.id)}
+                      onClick={() => confirmDelete(img)}
                     />
                   </div>
                 ))}
