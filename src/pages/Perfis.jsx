@@ -88,7 +88,16 @@ const Perfis = () => {
           <Column field="id" header="ID" sortable />
           <Column field="nome" header="Nome" sortable />
           <Column field="descricao" header="Descrição" sortable />
-          <Column field="permissoes" header="Permissões" body={(rowData) => rowData.permissoes.map(p => p.nome).join(', ')} />
+          <Column
+            field="permissoes"
+            header="Permissões"
+            body={(rowData) =>
+              rowData.permissoes && Array.isArray(rowData.permissoes) && rowData.permissoes.length > 0
+                ? rowData.permissoes.map(p => p.nome).join(', ')
+                : 'Sem permissões'
+            }
+          />
+
           <Column header="Ações" body={(rowData) => (
             <TableActions rowData={rowData} onEdit={openEditDialog} onDelete={handleDelete} />
           )} />
