@@ -61,7 +61,7 @@ const PerfilForm = ({ initialData = {}, permissoesOptions = [], onSubmit, onCanc
         />
       </div>
 
-      {/* Botões: alinhados à direita */}
+      {/* Botões */}
       <div
         className="p-field p-col-12"
         style={{

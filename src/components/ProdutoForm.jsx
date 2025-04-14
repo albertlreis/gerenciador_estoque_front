@@ -1,5 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import {InputText} from 'primereact/inputtext';
+import { InputTextarea } from 'primereact/inputtextarea';
 import {InputSwitch} from 'primereact/inputswitch';
 import {Dropdown} from 'primereact/dropdown';
 import {Button} from 'primereact/button';
@@ -13,6 +14,7 @@ const ProdutoForm = ({initialData = {}, onSubmit, onCancel}) => {
   const [ativo, setAtivo] = useState(initialData.ativo !== undefined ? initialData.ativo : true);
   const [categorias, setCategorias] = useState([]);
   const [existingImages, setExistingImages] = useState(initialData.imagens || []);
+  const [loading, setLoading] = useState(false);
 
   // Busca as categorias ao montar o componente
   useEffect(() => {
@@ -27,22 +29,20 @@ const ProdutoForm = ({initialData = {}, onSubmit, onCancel}) => {
     fetchCategorias();
   }, []);
 
-  // Handler para o upload das imagens usando o FileUpload
+  // Handler para upload das imagens usando o FileUpload
   const uploadHandler = async (event) => {
     const files = event.files; // Array de arquivos selecionados
-    // Envia cada arquivo para o endpoint de imagens para este produto
     for (const file of files) {
       const formData = new FormData();
       formData.append('image', file);
-      // Você pode definir aqui se a imagem é principal – ajuste conforme sua lógica
+      // Ajuste conforme sua lógica de imagem principal
       formData.append('principal', false);
 
       try {
-        // O endpoint necessita do ID do produto; por isso, este fluxo só acontece em edição (produto já criado)
+        // Este fluxo só ocorre se o produto já foi criado (edição)
         const response = await apiEstoque.post(`/produtos/${initialData.id}/imagens`, formData, {
           headers: {'Content-Type': 'multipart/form-data'}
         });
-        // Adiciona a nova imagem ao estado existente para exibição imediata
         setExistingImages(prevImages => [...prevImages, response.data]);
       } catch (error) {
         console.error('Erro ao enviar imagem:', error);
@@ -51,7 +51,7 @@ const ProdutoForm = ({initialData = {}, onSubmit, onCancel}) => {
     }
   };
 
-  // Exclusão de imagem já cadastrada
+  // Exclusão de imagem cadastrada
   const handleDeleteImage = async (imageId) => {
     try {
       await apiEstoque.delete(`/produtos/${initialData.id}/imagens/${imageId}`);
@@ -62,31 +62,51 @@ const ProdutoForm = ({initialData = {}, onSubmit, onCancel}) => {
     }
   };
 
-  // Envio do formulário do produto (dados básicos)
+  // Envio do formulário
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log(idCategoria)
-    const productData = {nome, descricao, id_categoria: idCategoria.id, ativo};
+    setLoading(true);
+    const productData = {
+      nome,
+      descricao,
+      id_categoria: idCategoria && idCategoria.id ? idCategoria.id : null,
+      ativo
+    };
     onSubmit(productData);
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="p-field">
-          <span className="p-float-label">
-            <InputText value={nome} onChange={(e) => setNome(e.target.value)}/>
-            <label>Nome</label>
-          </span>
+    <form
+      onSubmit={handleSubmit}
+      className="p-fluid p-formgrid p-grid"
+      style={{gap: '1rem'}}
+    >
+      {/* Campo Nome */}
+      <div className="p-field p-col-12">
+        <label htmlFor="nome">Nome</label>
+        <InputText
+          id="nome"
+          value={nome}
+          onChange={(e) => setNome(e.target.value)}
+        />
       </div>
-      <div className="p-field">
-          <span className="p-float-label">
-            <InputText value={descricao} onChange={(e) => setDescricao(e.target.value)}/>
-            <label>Descrição</label>
-          </span>
+
+      {/* Campo Descrição */}
+      <div className="p-field p-col-12">
+        <label htmlFor="descricao">Descrição</label>
+        <InputTextarea
+          id="descricao"
+          value={descricao}
+          onChange={(e) => setDescricao(e.target.value)}
+          rows={3}
+        />
       </div>
-      <div className="p-field">
-        <label>Categoria</label>
+
+      {/* Campo Categoria */}
+      <div className="p-field p-col-12 p-md-6">
+        <label htmlFor="categoria">Categoria</label>
         <Dropdown
+          id="categoria"
           value={idCategoria}
           options={categorias}
           onChange={(e) => setIdCategoria(e.value)}
@@ -94,15 +114,24 @@ const ProdutoForm = ({initialData = {}, onSubmit, onCancel}) => {
           placeholder="Selecione a categoria"
         />
       </div>
-      <div className="p-field">
-        <label>Ativo</label>
-        <InputSwitch checked={ativo} onChange={(e) => setAtivo(e.value)}/>
+
+      {/* Campo Ativo */}
+      <div className="p-field p-col-12 p-md-6">
+        <label htmlFor="ativo">Ativo</label>
+        <InputSwitch
+          id="ativo"
+          checked={ativo}
+          style={{
+            marginTop: '0.5rem'
+          }}
+          onChange={(e) => setAtivo(e.value)}
+        />
       </div>
 
-      {/* Se o produto já foi criado (possui ID), exibe a seção de imagens */}
+      {/* Se o produto já foi criado: Exibe imagens cadastradas e opção de adicionar imagens */}
       {initialData.id && (
         <>
-          <div className="p-field">
+          <div className="p-field p-col-12">
             <h4>Imagens Cadastradas</h4>
             <div style={{display: 'flex', flexWrap: 'wrap'}}>
               {existingImages.map((img) => (
@@ -122,9 +151,8 @@ const ProdutoForm = ({initialData = {}, onSubmit, onCancel}) => {
               ))}
             </div>
           </div>
-          <div className="p-field">
+          <div className="p-field p-col-12">
             <h4>Adicionar Imagens</h4>
-            {/* Utilizamos o FileUpload para permitir múltiplos arquivos */}
             <FileUpload
               name="files"
               customUpload
@@ -138,9 +166,25 @@ const ProdutoForm = ({initialData = {}, onSubmit, onCancel}) => {
         </>
       )}
 
-      <div className="p-field" style={{display: 'flex', justifyContent: 'flex-end'}}>
-        <Button label="Salvar Produto" type="submit" className="p-mr-2"/>
-        <Button label="Cancelar" type="button" className="p-button-secondary" onClick={onCancel}/>
+      {/* Botões */}
+      <div
+        className="p-field p-col-12"
+        style={{display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem'}}
+      >
+        <Button
+          label="Salvar"
+          type="submit"
+          icon="pi pi-check"
+          loading={loading}
+          className="p-mr-2"
+        />
+        <Button
+          label="Cancelar"
+          type="button"
+          className="p-button-secondary"
+          style={{marginLeft: '0.5rem'}}
+          onClick={onCancel}
+        />
       </div>
     </form>
   );
