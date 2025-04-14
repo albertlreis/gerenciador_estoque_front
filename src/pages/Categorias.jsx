@@ -6,6 +6,8 @@ import { Button } from 'primereact/button';
 import SakaiLayout from '../layouts/SakaiLayout';
 import CategoriaForm from '../components/CategoriaForm';
 import apiEstoque from '../services/apiEstoque';
+import {Divider} from "primereact/divider";
+import TableActions from "../components/TableActions";
 
 const Categorias = () => {
   const [categorias, setCategorias] = useState([]);
@@ -32,7 +34,7 @@ const Categorias = () => {
     setShowDialog(true);
   };
 
-  const openEditCategoriaDialog = (categoria) => {
+  const openEditDialog = (categoria) => {
     setEditingCategoria(categoria);
     setDialogTitle('Editar Categoria');
     setShowDialog(true);
@@ -66,23 +68,6 @@ const Categorias = () => {
     }
   };
 
-  const actionBodyTemplate = (rowData) => (
-    <>
-      <Button
-        label="Editar"
-        icon="pi pi-pencil"
-        className="p-button-rounded p-button-info p-mr-2"
-        onClick={() => openEditCategoriaDialog(rowData)}
-      />
-      <Button
-        label="Excluir"
-        icon="pi pi-trash"
-        className="p-button-rounded p-button-danger"
-        onClick={() => handleDelete(rowData.id)}
-      />
-    </>
-  );
-
   return (
     <SakaiLayout>
       <div className="categoria-gestao" style={{ margin: '2rem' }}>
@@ -93,11 +78,14 @@ const Categorias = () => {
           className="p-button-success p-mb-3"
           onClick={openNewCategoriaDialog}
         />
+        <Divider type="solid" />
         <DataTable value={categorias} paginator rows={10} dataKey="id" responsiveLayout="scroll">
           <Column field="id" header="ID" sortable />
           <Column field="nome" header="Nome" sortable />
           <Column field="descricao" header="Descrição" />
-          <Column header="Ações" body={actionBodyTemplate} />
+          <Column header="Ações" body={(rowData) => (
+            <TableActions rowData={rowData} onEdit={openEditDialog} onDelete={handleDelete} />
+          )} />
         </DataTable>
       </div>
 

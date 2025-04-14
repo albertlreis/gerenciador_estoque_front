@@ -1,12 +1,14 @@
-// src/pages/UsuarioGestao.jsx
-import React, { useEffect, useState } from 'react';
-import { DataTable } from 'primereact/datatable';
-import { Column } from 'primereact/column';
-import { Dialog } from 'primereact/dialog';
-import { Button } from 'primereact/button';
+import React, {useEffect, useState} from 'react';
+import {DataTable} from 'primereact/datatable';
+import {Column} from 'primereact/column';
+import {Dialog} from 'primereact/dialog';
+import {Button} from 'primereact/button';
+import { Divider } from 'primereact/divider';
+import { ButtonGroup } from 'primereact/buttongroup';
 import SakaiLayout from '../layouts/SakaiLayout';
 import UsuarioForm from '../components/UsuarioForm';
 import apiAuth from '../services/apiAuth';
+import TableActions from "../components/TableActions";
 
 const Usuarios = () => {
   const [usuarios, setUsuarios] = useState([]);
@@ -76,32 +78,27 @@ const Usuarios = () => {
     }
   };
 
-  const actionTemplate = (rowData) => (
-    <>
-      <Button label="Editar" icon="pi pi-pencil" className="p-button-rounded p-button-info p-mr-2" onClick={() => openEditDialog(rowData)} />
-      <Button label="Excluir" icon="pi pi-trash" className="p-button-rounded p-button-danger" onClick={() => handleDelete(rowData.id)} />
-    </>
-  );
-
   return (
     <SakaiLayout>
-      <div className="usuario-gestao" style={{ margin: '2rem' }}>
-        <h2>Gestão de Usuários</h2>
-        <Button label="Novo Usuário" icon="pi pi-plus" className="p-button-success p-mb-3" onClick={openNewDialog} />
-        <DataTable value={usuarios} paginator rows={10} dataKey="id" responsiveLayout="scroll">
-          <Column field="id" header="ID" sortable />
-          <Column field="nome" header="Nome" sortable />
-          <Column field="email" header="Email" sortable />
-          <Column field="ativo" header="Ativo" body={(rowData) => rowData.ativo ? 'Sim' : 'Não'} />
-          <Column
-            field="perfis"
-            header="Perfis"
-            body={(rowData) => rowData.perfis ? rowData.perfis.map(perfil => perfil.nome).join(', ') : ''}
-          />
-          <Column header="Ações" body={actionTemplate} />
-        </DataTable>
-      </div>
-      <Dialog header={dialogTitle} visible={showDialog} style={{ width: '500px' }} modal onHide={() => setShowDialog(false)}>
+      <h2>Gestão de Usuários</h2>
+      <Button label="Novo Usuário" icon="pi pi-plus" severity="success" onClick={openNewDialog}/>
+      <Divider type="solid" />
+      <DataTable value={usuarios} paginator rows={10} dataKey="id" responsiveLayout="scroll">
+        <Column field="id" header="ID" sortable/>
+        <Column field="nome" header="Nome" sortable/>
+        <Column field="email" header="Email" sortable/>
+        <Column field="ativo" header="Ativo" body={(rowData) => rowData.ativo ? 'Sim' : 'Não'}/>
+        <Column
+          field="perfis"
+          header="Perfis"
+          body={(rowData) => rowData.perfis ? rowData.perfis.map(perfil => perfil.nome).join(', ') : ''}
+        />
+        <Column header="Ações" body={(rowData) => (
+          <TableActions rowData={rowData} onEdit={openEditDialog} onDelete={handleDelete} />
+        )} />
+      </DataTable>
+      <Dialog header={dialogTitle} visible={showDialog} style={{width: '500px'}} modal
+              onHide={() => setShowDialog(false)}>
         <UsuarioForm
           initialData={editingUsuario || {}}
           perfisOptions={perfisOptions}

@@ -6,6 +6,8 @@ import { Button } from 'primereact/button';
 import SakaiLayout from '../layouts/SakaiLayout';
 import PedidoFormWithItems from '../components/PedidoFormWithItems';
 import apiEstoque from '../services/apiEstoque';
+import {Divider} from "primereact/divider";
+import TableActions from "../components/TableActions";
 
 const Pedidos = () => {
   const [pedidos, setPedidos] = useState([]);
@@ -57,7 +59,7 @@ const Pedidos = () => {
     setShowDialog(true);
   };
 
-  const openEditPedidoDialog = (pedido) => {
+  const openEditDialog = (pedido) => {
     setEditingPedido(pedido);
     setDialogTitle('Editar Pedido');
     setShowDialog(true);
@@ -89,23 +91,6 @@ const Pedidos = () => {
     }
   };
 
-  const actionBodyTemplate = (rowData) => (
-    <>
-      <Button
-        label="Editar"
-        icon="pi pi-pencil"
-        className="p-button-rounded p-button-info p-mr-2"
-        onClick={() => openEditPedidoDialog(rowData)}
-      />
-      <Button
-        label="Excluir"
-        icon="pi pi-trash"
-        className="p-button-rounded p-button-danger"
-        onClick={() => handleDelete(rowData.id)}
-      />
-    </>
-  );
-
   // Formata a data do pedido para exibição
   const dateBodyTemplate = (rowData) => {
     return new Date(rowData.data_pedido).toLocaleDateString('pt-BR');
@@ -127,13 +112,16 @@ const Pedidos = () => {
           className="p-button-success p-mb-3"
           onClick={openNewPedidoDialog}
         />
+        <Divider type="solid" />
         <DataTable value={pedidos} paginator rows={10} dataKey="id" responsiveLayout="scroll">
           <Column field="id" header="ID" sortable />
           <Column header="Cliente" body={clienteBodyTemplate} sortable />
           <Column header="Data" body={dateBodyTemplate} sortable />
           <Column field="status" header="Status" sortable />
           <Column field="observacoes" header="Observações" sortable />
-          <Column header="Ações" body={actionBodyTemplate} />
+          <Column header="Ações" body={(rowData) => (
+            <TableActions rowData={rowData} onEdit={openEditDialog} onDelete={handleDelete} />
+          )} />
         </DataTable>
       </div>
 

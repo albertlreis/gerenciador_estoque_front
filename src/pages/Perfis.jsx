@@ -6,6 +6,9 @@ import { Button } from 'primereact/button';
 import SakaiLayout from '../layouts/SakaiLayout';
 import PerfilForm from '../components/PerfilForm';
 import apiAuth from '../services/apiAuth';
+import {Divider} from "primereact/divider";
+import {ButtonGroup} from "primereact/buttongroup";
+import TableActions from "../components/TableActions";
 
 const Perfis = () => {
   const [perfis, setPerfis] = useState([]);
@@ -75,24 +78,20 @@ const Perfis = () => {
     }
   };
 
-  const actionTemplate = (rowData) => (
-    <>
-      <Button label="Editar" icon="pi pi-pencil" className="p-button-rounded p-button-info p-mr-2" onClick={() => openEditDialog(rowData)} />
-      <Button label="Excluir" icon="pi pi-trash" className="p-button-rounded p-button-danger" onClick={() => handleDelete(rowData.id)} />
-    </>
-  );
-
   return (
     <SakaiLayout>
       <div className="perfil-gestao" style={{ margin: '2rem' }}>
         <h2>Gestão de Perfis</h2>
         <Button label="Novo Perfil" icon="pi pi-plus" className="p-button-success p-mb-3" onClick={openNewDialog} />
+        <Divider type="solid" />
         <DataTable value={perfis} paginator rows={10} dataKey="id" responsiveLayout="scroll">
           <Column field="id" header="ID" sortable />
           <Column field="nome" header="Nome" sortable />
           <Column field="descricao" header="Descrição" sortable />
           <Column field="permissoes" header="Permissões" body={(rowData) => rowData.permissoes.map(p => p.nome).join(', ')} />
-          <Column header="Ações" body={actionTemplate} />
+          <Column header="Ações" body={(rowData) => (
+            <TableActions rowData={rowData} onEdit={openEditDialog} onDelete={handleDelete} />
+          )} />
         </DataTable>
       </div>
       <Dialog header={dialogTitle} visible={showDialog} style={{ width: '500px' }} modal onHide={() => setShowDialog(false)}>

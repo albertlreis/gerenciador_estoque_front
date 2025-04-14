@@ -6,6 +6,8 @@ import { Dialog } from 'primereact/dialog';
 import SakaiLayout from '../layouts/SakaiLayout';
 import apiEstoque from '../services/apiEstoque';
 import ProdutoForm from '../components/ProdutoForm';
+import {Divider} from "primereact/divider";
+import TableActions from "../components/TableActions";
 
 const Produtos = () => {
   const [produtos, setProdutos] = useState([]);
@@ -43,7 +45,7 @@ const Produtos = () => {
     setShowDialog(true);
   };
 
-  const openEditProdutoDialog = (produto) => {
+  const openEditDialog = (produto) => {
     setEditingProduto(produto);
     setDialogTitle('Editar Produto');
     setShowDialog(true);
@@ -77,25 +79,6 @@ const Produtos = () => {
     }
   };
 
-  const actionBodyTemplate = (rowData) => {
-    return (
-      <>
-        <Button
-          label="Editar"
-          icon="pi pi-pencil"
-          className="p-button-rounded p-button-info p-mr-2"
-          onClick={() => openEditProdutoDialog(rowData)}
-        />
-        <Button
-          label="Excluir"
-          icon="pi pi-trash"
-          className="p-button-rounded p-button-danger"
-          onClick={() => handleDelete(rowData.id)}
-        />
-      </>
-    );
-  };
-
   return (
     <SakaiLayout>
       <div className="produto-gestao" style={{ margin: '2rem' }}>
@@ -106,6 +89,7 @@ const Produtos = () => {
           className="p-button-success p-mb-3"
           onClick={openNewProdutoDialog}
         />
+        <Divider type="solid" />
         <DataTable value={produtos} paginator rows={10} dataKey="id" responsiveLayout="scroll">
           <Column field="id" header="ID" sortable />
           <Column field="nome" header="Nome" sortable />
@@ -120,7 +104,9 @@ const Produtos = () => {
             }}
           />
           <Column field="ativo" header="Ativo" body={(rowData) => (rowData.ativo ? 'Sim' : 'Não')} />
-          <Column header="Ações" body={actionBodyTemplate} />
+          <Column header="Ações" body={(rowData) => (
+            <TableActions rowData={rowData} onEdit={openEditDialog} onDelete={handleDelete} />
+          )} />
         </DataTable>
       </div>
 

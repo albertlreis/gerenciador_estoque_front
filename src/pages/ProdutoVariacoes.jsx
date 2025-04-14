@@ -6,6 +6,8 @@ import { Button } from 'primereact/button';
 import SakaiLayout from '../layouts/SakaiLayout';
 import ProdutoVariacaoForm from '../components/ProdutoVariacaoForm';
 import apiEstoque from '../services/apiEstoque';
+import {Divider} from "primereact/divider";
+import TableActions from "../components/TableActions";
 
 const ProdutoVariacoes = () => {
   const [variacoes, setVariacoes] = useState([]);
@@ -45,7 +47,7 @@ const ProdutoVariacoes = () => {
   };
 
   // Abre o diálogo para editar variação existente
-  const openEditVariacaoDialog = (variacao) => {
+  const openEditDialog = (variacao) => {
     setEditingVariacao(variacao);
     setDialogTitle('Editar Variação');
     setShowDialog(true);
@@ -79,23 +81,6 @@ const ProdutoVariacoes = () => {
     }
   };
 
-  const actionBodyTemplate = (rowData) => (
-    <>
-      <Button
-        label="Editar"
-        icon="pi pi-pencil"
-        className="p-button-rounded p-button-info p-mr-2"
-        onClick={() => openEditVariacaoDialog(rowData)}
-      />
-      <Button
-        label="Excluir"
-        icon="pi pi-trash"
-        className="p-button-rounded p-button-danger"
-        onClick={() => handleDelete(rowData.id)}
-      />
-    </>
-  );
-
   // Exibe o nome do produto relacionado à variação
   const produtoBodyTemplate = (rowData) => {
     const prod = produtos.find(p => p.id === rowData.id_produto);
@@ -120,6 +105,7 @@ const ProdutoVariacoes = () => {
           className="p-button-success p-mb-3"
           onClick={openNewVariacaoDialog}
         />
+        <Divider type="solid" />
         <DataTable value={variacoes} paginator rows={10} dataKey="id" responsiveLayout="scroll">
           <Column field="id" header="ID" sortable />
           <Column header="Produto" body={produtoBodyTemplate} sortable />
@@ -132,7 +118,9 @@ const ProdutoVariacoes = () => {
           <Column field="largura" header="Largura" sortable />
           <Column field="profundidade" header="Profundidade" sortable />
           <Column field="codigo_barras" header="Código de Barras" />
-          <Column header="Ações" body={actionBodyTemplate} />
+          <Column header="Ações" body={(rowData) => (
+            <TableActions rowData={rowData} onEdit={openEditDialog} onDelete={handleDelete} />
+          )} />
         </DataTable>
       </div>
 
