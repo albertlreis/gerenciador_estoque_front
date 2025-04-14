@@ -15,6 +15,7 @@ const TableActions = ({ rowData, onEdit, onDelete }) => {
         label="Excluir"
         icon="pi pi-trash"
         severity="danger"
+        style={{ marginLeft: '0.5em' }}
         onClick={() => onDelete(rowData.id)}
       />
     </ButtonGroup>
