@@ -14,7 +14,7 @@ import Perfis from "./pages/Perfis";
 import Permissoes from "./pages/Permissoes";
 
 const App = () => {
-  const isAuthenticated = localStorage.getItem('user');
+  const isAuthenticated = localStorage.getItem('token');
 
   return (
     <Router>

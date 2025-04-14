@@ -1,17 +1,17 @@
 import axios from 'axios';
 
 const apiAuth = axios.create({
-  baseURL: 'http://localhost:8000/api/',
-  timeout: 100000, // Timeout de 1 minuto
+  baseURL: process.env.REACT_APP_BASE_URL_AUTH,
+  timeout: Number(process.env.REACT_APP_TIMEOUT),
   headers: {
     'Content-Type': 'application/json'
   }
 });
 
-// Interceptor para adicionar o token à requisição, se disponível
+// Interceptor para adicionar o token à requisição
 apiAuth.interceptors.request.use(
   (config) => {
-    const user = localStorage.getItem('user');
+    const user = localStorage.getItem('token');
     if (user) {
       try {
         const parsedUser = JSON.parse(user);
