@@ -82,7 +82,6 @@ const Clientes = () => {
           <Column field="nome" header="Nome" sortable />
           <Column field="email" header="Email" sortable />
           <Column field="telefone" header="Telefone" sortable />
-          <Column field="ativo" header="Ativo" body={(rowData) => (rowData.ativo ? 'Sim' : 'Não')} />
           <Column header="Ações" body={(rowData) => (
             <TableActions rowData={rowData} onEdit={openEditDialog} onDelete={handleDelete} />
           )} />

@@ -14,7 +14,7 @@ const CategoriaForm = ({ initialData = {}, onSubmit, onCancel }) => {
   };
 
   const handleSubmit = (e) => {
-    setLoading(true)
+    setLoading(true);
     e.preventDefault();
     onSubmit(categoria);
   };
@@ -46,8 +46,15 @@ const CategoriaForm = ({ initialData = {}, onSubmit, onCancel }) => {
       </div>
 
       {/* Botões */}
-      <div className="p-field" style={{display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem'}}>
-        <Button label="Salvar" type="submit" icon="pi pi-check" loading={loading} />
+      <div
+        className="p-field p-col-12"
+        style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          marginTop: '0.5rem'
+        }}
+      >
+        <Button label="Salvar" type="submit" icon="pi pi-check" loading={loading}/>
         <Button
           label="Cancelar"
           type="button"
