@@ -6,21 +6,26 @@ import Register from './pages/Register';
 import Home from './pages/Home';
 import Categorias from './pages/Categorias';
 import Produtos from './pages/Produtos';
-import Usuarios from "./pages/Usuarios";
-import Clientes from "./pages/Clientes";
-import Pedidos from "./pages/Pedidos";
-import ProdutoVariacoes from "./pages/ProdutoVariacoes";
-import Perfis from "./pages/Perfis";
-import Permissoes from "./pages/Permissoes";
+import Usuarios from './pages/Usuarios';
+import Clientes from './pages/Clientes';
+import Pedidos from './pages/Pedidos';
+import ProdutoVariacoes from './pages/ProdutoVariacoes';
+import Perfis from './pages/Perfis';
+import Permissoes from './pages/Permissoes';
+import { isTokenValid } from './helper';
 
 const App = () => {
-  const isAuthenticated = localStorage.getItem('token');
+  // Atualiza o localStorage se o token estiver expirado
+  if (!isTokenValid()) {
+    localStorage.removeItem('user');
+  }
+  const isAuthenticated = isTokenValid();
 
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={isAuthenticated ? <Navigate to="/" /> : <Login />} />
+        <Route path="/register" element={isAuthenticated ? <Navigate to="/" /> : <Register />} />
 
         {/* Rotas protegidas */}
         <Route path="/" element={isAuthenticated ? <Home /> : <Navigate to="/login" />} />
