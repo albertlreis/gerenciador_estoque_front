@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { InputText } from 'primereact/inputtext';
-import { InputTextarea } from 'primereact/inputtextarea';
 import { MultiSelect } from 'primereact/multiselect';
 import { Button } from 'primereact/button';
 

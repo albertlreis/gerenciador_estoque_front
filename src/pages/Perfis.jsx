@@ -7,7 +7,6 @@ import SakaiLayout from '../layouts/SakaiLayout';
 import PerfilForm from '../components/PerfilForm';
 import apiAuth from '../services/apiAuth';
 import {Divider} from "primereact/divider";
-import {ButtonGroup} from "primereact/buttongroup";
 import TableActions from "../components/TableActions";
 
 const Perfis = () => {

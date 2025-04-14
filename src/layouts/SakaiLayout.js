@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Menubar } from 'primereact/menubar';
 import { PanelMenu } from 'primereact/panelmenu';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -9,36 +9,43 @@ const SakaiLayout = ({ children }) => {
   const location = useLocation();
   const [expandedKeys, setExpandedKeys] = useState({});
 
-  // Atualiza os itens expandidos com base na rota atual
+  // Para permitir que o usuário expanda ou recolha o menu manualmente
+  const userHasToggled = useRef(false);
+
+  // Atualiza os expandedKeys automaticamente somente se o usuário ainda não interagiu
   useEffect(() => {
-    if (
-      location.pathname.startsWith('/usuarios') ||
-      location.pathname.startsWith('/perfis') ||
-      location.pathname.startsWith('/permissoes')
-    ) {
-      setExpandedKeys({ acesso: true });
-    } else {
-      setExpandedKeys({});
+    if (!userHasToggled.current) {
+      if (
+        location.pathname.startsWith('/usuarios') ||
+        location.pathname.startsWith('/perfis') ||
+        location.pathname.startsWith('/permissoes')
+      ) {
+        setExpandedKeys({ acesso: true });
+      } else {
+        setExpandedKeys({});
+      }
     }
   }, [location]);
 
-  // Função para realizar logout: chama o endpoint de logout (caso disponível),
-  // limpa os dados do usuário e redireciona para a página de login.
+  // Quando o usuário interage manualmente, atualizamos o estado e marcamos que houve toggle
+  const handleExpandedKeysChange = (e) => {
+    userHasToggled.current = true;
+    setExpandedKeys(e.value);
+  };
+
+  // Logout: chama o endpoint, limpa os dados e redireciona para a página de login.
   const handleLogout = async () => {
     try {
-      // Tenta revogar o token no servidor.
       await apiAuth.post('/logout');
       window.location.reload();
     } catch (error) {
       navigate('/login');
     } finally {
-      // Limpa os dados do usuário no localStorage.
       localStorage.removeItem('user');
       navigate('/login');
     }
   };
 
-  // Itens do cabeçalho (Menubar)
   const menubarItems = [
     {
       label: 'Dashboard',
@@ -52,7 +59,6 @@ const SakaiLayout = ({ children }) => {
     }
   ];
 
-  // Itens da sidebar (PanelMenu)
   const sidebarItems = [
     {
       label: 'Acesso',
@@ -116,7 +122,8 @@ const SakaiLayout = ({ children }) => {
             model={sidebarItems}
             style={{ width: '300px' }}
             expandedKeys={expandedKeys}
-            onToggle={(e) => setExpandedKeys(e.value)}
+            onExpandedKeysChange={handleExpandedKeysChange}
+            multiple
           />
         </div>
         <div className="layout-content">{children}</div>

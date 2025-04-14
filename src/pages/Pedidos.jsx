@@ -128,7 +128,7 @@ const Pedidos = () => {
       <Dialog
         header={dialogTitle}
         visible={showDialog}
-        style={{ width: '800px' }}
+        style={{ width: '1024px' }}
         modal
         onHide={() => setShowDialog(false)}
       >

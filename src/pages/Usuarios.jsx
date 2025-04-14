@@ -4,7 +4,6 @@ import {Column} from 'primereact/column';
 import {Dialog} from 'primereact/dialog';
 import {Button} from 'primereact/button';
 import { Divider } from 'primereact/divider';
-import { ButtonGroup } from 'primereact/buttongroup';
 import SakaiLayout from '../layouts/SakaiLayout';
 import UsuarioForm from '../components/UsuarioForm';
 import apiAuth from '../services/apiAuth';
