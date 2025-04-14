@@ -6,19 +6,17 @@ import { Dialog } from 'primereact/dialog';
 import SakaiLayout from '../layouts/SakaiLayout';
 import apiEstoque from '../services/apiEstoque';
 import ProdutoForm from '../components/ProdutoForm';
-import {Divider} from "primereact/divider";
+import { Divider } from "primereact/divider";
 import TableActions from "../components/TableActions";
 
 const Produtos = () => {
   const [produtos, setProdutos] = useState([]);
-  const [categorias, setCategorias] = useState([]);
   const [showDialog, setShowDialog] = useState(false);
   const [editingProduto, setEditingProduto] = useState(null);
   const [dialogTitle, setDialogTitle] = useState('');
 
   useEffect(() => {
     fetchProdutos();
-    fetchCategorias();
   }, []);
 
   const fetchProdutos = async () => {
@@ -27,15 +25,6 @@ const Produtos = () => {
       setProdutos(response.data);
     } catch (error) {
       console.error('Erro ao carregar produtos:', error.response?.data || error.message);
-    }
-  };
-
-  const fetchCategorias = async () => {
-    try {
-      const response = await apiEstoque.get('/categorias');
-      setCategorias(response.data);
-    } catch (error) {
-      console.error('Erro ao carregar categorias:', error.response?.data || error.message);
     }
   };
 
@@ -79,6 +68,17 @@ const Produtos = () => {
     }
   };
 
+  // Formatação do preço
+  const precoBodyTemplate = (rowData) => {
+    const preco = Number(rowData.preco);
+    return preco ? preco.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '';
+  };
+
+  // Formatação para exibir o nome da categoria relacionada
+  const categoriaBodyTemplate = (rowData) => {
+    return rowData.categoria ? rowData.categoria.nome : '';
+  };
+
   return (
     <SakaiLayout>
       <div className="produto-gestao" style={{ margin: '2rem' }}>
@@ -95,14 +95,12 @@ const Produtos = () => {
           <Column field="nome" header="Nome" sortable />
           <Column field="descricao" header="Descrição" />
           <Column
-            field="id_categoria"
+            field="categoria"
             header="Categoria"
             sortable
-            body={(rowData) => {
-              const cat = categorias.find((c) => c.id === rowData.id_categoria);
-              return cat ? cat.nome : '';
-            }}
+            body={categoriaBodyTemplate}
           />
+          <Column field="preco" header="Preço" body={precoBodyTemplate} sortable />
           <Column field="ativo" header="Ativo" body={(rowData) => (rowData.ativo ? 'Sim' : 'Não')} />
           <Column header="Ações" body={(rowData) => (
             <TableActions rowData={rowData} onEdit={openEditDialog} onDelete={handleDelete} />
@@ -119,7 +117,6 @@ const Produtos = () => {
       >
         <ProdutoForm
           initialData={editingProduto || {}}
-          categorias={categorias}
           onSubmit={handleFormSubmit}
           onCancel={() => setShowDialog(false)}
         />

@@ -6,17 +6,21 @@ const TableActions = ({ rowData, onEdit, onDelete }) => {
   return (
     <ButtonGroup>
       <Button
-        label="Editar"
+        label=""
         icon="pi pi-pencil"
         severity="info"
         onClick={() => onEdit(rowData)}
+        tooltip="Editar"
+        tooltipOptions={{ position: 'top' }}
       />
       <Button
-        label="Excluir"
+        label=""
         icon="pi pi-trash"
         severity="danger"
         style={{ marginLeft: '0.5em' }}
         onClick={() => onDelete(rowData.id)}
+        tooltip="Excluir"
+        tooltipOptions={{ position: 'top' }}
       />
     </ButtonGroup>
   );

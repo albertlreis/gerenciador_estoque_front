@@ -1,17 +1,26 @@
-import React, {useState, useEffect} from 'react';
-import {InputText} from 'primereact/inputtext';
+import React, { useState, useEffect } from 'react';
+import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
-import {InputSwitch} from 'primereact/inputswitch';
-import {Dropdown} from 'primereact/dropdown';
-import {Button} from 'primereact/button';
-import {FileUpload} from 'primereact/fileupload';
+import { InputSwitch } from 'primereact/inputswitch';
+import { Dropdown } from 'primereact/dropdown';
+import { InputNumber } from 'primereact/inputnumber';
+import { Button } from 'primereact/button';
+import { FileUpload } from 'primereact/fileupload';
 import apiEstoque from '../services/apiEstoque';
 
-const ProdutoForm = ({initialData = {}, onSubmit, onCancel}) => {
+const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
+  // Se estiver em modo edição, tenta usar o objeto da categoria, se disponível, senão usa o id
+  const [idCategoria, setIdCategoria] = useState(
+    initialData.categoria ? initialData.categoria : initialData.id_categoria || null
+  );
   const [nome, setNome] = useState(initialData.nome || '');
   const [descricao, setDescricao] = useState(initialData.descricao || '');
-  const [idCategoria, setIdCategoria] = useState(initialData.id_categoria || null);
-  const [ativo, setAtivo] = useState(initialData.ativo !== undefined ? initialData.ativo : true);
+  const [preco, setPreco] = useState(initialData.preco || 0);
+  const [ativo, setAtivo] = useState(
+    initialData.ativo !== undefined
+      ? (initialData.ativo === true || initialData.ativo === 1 || initialData.ativo === "1")
+      : true
+  );
   const [categorias, setCategorias] = useState([]);
   const [existingImages, setExistingImages] = useState(initialData.imagens || []);
   const [loading, setLoading] = useState(false);
@@ -29,6 +38,17 @@ const ProdutoForm = ({initialData = {}, onSubmit, onCancel}) => {
     fetchCategorias();
   }, []);
 
+  // Quando as categorias estiverem carregadas, se o estado de idCategoria estiver como número,
+  // vamos procurar o objeto correspondente na lista e atualizar o estado.
+  useEffect(() => {
+    if (categorias.length > 0 && typeof idCategoria === 'number') {
+      const catObj = categorias.find((c) => c.id === idCategoria);
+      if (catObj) {
+        setIdCategoria(catObj);
+      }
+    }
+  }, [categorias, idCategoria]);
+
   // Handler para upload das imagens usando o FileUpload
   const uploadHandler = async (event) => {
     const files = event.files; // Array de arquivos selecionados
@@ -41,7 +61,7 @@ const ProdutoForm = ({initialData = {}, onSubmit, onCancel}) => {
       try {
         // Este fluxo só ocorre se o produto já foi criado (edição)
         const response = await apiEstoque.post(`/produtos/${initialData.id}/imagens`, formData, {
-          headers: {'Content-Type': 'multipart/form-data'}
+          headers: { 'Content-Type': 'multipart/form-data' }
         });
         setExistingImages(prevImages => [...prevImages, response.data]);
       } catch (error) {
@@ -66,40 +86,29 @@ const ProdutoForm = ({initialData = {}, onSubmit, onCancel}) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     setLoading(true);
+    // Aqui, garantimos que o valor enviado é o id presente no objeto selecionado
     const productData = {
       nome,
       descricao,
       id_categoria: idCategoria && idCategoria.id ? idCategoria.id : null,
-      ativo
+      ativo,
+      preco
     };
     onSubmit(productData);
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="p-fluid p-formgrid p-grid"
-      style={{gap: '1rem'}}
-    >
+    <form onSubmit={handleSubmit} className="p-fluid p-formgrid p-grid" style={{ gap: '1rem' }}>
       {/* Campo Nome */}
       <div className="p-field p-col-12">
         <label htmlFor="nome">Nome</label>
-        <InputText
-          id="nome"
-          value={nome}
-          onChange={(e) => setNome(e.target.value)}
-        />
+        <InputText id="nome" value={nome} onChange={(e) => setNome(e.target.value)} />
       </div>
 
       {/* Campo Descrição */}
       <div className="p-field p-col-12">
         <label htmlFor="descricao">Descrição</label>
-        <InputTextarea
-          id="descricao"
-          value={descricao}
-          onChange={(e) => setDescricao(e.target.value)}
-          rows={3}
-        />
+        <InputTextarea id="descricao" value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={3} />
       </div>
 
       {/* Campo Categoria */}
@@ -115,36 +124,43 @@ const ProdutoForm = ({initialData = {}, onSubmit, onCancel}) => {
         />
       </div>
 
+      {/* Campo Preço */}
+      <div className="p-field p-col-12 p-md-6">
+        <label htmlFor="preco">Preço</label>
+        <InputNumber
+          id="preco"
+          value={preco}
+          onValueChange={(e) => setPreco(e.value)}
+          mode="currency"
+          currency="BRL"
+          locale="pt-BR"
+        />
+      </div>
+
       {/* Campo Ativo */}
       <div className="p-field p-col-12 p-md-6">
         <label htmlFor="ativo">Ativo</label>
         <InputSwitch
           id="ativo"
           checked={ativo}
-          style={{
-            marginTop: '0.5rem'
-          }}
+          style={{ marginTop: '0.5rem' }}
           onChange={(e) => setAtivo(e.value)}
         />
       </div>
 
-      {/* Se o produto já foi criado: Exibe imagens cadastradas e opção de adicionar imagens */}
+      {/* Se o produto já foi criado: Imagens */}
       {initialData.id && (
         <>
           <div className="p-field p-col-12">
             <h4>Imagens Cadastradas</h4>
-            <div style={{display: 'flex', flexWrap: 'wrap'}}>
+            <div style={{ display: 'flex', flexWrap: 'wrap' }}>
               {existingImages.map((img) => (
-                <div key={img.id} style={{margin: '0.5rem', position: 'relative'}}>
-                  <img
-                    src={img.url}
-                    alt="produto"
-                    style={{width: '100px', height: '100px', objectFit: 'cover'}}
-                  />
+                <div key={img.id} style={{ margin: '0.5rem', position: 'relative' }}>
+                  <img src={img.url} alt="produto" style={{ width: '100px', height: '100px', objectFit: 'cover' }} />
                   <Button
                     icon="pi pi-times"
                     className="p-button-rounded p-button-danger"
-                    style={{position: 'absolute', top: 0, right: 0}}
+                    style={{ position: 'absolute', top: 0, right: 0 }}
                     onClick={() => handleDeleteImage(img.id)}
                   />
                 </div>
@@ -167,22 +183,13 @@ const ProdutoForm = ({initialData = {}, onSubmit, onCancel}) => {
       )}
 
       {/* Botões */}
-      <div
-        className="p-field p-col-12"
-        style={{display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem'}}
-      >
-        <Button
-          label="Salvar"
-          type="submit"
-          icon="pi pi-check"
-          loading={loading}
-          className="p-mr-2"
-        />
+      <div className="p-field p-col-12" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+        <Button label="Salvar" type="submit" icon="pi pi-check" loading={loading} className="p-mr-2" />
         <Button
           label="Cancelar"
           type="button"
           className="p-button-secondary"
-          style={{marginLeft: '0.5rem'}}
+          style={{ marginLeft: '0.5rem' }}
           onClick={onCancel}
         />
       </div>
