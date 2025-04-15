@@ -108,6 +108,12 @@ const SakaiLayout = ({ children }) => {
       key: 'pedidos',
       icon: 'pi pi-fw pi-shopping-cart',
       command: () => navigate('/pedidos')
+    },
+    {
+      label: 'Depósitos',
+      key: 'depositos',
+      icon: 'pi pi-fw pi-shopping-cart',
+      command: () => navigate('/depositos')
     }
   ];
 

@@ -12,6 +12,7 @@ import ProdutoVariacoes from './pages/ProdutoVariacoes';
 import Perfis from './pages/Perfis';
 import Permissoes from './pages/Permissoes';
 import { isTokenValid } from './helper';
+import Depositos from "./pages/Depositos";
 
 const App = () => {
   // Atualiza o localStorage se o token estiver expirado
@@ -36,6 +37,7 @@ const App = () => {
         <Route path="/produto-variacoes" element={isAuthenticated ? <ProdutoVariacoes /> : <Navigate to="/login" />} />
         <Route path="/perfis" element={isAuthenticated ? <Perfis /> : <Navigate to="/login" />} />
         <Route path="/permissoes" element={isAuthenticated ? <Permissoes /> : <Navigate to="/login" />} />
+        <Route path="/depositos" element={isAuthenticated ? <Depositos /> : <Navigate to="/login" />} />
       </Routes>
     </Router>
   );
