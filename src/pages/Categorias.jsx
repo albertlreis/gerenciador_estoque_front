@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Dialog } from 'primereact/dialog';
@@ -6,14 +6,17 @@ import { Button } from 'primereact/button';
 import SakaiLayout from '../layouts/SakaiLayout';
 import CategoriaForm from '../components/CategoriaForm';
 import apiEstoque from '../services/apiEstoque';
-import {Divider} from "primereact/divider";
-import TableActions from "../components/TableActions";
+import { Divider } from 'primereact/divider';
+import TableActions from '../components/TableActions';
+import { ConfirmPopup, confirmPopup } from 'primereact/confirmpopup';
+import { Toast } from 'primereact/toast';
 
 const Categorias = () => {
   const [categorias, setCategorias] = useState([]);
   const [showDialog, setShowDialog] = useState(false);
   const [editingCategoria, setEditingCategoria] = useState(null);
   const [dialogTitle, setDialogTitle] = useState('');
+  const toast = useRef(null);
 
   useEffect(() => {
     fetchCategorias();
@@ -25,6 +28,12 @@ const Categorias = () => {
       setCategorias(response.data);
     } catch (error) {
       console.error('Erro ao carregar categorias:', error.response?.data || error.message);
+      toast.current.show({
+        severity: 'error',
+        summary: 'Erro',
+        detail: 'Erro ao carregar categorias',
+        life: 3000,
+      });
     }
   };
 
@@ -40,36 +49,84 @@ const Categorias = () => {
     setShowDialog(true);
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Tem certeza que deseja deletar esta categoria?')) {
-      try {
-        await apiEstoque.delete(`/categorias/${id}`);
-        fetchCategorias();
-      } catch (error) {
-        console.error('Erro ao deletar categoria:', error.response?.data || error.message);
+  // Atualizamos a função de deleção para usar confirmPopup
+  const handleDelete = (event, id) => {
+    confirmPopup({
+      target: event.currentTarget,
+      message: 'Tem certeza que deseja deletar esta categoria?',
+      icon: 'pi pi-exclamation-triangle',
+      defaultFocus: 'accept',
+      accept: async () => {
+        try {
+          await apiEstoque.delete(`/categorias/${id}`);
+          // Atualiza o estado local removendo a categoria deletada
+          setCategorias(prev => prev.filter(cat => cat.id !== id));
+          toast.current.show({
+            severity: 'success',
+            summary: 'Sucesso',
+            detail: 'Categoria deletada',
+            life: 3000,
+          });
+        } catch (error) {
+          console.error('Erro ao deletar categoria:', error.response?.data || error.message);
+          toast.current.show({
+            severity: 'error',
+            summary: 'Erro',
+            detail: 'Erro ao deletar categoria',
+            life: 3000,
+          });
+        }
+      },
+      reject: () => {
+        toast.current.show({
+          severity: 'warn',
+          summary: 'Cancelado',
+          detail: 'Operação cancelada',
+          life: 3000,
+        });
       }
-    }
+    });
   };
 
   const handleFormSubmit = async (categoriaData) => {
     try {
       if (editingCategoria) {
-        // Atualiza categoria existente
-        await apiEstoque.put(`/categorias/${editingCategoria.id}`, categoriaData);
+        const response = await apiEstoque.put(`/categorias/${editingCategoria.id}`, categoriaData);
+        // Atualiza estado local: substitui a categoria editada
+        setCategorias(prev => prev.map(cat => (cat.id === editingCategoria.id ? response.data : cat)));
+        toast.current.show({
+          severity: 'success',
+          summary: 'Sucesso',
+          detail: 'Categoria atualizada',
+          life: 3000,
+        });
       } else {
-        // Cria nova categoria
-        await apiEstoque.post('/categorias', categoriaData);
+        const response = await apiEstoque.post('/categorias', categoriaData);
+        // Atualiza o estado local adicionando a nova categoria
+        setCategorias(prev => [...prev, response.data]);
+        toast.current.show({
+          severity: 'success',
+          summary: 'Sucesso',
+          detail: 'Categoria criada',
+          life: 3000,
+        });
       }
       setShowDialog(false);
-      fetchCategorias();
     } catch (error) {
       console.error('Erro ao salvar categoria:', error.response?.data || error.message);
-      alert('Erro ao salvar categoria!');
+      toast.current.show({
+        severity: 'error',
+        summary: 'Erro',
+        detail: 'Erro ao salvar categoria',
+        life: 3000,
+      });
     }
   };
 
   return (
     <SakaiLayout>
+      <Toast ref={toast} />
+      <ConfirmPopup />
       <div className="categoria-gestao" style={{ margin: '2rem' }}>
         <h2>Gestão de Categorias</h2>
         <Button
@@ -83,9 +140,16 @@ const Categorias = () => {
           <Column field="id" header="ID" sortable />
           <Column field="nome" header="Nome" sortable />
           <Column field="descricao" header="Descrição" />
-          <Column header="Ações" body={(rowData) => (
-            <TableActions rowData={rowData} onEdit={openEditDialog} onDelete={handleDelete} />
-          )} />
+          <Column
+            header="Ações"
+            body={(rowData) => (
+              <TableActions
+                rowData={rowData}
+                onEdit={openEditDialog}
+                onDelete={handleDelete} // O TableActions deverá encaminhar o event para a função onDelete
+              />
+            )}
+          />
         </DataTable>
       </div>
 

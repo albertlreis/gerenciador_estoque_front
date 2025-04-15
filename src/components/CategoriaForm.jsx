@@ -7,16 +7,22 @@ const CategoriaForm = ({ initialData = {}, onSubmit, onCancel }) => {
     nome: initialData.nome || '',
     descricao: initialData.descricao || '',
   });
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (field, value) => {
     setCategoria({ ...categoria, [field]: value });
   };
 
-  const handleSubmit = (e) => {
-    setLoading(true);
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit(categoria);
+    setLoading(true);
+    try {
+      await onSubmit(categoria);
+    } catch (error) {
+      console.error('Erro no processamento do formulário:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -54,13 +60,13 @@ const CategoriaForm = ({ initialData = {}, onSubmit, onCancel }) => {
           marginTop: '0.5rem'
         }}
       >
-        <Button label="Salvar" type="submit" icon="pi pi-check" loading={loading}/>
+        <Button label="Salvar" type="submit" icon="pi pi-check" loading={loading} className="p-mr-2" />
         <Button
           label="Cancelar"
           type="button"
           severity="secondary"
           icon="pi pi-times"
-          style={{marginLeft: '0.5rem'}}
+          style={{ marginLeft: '0.5rem' }}
           onClick={onCancel}
         />
       </div>
