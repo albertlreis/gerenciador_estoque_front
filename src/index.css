@@ -92,3 +92,14 @@
 .auth-button:hover {
   background-color: #0056b3;
 }
+
+/* Oculta os textos dos itens do PanelMenu em modo recolhido */
+.layout-sidebar.collapsed .p-menuitem-text {
+  display: none;
+}
+
+/* Ajusta o padding ou alinhamento dos ícones para centralizá-los quando estiver colapsado */
+.layout-sidebar.collapsed .p-menuitem-link {
+  justify-content: center;
+  padding: 0.5rem 0;
+}

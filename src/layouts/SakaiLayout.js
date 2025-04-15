@@ -1,18 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Menubar } from 'primereact/menubar';
 import { PanelMenu } from 'primereact/panelmenu';
 import { useNavigate, useLocation } from 'react-router-dom';
 import apiAuth from '../services/apiAuth';
+import Topbar from './Topbar'; // Componente do header inspirado no Sakai
 
 const SakaiLayout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [expandedKeys, setExpandedKeys] = useState({});
+  // Estado para controlar se a sidebar está recolhida
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Para permitir que o usuário expanda ou recolha o menu manualmente
   const userHasToggled = useRef(false);
 
-  // Atualiza os expandedKeys automaticamente somente se o usuário ainda não interagiu
+  // Atualiza os expandedKeys automaticamente somente se o usuário não interagiu previamente
   useEffect(() => {
     if (!userHasToggled.current) {
       if (
@@ -33,6 +35,11 @@ const SakaiLayout = ({ children }) => {
     setExpandedKeys(e.value);
   };
 
+  // Toggle para recolher/expandir a sidebar
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed((prev) => !prev);
+  };
+
   // Logout: chama o endpoint, limpa os dados e redireciona para a página de login.
   const handleLogout = async () => {
     try {
@@ -45,19 +52,6 @@ const SakaiLayout = ({ children }) => {
       navigate('/login');
     }
   };
-
-  const menubarItems = [
-    {
-      label: 'Dashboard',
-      icon: 'pi pi-fw pi-home',
-      command: () => navigate('/')
-    },
-    {
-      label: 'Sair',
-      icon: 'pi pi-fw pi-sign-out',
-      command: handleLogout
-    }
-  ];
 
   const sidebarItems = [
     {
@@ -112,27 +106,36 @@ const SakaiLayout = ({ children }) => {
     {
       label: 'Depósitos',
       key: 'depositos',
-      icon: 'pi pi-fw pi-shopping-cart',
+      // Ícone alterado para refletir melhor a funcionalidade
+      icon: 'pi pi-fw pi-box',
       command: () => navigate('/depositos')
     }
   ];
 
   return (
     <div className="layout-wrapper">
-      <div className="layout-header">
-        <Menubar model={menubarItems} />
-      </div>
+      {/* Header com o Topbar customizado */}
+      <Topbar onToggleMenu={toggleSidebar} handleLogout={handleLogout} />
+
       <div className="layout-container">
-        <div className="layout-sidebar">
+        {/* Sidebar com comportamento de recolhimento */}
+        <div
+          className={`layout-sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}
+          style={{ width: isSidebarCollapsed ? '80px' : '300px' }}
+        >
           <PanelMenu
             model={sidebarItems}
-            style={{ width: '300px' }}
+            style={{ width: '100%' }}
             expandedKeys={expandedKeys}
             onExpandedKeysChange={handleExpandedKeysChange}
             multiple
           />
         </div>
-        <div className="layout-content">{children}</div>
+
+        {/* Conteúdo principal renderizado conforme as rotas */}
+        <div className="layout-content">
+          {children}
+        </div>
       </div>
     </div>
   );
