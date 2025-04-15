@@ -36,3 +36,5 @@ Thumbs.db
 yarn.lock
 
 package-lock.json
+
+build.zip

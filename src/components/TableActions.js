@@ -18,7 +18,7 @@ const TableActions = ({ rowData, onEdit, onDelete }) => {
         icon="pi pi-trash"
         severity="danger"
         style={{ marginLeft: '0.5em' }}
-        onClick={() => onDelete(rowData.id)}
+        onClick={(e) => onDelete(e, rowData.id)}
         tooltip="Excluir"
         tooltipOptions={{ position: 'top' }}
       />

@@ -6,60 +6,121 @@ import { MultiSelect } from 'primereact/multiselect';
 import { Button } from 'primereact/button';
 
 const UsuarioForm = ({ initialData = {}, perfisOptions = [], onSubmit, onCancel }) => {
+  const isEditMode = Boolean(initialData.id);
+
   const [usuario, setUsuario] = useState({
     nome: initialData.nome || '',
     email: initialData.email || '',
-    senha: '', // Em edição, se vazio, pode significar que a senha não será alterada
-    ativo: initialData.ativo !== undefined ? initialData.ativo : true,
-    perfis: initialData.perfis || [] // Array de perfis associados (objetos ou IDs)
+    senha: '', // Em edição, se vazio, a senha não será alterada
+    // Garante que 'ativo' seja sempre booleano
+    ativo: initialData.ativo !== undefined ? !!initialData.ativo : true,
+    // Se o usuário já possuir perfis (array de objetos), convertemos para um array de IDs;
+    // caso contrário, iniciamos com array vazio.
+    perfis: initialData.perfis ? initialData.perfis.map(perfil => perfil.id) : []
   });
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (field, value) => {
     setUsuario({ ...usuario, [field]: value });
   };
 
-  const handleSubmit = (e) => {
+  // Função assíncrona para capturar erros via try/catch
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit(usuario);
+    setLoading(true);
+    try {
+      await onSubmit(usuario);
+    } catch (error) {
+      console.error('Erro no processamento do formulário:', error);
+      // Opcional: exibir notificação de erro para o usuário
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="p-field">
-        <span className="p-float-label">
-          <InputText value={usuario.nome} onChange={(e) => handleChange('nome', e.target.value)} />
-          <label>Nome</label>
-        </span>
+    <form onSubmit={handleSubmit} className="p-fluid">
+      {/* Campo Nome */}
+      <div className="p-field p-grid">
+        <label className="p-col-12 p-md-3">Nome</label>
+        <div className="p-col-12 p-md-9">
+          <InputText
+            value={usuario.nome}
+            onChange={(e) => handleChange('nome', e.target.value)}
+          />
+        </div>
       </div>
-      <div className="p-field">
-        <span className="p-float-label">
-          <InputText value={usuario.email} onChange={(e) => handleChange('email', e.target.value)} />
-          <label>Email</label>
-        </span>
+
+      {/* Campo Email */}
+      <div className="p-field p-grid">
+        <label className="p-col-12 p-md-3">Email</label>
+        <div className="p-col-12 p-md-9">
+          <InputText
+            value={usuario.email}
+            onChange={(e) => handleChange('email', e.target.value)}
+          />
+        </div>
       </div>
-      <div className="p-field">
-        <span className="p-float-label">
-          <Password value={usuario.senha} onChange={(e) => handleChange('senha', e.target.value)} feedback={false} />
-          <label>Senha</label>
-        </span>
+
+      {/* Campo Senha: exibido no cadastro; para edição, se mantiver vazio, não altera */}
+      {!isEditMode && (
+        <div className="p-field p-grid">
+          <label className="p-col-12 p-md-3">Senha</label>
+          <div className="p-col-12 p-md-9">
+            <Password
+              value={usuario.senha}
+              onChange={(e) => handleChange('senha', e.target.value)}
+              feedback={false}
+              minLength={6}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Campo Ativo */}
+      <div className="p-field p-grid">
+        <label className="p-col-12 p-md-3">Ativo</label>
+        <div className="p-col-12 p-md-9">
+          <InputSwitch
+            checked={usuario.ativo}
+            onChange={(e) => handleChange('ativo', e.value)}
+          />
+        </div>
       </div>
-      <div className="p-field">
-        <label htmlFor="ativo">Ativo:</label>
-        <InputSwitch id="ativo" checked={usuario.ativo} onChange={(e) => handleChange('ativo', e.value)} />
+
+      {/* Campo Perfis: permite vincular e desvincular perfis em cadastro e edição */}
+      <div className="p-field p-grid">
+        <label className="p-col-12 p-md-3">Perfis</label>
+        <div className="p-col-12 p-md-9">
+          <MultiSelect
+            value={usuario.perfis}
+            options={perfisOptions}
+            onChange={(e) => handleChange('perfis', e.value)}
+            optionLabel="nome"
+            optionValue="id"  // Define que o valor utilizado é o ID do perfil
+            placeholder="Selecione os perfis"
+            display="chip"
+          />
+        </div>
       </div>
-      <div className="p-field">
-        <label>Perfis</label>
-        <MultiSelect
-          value={usuario.perfis}
-          options={perfisOptions}
-          onChange={(e) => handleChange('perfis', e.value)}
-          optionLabel="nome"
-          placeholder="Selecione os perfis"
+
+      {/* Botões Salvar/Cancelar */}
+      <div className="p-field p-col-12" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+        <Button
+          label="Salvar"
+          type="submit"
+          icon="pi pi-check"
+          loading={loading}
+          className="p-mr-2"
         />
-      </div>
-      <div className="p-field" style={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <Button label="Salvar" type="submit" className="p-mr-2" />
-        <Button label="Cancelar" type="button" className="p-button-secondary" onClick={onCancel} />
+        <Button
+          label="Cancelar"
+          type="button"
+          className="p-button-secondary"
+          icon="pi pi-times"
+          style={{ marginLeft: '0.5rem' }}
+          onClick={onCancel}
+        />
       </div>
     </form>
   );
