@@ -12,7 +12,7 @@ import TableActions from "../components/TableActions";
 const Pedidos = () => {
   const [pedidos, setPedidos] = useState([]);
   const [clientes, setClientes] = useState([]);
-  const [variacoes, setVariacoes] = useState([]);
+  const [produtos, setProdutos] = useState([]);
   const [showDialog, setShowDialog] = useState(false);
   const [editingPedido, setEditingPedido] = useState(null);
   const [dialogTitle, setDialogTitle] = useState('');
@@ -23,7 +23,7 @@ const Pedidos = () => {
   useEffect(() => {
     fetchPedidos();
     fetchClientes();
-    fetchVariacoes();
+    fetchProdutos();
   }, []);
 
   const fetchPedidos = async () => {
@@ -44,12 +44,12 @@ const Pedidos = () => {
     }
   };
 
-  const fetchVariacoes = async () => {
+  const fetchProdutos = async () => {
     try {
-      const response = await apiEstoque.get('/produto-variacoes');
-      setVariacoes(response.data);
+      const response = await apiEstoque.get('/produtos');
+      setProdutos(response.data);
     } catch (error) {
-      console.error('Erro ao carregar variações:', error.response?.data || error.message);
+      console.error('Erro ao carregar produtos:', error.response?.data || error.message);
     }
   };
 
@@ -98,8 +98,7 @@ const Pedidos = () => {
 
   // Exibe o nome do cliente
   const clienteBodyTemplate = (rowData) => {
-    const cliente = clientes.find(c => c.id === rowData.id_cliente);
-    return cliente ? cliente.nome : 'N/D';
+    return rowData.cliente ? rowData.cliente.nome : 'N/D';
   };
 
   return (
@@ -135,7 +134,7 @@ const Pedidos = () => {
         <PedidoFormWithItems
           initialData={editingPedido || {}}
           clientes={clientes}
-          variacoes={variacoes}
+          produtos={produtos}
           statusOptions={statusOptions}
           onSubmit={handleFormSubmit}
           onCancel={() => setShowDialog(false)}

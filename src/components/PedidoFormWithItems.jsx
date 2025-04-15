@@ -4,53 +4,80 @@ import { Dropdown } from 'primereact/dropdown';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { InputNumber } from 'primereact/inputnumber';
 import { Button } from 'primereact/button';
+import apiEstoque from '../services/apiEstoque';
 
-const PedidoFormWithItems = ({ initialData = {}, clientes = [], variacoes = [], statusOptions = [], onSubmit, onCancel }) => {
-  // Dados do cabeçalho e itens do pedido
+const PedidoFormWithItems = ({
+                               initialData = {},
+                               clientes = [],
+                               produtos = [],
+                               statusOptions = [],
+                               onSubmit,
+                               onCancel
+                             }) => {
   const [pedido, setPedido] = useState({
     id_cliente: initialData.id_cliente || null,
     data_pedido: initialData.data_pedido ? new Date(initialData.data_pedido) : new Date(),
     status: initialData.status || (statusOptions.length > 0 ? statusOptions[0] : ''),
     observacoes: initialData.observacoes || '',
-    itens: initialData.itens || []  // Cada item: { id_variacao, quantidade, preco_unitario }
+    itens: initialData.itens || []
   });
+  const [loading, setLoading] = useState(false);
 
-  // Atualiza campos do cabeçalho
   const handleChangeHeader = (field, value) => {
     setPedido({ ...pedido, [field]: value });
   };
 
-  // Atualiza os campos de um item específico
   const handleItemChange = (index, field, value) => {
     const itens = [...pedido.itens];
     itens[index][field] = value;
     setPedido({ ...pedido, itens });
   };
 
-  // Adiciona um novo item (com valores padrão)
   const handleAddItem = () => {
-    const newItem = { id_variacao: null, quantidade: 1, preco_unitario: 0 };
+    const newItem = { id_produto: null, quantidade: 1, preco_unitario: 0 };
     setPedido({ ...pedido, itens: [...pedido.itens, newItem] });
   };
 
-  // Remove um item da lista
   const handleRemoveItem = (index) => {
     const itens = [...pedido.itens];
     itens.splice(index, 1);
     setPedido({ ...pedido, itens });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit(pedido);
+    setLoading(true);
+    try {
+      const orderPayload = {
+        id_cliente: pedido.id_cliente.id,
+        data_pedido: pedido.data_pedido,
+        status: pedido.status,
+        observacoes: pedido.observacoes
+      };
+      const response = await apiEstoque.post('/pedidos', orderPayload);
+      const createdPedido = response.data;
+      const pedidoId = createdPedido.id;
+
+      if (pedido.itens && pedido.itens.length > 0) {
+        for (const item of pedido.itens) {
+          await apiEstoque.post(`/pedidos/${pedidoId}/itens`, item);
+        }
+      }
+
+      onSubmit({ ...createdPedido, itens: pedido.itens });
+    } catch (error) {
+      console.error('Erro ao salvar pedido:', error.response?.data || error.message);
+      alert('Erro ao salvar pedido!');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h3>Detalhes do Pedido</h3>
+    <div className="formgrid grid">
+      <h3 className="col-12">Detalhes do Pedido</h3>
 
-      {/* Cliente */}
-      <div className="p-field">
+      <div className="field col-12 md:col-4">
         <label htmlFor="id_cliente">Cliente</label>
         <Dropdown
           id="id_cliente"
@@ -59,100 +86,125 @@ const PedidoFormWithItems = ({ initialData = {}, clientes = [], variacoes = [], 
           onChange={(e) => handleChangeHeader('id_cliente', e.value)}
           optionLabel="nome"
           placeholder="Selecione um cliente"
+          className="w-full"
         />
       </div>
 
-      {/* Data do Pedido */}
-      <div className="p-field">
+      <div className="field col-12 md:col-4">
         <label htmlFor="data_pedido">Data do Pedido</label>
         <Calendar
           id="data_pedido"
           value={pedido.data_pedido}
           onChange={(e) => handleChangeHeader('data_pedido', e.value)}
           dateFormat="dd/mm/yy"
+          className="w-full"
         />
       </div>
 
-      {/* Status */}
-      <div className="p-field">
+      <div className="field col-12 md:col-4">
         <label htmlFor="status">Status</label>
         <Dropdown
           id="status"
           value={pedido.status}
-          options={statusOptions.map(s => ({ label: s, value: s }))}
+          options={statusOptions.map((s) => ({ label: s, value: s }))}
           onChange={(e) => handleChangeHeader('status', e.value)}
           placeholder="Selecione o status"
+          className="w-full"
         />
       </div>
 
-      {/* Observações */}
-      <div className="p-field">
+      <div className="field col-12">
         <label htmlFor="observacoes">Observações</label>
         <InputTextarea
           id="observacoes"
           value={pedido.observacoes}
           onChange={(e) => handleChangeHeader('observacoes', e.target.value)}
           rows={3}
-          cols={30}
+          className="w-full"
         />
       </div>
 
-      <h3>Itens do Pedido</h3>
-      {/* Lista os itens do pedido */}
+      <h3 className="col-12">Itens do Pedido</h3>
+
       {pedido.itens.map((item, index) => (
-        <div key={index} className="p-grid p-formgrid" style={{ marginBottom: '1rem', border: '1px solid #ccc', padding: '1rem' }}>
-          {/* Variação (seleção da variação do produto) */}
-          <div className="p-field p-col-12 p-md-4">
-            <label htmlFor={`item-${index}-variacao`}>Variação</label>
-            <Dropdown
-              id={`item-${index}-variacao`}
-              value={item.id_variacao}
-              options={variacoes}
-              onChange={(e) => handleItemChange(index, 'id_variacao', e.value)}
-              optionLabel="nome"
-              placeholder="Selecione a variação"
-            />
-          </div>
+        <div key={index} className="col-12 border-1 surface-border border-round p-3 mb-3">
+          <div className="formgrid grid">
+            <div className="field col-12 md:col-4">
+              <label htmlFor={`item-${index}-produto`}>Produto</label>
+              <Dropdown
+                id={`item-${index}-produto`}
+                value={item.id_produto}
+                options={produtos}
+                onChange={(e) => handleItemChange(index, 'id_produto', e.value)}
+                optionLabel="nome"
+                placeholder="Selecione o produto"
+                optionValue="id"
+                className="w-full"
+              />
+            </div>
 
-          {/* Quantidade */}
-          <div className="p-field p-col-12 p-md-3">
-            <label htmlFor={`item-${index}-quantidade`}>Quantidade</label>
-            <InputNumber
-              id={`item-${index}-quantidade`}
-              value={item.quantidade}
-              onValueChange={(e) => handleItemChange(index, 'quantidade', e.value)}
-              integerOnly
-              min={1}
-            />
-          </div>
+            <div className="field col-12 md:col-4">
+              <label htmlFor={`item-${index}-quantidade`}>Quantidade</label>
+              <InputNumber
+                id={`item-${index}-quantidade`}
+                value={item.quantidade}
+                onValueChange={(e) => handleItemChange(index, 'quantidade', e.value)}
+                integerOnly
+                min={1}
+                className="w-full"
+              />
+            </div>
 
-          {/* Preço Unitário */}
-          <div className="p-field p-col-12 p-md-3">
-            <label htmlFor={`item-${index}-preco`}>Preço Unitário</label>
-            <InputNumber
-              id={`item-${index}-preco`}
-              value={item.preco_unitario}
-              onValueChange={(e) => handleItemChange(index, 'preco_unitario', e.value)}
-              mode="currency"
-              currency="BRL"
-              locale="pt-BR"
-            />
-          </div>
+            <div className="field col-12 md:col-4">
+              <label htmlFor={`item-${index}-preco`}>Preço Unitário</label>
+              <InputNumber
+                id={`item-${index}-preco`}
+                value={item.preco_unitario}
+                onValueChange={(e) => handleItemChange(index, 'preco_unitario', e.value)}
+                mode="currency"
+                currency="BRL"
+                locale="pt-BR"
+                className="w-full"
+              />
+            </div>
 
-          {/* Botão para remover o item */}
-          <div className="p-field p-col-12 p-md-2" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Button label="Remover" icon="pi pi-times" className="p-button-danger" onClick={() => handleRemoveItem(index)} />
+            <div className="field col-12" style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button
+                label=""
+                icon="pi pi-times"
+                className="p-button-danger"
+                onClick={() => handleRemoveItem(index)}
+              />
+            </div>
           </div>
         </div>
       ))}
 
-      <Button label="Adicionar Item" icon="pi pi-plus" className="p-button-success p-mb-3" onClick={handleAddItem} />
-
-      <div className="p-field" style={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <Button label="Salvar Pedido" type="submit" className="p-mr-2" />
-        <Button label="Cancelar" type="button" className="p-button-secondary" onClick={onCancel} />
+      <div className="field col-12">
+        <Button
+          label="Adicionar Produto"
+          icon="pi pi-plus"
+          className="p-button-success"
+          onClick={handleAddItem}
+        />
       </div>
-    </form>
+
+      <div className="field col-12 flex justify-content-end gap-2 mt-2">
+        <Button
+          label="Salvar Pedido"
+          onClick={handleSubmit}
+          icon="pi pi-check"
+          loading={loading}
+          className="p-button-primary"
+        />
+        <Button
+          label="Cancelar"
+          type="button"
+          className="p-button-secondary"
+          onClick={onCancel}
+        />
+      </div>
+    </div>
   );
 };
 

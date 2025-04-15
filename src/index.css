@@ -1,3 +1,4 @@
+@import '~primeflex/primeflex.css';
 /* Layout para páginas autenticadas */
 .layout-wrapper {
   display: flex;
