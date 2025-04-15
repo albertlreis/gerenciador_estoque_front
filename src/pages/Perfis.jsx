@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Dialog } from 'primereact/dialog';
@@ -6,8 +6,10 @@ import { Button } from 'primereact/button';
 import SakaiLayout from '../layouts/SakaiLayout';
 import PerfilForm from '../components/PerfilForm';
 import apiAuth from '../services/apiAuth';
-import {Divider} from "primereact/divider";
+import { Divider } from 'primereact/divider';
 import TableActions from "../components/TableActions";
+import { ConfirmPopup, confirmPopup } from 'primereact/confirmpopup';
+import { Toast } from 'primereact/toast';
 
 const Perfis = () => {
   const [perfis, setPerfis] = useState([]);
@@ -15,6 +17,7 @@ const Perfis = () => {
   const [showDialog, setShowDialog] = useState(false);
   const [editingPerfil, setEditingPerfil] = useState(null);
   const [dialogTitle, setDialogTitle] = useState('');
+  const toast = useRef(null);
 
   useEffect(() => {
     fetchPerfis();
@@ -27,6 +30,7 @@ const Perfis = () => {
       setPerfis(response.data);
     } catch (error) {
       console.error('Erro ao carregar perfis:', error.response?.data || error.message);
+      toast.current.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao carregar perfis', life: 3000 });
     }
   };
 
@@ -36,6 +40,7 @@ const Perfis = () => {
       setPermissoesOptions(response.data);
     } catch (error) {
       console.error('Erro ao carregar permissões:', error.response?.data || error.message);
+      toast.current.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao carregar permissões', life: 3000 });
     }
   };
 
@@ -51,34 +56,58 @@ const Perfis = () => {
     setShowDialog(true);
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Tem certeza que deseja deletar este perfil?')) {
-      try {
-        await apiAuth.delete(`/perfis/${id}`);
-        fetchPerfis();
-      } catch (error) {
-        console.error('Erro ao deletar perfil:', error.response?.data || error.message);
+  const handleDelete = (event, id) => {
+    confirmPopup({
+      target: event.currentTarget,
+      message: 'Tem certeza que deseja deletar este perfil?',
+      icon: 'pi pi-exclamation-triangle',
+      defaultFocus: 'accept',
+      accept: async () => {
+        try {
+          await apiAuth.delete(`/perfis/${id}`);
+          // Atualiza o estado local eliminando o perfil deletado
+          setPerfis(prev => prev.filter(perfil => perfil.id !== id));
+          toast.current.show({ severity: 'success', summary: 'Sucesso', detail: 'Perfil deletado', life: 3000 });
+        } catch (error) {
+          console.error('Erro ao deletar perfil:', error.response?.data || error.message);
+          toast.current.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao deletar perfil', life: 3000 });
+        }
+      },
+      reject: () => {
+        toast.current.show({ severity: 'warn', summary: 'Cancelado', detail: 'Operação cancelada', life: 3000 });
       }
-    }
+    });
   };
 
   const handleFormSubmit = async (perfilData) => {
     try {
       if (editingPerfil) {
-        await apiAuth.put(`/perfis/${editingPerfil.id}`, perfilData);
+        const response = await apiAuth.put(`/perfis/${editingPerfil.id}`, perfilData);
+        // Atualiza o estado local substituindo o perfil editado
+        setPerfis(prev => prev.map(p => p.id === editingPerfil.id ? response.data : p));
+        toast.current.show({ severity: 'success', summary: 'Sucesso', detail: 'Perfil atualizado', life: 3000 });
       } else {
-        await apiAuth.post('/perfis', perfilData);
+        const response = await apiAuth.post('/perfis', perfilData);
+        // Adiciona o novo perfil ao estado local sem nova requisição
+        setPerfis(prev => [...prev, response.data]);
+        toast.current.show({ severity: 'success', summary: 'Sucesso', detail: 'Perfil criado', life: 3000 });
       }
       setShowDialog(false);
-      fetchPerfis();
     } catch (error) {
       console.error('Erro ao salvar perfil:', error.response?.data || error.message);
-      alert('Erro ao salvar perfil!');
+      toast.current.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao salvar perfil', life: 3000 });
     }
+  };
+
+  const truncateText = (text, maxLength = 50) => {
+    if (!text) return '';
+    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
   };
 
   return (
     <SakaiLayout>
+      <Toast ref={toast} />
+      <ConfirmPopup />
       <div className="perfil-gestao" style={{ margin: '2rem' }}>
         <h2>Gestão de Perfis</h2>
         <Button label="Novo Perfil" icon="pi pi-plus" className="p-button-success p-mb-3" onClick={openNewDialog} />
@@ -92,13 +121,16 @@ const Perfis = () => {
             header="Permissões"
             body={(rowData) =>
               rowData.permissoes && Array.isArray(rowData.permissoes) && rowData.permissoes.length > 0
-                ? rowData.permissoes.map(p => p.nome).join(', ')
+                ? truncateText(rowData.permissoes.map(p => p.nome).join(', '), 50)
                 : 'Sem permissões'
             }
           />
-
           <Column header="Ações" body={(rowData) => (
-            <TableActions rowData={rowData} onEdit={openEditDialog} onDelete={handleDelete} />
+            <TableActions
+              rowData={rowData}
+              onEdit={openEditDialog}
+              onDelete={handleDelete} // TableActions deverá encaminhar o event para a função onDelete
+            />
           )} />
         </DataTable>
       </div>

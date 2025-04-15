@@ -4,10 +4,12 @@ import { MultiSelect } from 'primereact/multiselect';
 import { Button } from 'primereact/button';
 
 const PerfilForm = ({ initialData = {}, permissoesOptions = [], onSubmit, onCancel }) => {
+  const initialPermissoes = initialData.permissoes ? initialData.permissoes.map(p => p.id) : [];
+
   const [perfil, setPerfil] = useState({
     nome: initialData.nome || '',
     descricao: initialData.descricao || '',
-    permissoes: initialData.permissoes || []
+    permissoes: initialPermissoes
   });
   const [loading, setLoading] = useState(false);
 
@@ -15,18 +17,20 @@ const PerfilForm = ({ initialData = {}, permissoesOptions = [], onSubmit, onCanc
     setPerfil({ ...perfil, [field]: value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    onSubmit(perfil);
+    try {
+      await onSubmit(perfil);
+    } catch (error) {
+      console.error('Erro no processamento do formulário:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="p-fluid p-formgrid p-grid"
-      style={{ gap: '1rem' }}
-    >
+    <form onSubmit={handleSubmit} className="p-fluid p-formgrid p-grid" style={{ gap: '1rem' }}>
       {/* Campo Nome */}
       <div className="p-field p-col-12">
         <label htmlFor="nome">Nome</label>
@@ -56,19 +60,14 @@ const PerfilForm = ({ initialData = {}, permissoesOptions = [], onSubmit, onCanc
           options={permissoesOptions}
           onChange={(e) => handleChange('permissoes', e.value)}
           optionLabel="nome"
+          optionValue="id"
           placeholder="Selecione as permissões"
+          display="chip"
         />
       </div>
 
       {/* Botões */}
-      <div
-        className="p-field p-col-12"
-        style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          marginTop: '0.5rem'
-        }}
-      >
+      <div className="p-field p-col-12" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
         <Button
           label="Salvar"
           type="submit"
@@ -81,7 +80,7 @@ const PerfilForm = ({ initialData = {}, permissoesOptions = [], onSubmit, onCanc
           type="button"
           className="p-button-secondary"
           icon="pi pi-times"
-          style={{marginLeft: '0.5rem'}}
+          style={{ marginLeft: '0.5rem' }}
           onClick={onCancel}
         />
       </div>

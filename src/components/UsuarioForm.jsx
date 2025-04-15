@@ -11,11 +11,8 @@ const UsuarioForm = ({ initialData = {}, perfisOptions = [], onSubmit, onCancel 
   const [usuario, setUsuario] = useState({
     nome: initialData.nome || '',
     email: initialData.email || '',
-    senha: '', // Em edição, se vazio, a senha não será alterada
-    // Garante que 'ativo' seja sempre booleano
+    senha: '',
     ativo: initialData.ativo !== undefined ? !!initialData.ativo : true,
-    // Se o usuário já possuir perfis (array de objetos), convertemos para um array de IDs;
-    // caso contrário, iniciamos com array vazio.
     perfis: initialData.perfis ? initialData.perfis.map(perfil => perfil.id) : []
   });
   const [loading, setLoading] = useState(false);
@@ -24,7 +21,6 @@ const UsuarioForm = ({ initialData = {}, perfisOptions = [], onSubmit, onCancel 
     setUsuario({ ...usuario, [field]: value });
   };
 
-  // Função assíncrona para capturar erros via try/catch
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -32,7 +28,6 @@ const UsuarioForm = ({ initialData = {}, perfisOptions = [], onSubmit, onCancel 
       await onSubmit(usuario);
     } catch (error) {
       console.error('Erro no processamento do formulário:', error);
-      // Opcional: exibir notificação de erro para o usuário
     } finally {
       setLoading(false);
     }
