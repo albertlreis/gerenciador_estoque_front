@@ -76,18 +76,24 @@ const Pedidos = () => {
     }
   };
 
-  const handleFormSubmit = async (pedidoData) => {
-    try {
-      if (editingPedido) {
-        await apiEstoque.put(`/pedidos/${editingPedido.id}`, pedidoData);
-      } else {
-        await apiEstoque.post('/pedidos', pedidoData);
-      }
+  const handleFormSubmit = (pedidoData) => {
+    // Se estiver em modo de edição, pode ser necessário chamar o PUT,
+    // mas para criação (quando editingPedido é null) não chamamos o POST novamente.
+    if (editingPedido) {
+      apiEstoque.put(`/pedidos/${editingPedido.id}`, pedidoData)
+        .then(() => {
+          setShowDialog(false);
+          fetchPedidos();
+        })
+        .catch((error) => {
+          console.error('Erro ao salvar pedido:', error.response?.data || error.message);
+          alert('Erro ao salvar pedido!');
+        });
+    } else {
+      // Para novo pedido, já que o formulário já fez a criação,
+      // basta fechar o diálogo e atualizar a listagem.
       setShowDialog(false);
       fetchPedidos();
-    } catch (error) {
-      console.error('Erro ao salvar pedido:', error.response?.data || error.message);
-      alert('Erro ao salvar pedido!');
     }
   };
 
