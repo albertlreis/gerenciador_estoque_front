@@ -1,19 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
+import { Divider } from 'primereact/divider';
+import { ConfirmPopup, confirmPopup } from 'primereact/confirmpopup';
+import { Toast } from 'primereact/toast';
 import SakaiLayout from '../layouts/SakaiLayout';
 import ClienteForm from '../components/ClienteForm';
 import apiEstoque from '../services/apiEstoque';
-import {Divider} from "primereact/divider";
-import TableActions from "../components/TableActions";
+import TableActions from '../components/TableActions';
 
 const Clientes = () => {
   const [clientes, setClientes] = useState([]);
   const [showDialog, setShowDialog] = useState(false);
   const [editingCliente, setEditingCliente] = useState(null);
   const [dialogTitle, setDialogTitle] = useState('');
+  const toast = useRef(null);
 
   useEffect(() => {
     fetchClientes();
@@ -25,6 +28,12 @@ const Clientes = () => {
       setClientes(response.data);
     } catch (error) {
       console.error('Erro ao carregar clientes:', error.response?.data || error.message);
+      toast.current.show({
+        severity: 'error',
+        summary: 'Erro',
+        detail: 'Erro ao carregar clientes',
+        life: 3000,
+      });
     }
   };
 
@@ -40,34 +49,87 @@ const Clientes = () => {
     setShowDialog(true);
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Tem certeza que deseja deletar este cliente?')) {
-      try {
-        await apiEstoque.delete(`/clientes/${id}`);
-        fetchClientes();
-      } catch (error) {
-        console.error('Erro ao deletar cliente:', error.response?.data || error.message);
-      }
-    }
+  // Utiliza confirmPopup para confirmar a exclusão do cliente.
+  const handleDelete = (event, id) => {
+    confirmPopup({
+      target: event.currentTarget,
+      message: 'Tem certeza que deseja deletar este cliente?',
+      icon: 'pi pi-exclamation-triangle',
+      defaultFocus: 'accept',
+      accept: async () => {
+        try {
+          await apiEstoque.delete(`/clientes/${id}`);
+          // Atualiza o estado local eliminando o cliente deletado.
+          setClientes(prev => prev.filter(cliente => cliente.id !== id));
+          toast.current.show({
+            severity: 'success',
+            summary: 'Sucesso',
+            detail: 'Cliente deletado',
+            life: 3000,
+          });
+        } catch (error) {
+          console.error('Erro ao deletar cliente:', error.response?.data || error.message);
+          toast.current.show({
+            severity: 'error',
+            summary: 'Erro',
+            detail: 'Erro ao deletar cliente',
+            life: 3000,
+          });
+        }
+      },
+      reject: () => {
+        toast.current.show({
+          severity: 'warn',
+          summary: 'Cancelado',
+          detail: 'Operação cancelada',
+          life: 3000,
+        });
+      },
+    });
   };
 
+  // Atualiza o estado local com o cliente salvo para evitar nova requisição
   const handleFormSubmit = async (clienteData) => {
     try {
       if (editingCliente) {
-        await apiEstoque.put(`/clientes/${editingCliente.id}`, clienteData);
+        // Atualiza cliente e atualiza estado local sem refazer a requisição completa.
+        const response = await apiEstoque.put(`/clientes/${editingCliente.id}`, clienteData);
+        setClientes(prev =>
+          prev.map(c => (c.id === editingCliente.id ? response.data : c))
+        );
+        toast.current.show({
+          severity: 'success',
+          summary: 'Sucesso',
+          detail: 'Cliente atualizado',
+          life: 3000,
+        });
       } else {
-        await apiEstoque.post('/clientes', clienteData);
+        // Cria cliente e adiciona ao estado local.
+        const response = await apiEstoque.post('/clientes', clienteData);
+        setClientes(prev => [...prev, response.data]);
+        toast.current.show({
+          severity: 'success',
+          summary: 'Sucesso',
+          detail: 'Cliente criado',
+          life: 3000,
+        });
       }
       setShowDialog(false);
-      fetchClientes();
     } catch (error) {
       console.error('Erro ao salvar cliente:', error.response?.data || error.message);
-      alert('Erro ao salvar cliente!');
+      toast.current.show({
+        severity: 'error',
+        summary: 'Erro',
+        detail: 'Erro ao salvar cliente',
+        life: 3000,
+      });
     }
   };
 
   return (
     <SakaiLayout>
+      <Toast ref={toast} />
+      <ConfirmPopup />
       <div className="cliente-gestao" style={{ margin: '2rem' }}>
         <h2>Gestão de Clientes</h2>
         <Button
@@ -82,9 +144,17 @@ const Clientes = () => {
           <Column field="nome" header="Nome" sortable />
           <Column field="email" header="Email" sortable />
           <Column field="telefone" header="Telefone" sortable />
-          <Column header="Ações" body={(rowData) => (
-            <TableActions rowData={rowData} onEdit={openEditDialog} onDelete={handleDelete} />
-          )} />
+          <Column
+            header="Ações"
+            body={(rowData) => (
+              <TableActions
+                rowData={rowData}
+                onEdit={openEditDialog}
+                // TableActions deverá encaminhar o event para a função onDelete
+                onDelete={handleDelete}
+              />
+            )}
+          />
         </DataTable>
       </div>
 
