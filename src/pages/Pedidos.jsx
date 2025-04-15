@@ -3,10 +3,12 @@ import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
+import { confirmPopup } from 'primereact/confirmpopup';
+import { ProgressSpinner } from 'primereact/progressspinner';
 import SakaiLayout from '../layouts/SakaiLayout';
-import PedidoFormWithItems from '../components/PedidoFormWithItems';
+import PedidoForm from '../components/PedidoForm';
 import apiEstoque from '../services/apiEstoque';
-import {Divider} from "primereact/divider";
+import { Divider } from "primereact/divider";
 import TableActions from "../components/TableActions";
 
 const Pedidos = () => {
@@ -16,22 +18,27 @@ const Pedidos = () => {
   const [showDialog, setShowDialog] = useState(false);
   const [editingPedido, setEditingPedido] = useState(null);
   const [dialogTitle, setDialogTitle] = useState('');
+  const [dialogLoading, setDialogLoading] = useState(false);
+  // Estado para controlar o loading da tabela
+  const [tableLoading, setTableLoading] = useState(true);
 
-  // Status possíveis para o pedido
-  const statusOptions = ['Pendente', 'Confirmado', 'Cancelado'];
+  // Status disponíveis conforme banco: novo, finalizado, pendente e cancelado
+  const statusOptions = ['novo', 'finalizado', 'pendente', 'cancelado'];
 
+  // Carrega os pedidos na carga inicial
   useEffect(() => {
     fetchPedidos();
-    fetchClientes();
-    fetchProdutos();
   }, []);
 
   const fetchPedidos = async () => {
+    setTableLoading(true);
     try {
       const response = await apiEstoque.get('/pedidos');
       setPedidos(response.data);
     } catch (error) {
       console.error('Erro ao carregar pedidos:', error.response?.data || error.message);
+    } finally {
+      setTableLoading(false);
     }
   };
 
@@ -53,33 +60,54 @@ const Pedidos = () => {
     }
   };
 
-  const openNewPedidoDialog = () => {
+  // Abre o formulário de novo pedido, carregando as listas necessárias
+  const openNewPedidoDialog = async () => {
+    setShowDialog(true);
+    await fetchClientes();
+    await fetchProdutos();
     setEditingPedido(null);
     setDialogTitle('Cadastrar Pedido');
-    setShowDialog(true);
   };
 
-  const openEditDialog = (pedido) => {
-    setEditingPedido(pedido);
-    setDialogTitle('Editar Pedido');
+  // Ao editar, busca os dados atualizados, carrega as listas e exibe o loading
+  const openEditDialog = async (pedido) => {
+    setDialogLoading(true);
     setShowDialog(true);
-  };
-
-  const handleDelete = async (id) => {
-    if (window.confirm('Tem certeza que deseja deletar este pedido?')) {
-      try {
-        await apiEstoque.delete(`/pedidos/${id}`);
-        fetchPedidos();
-      } catch (error) {
-        console.error('Erro ao deletar pedido:', error.response?.data || error.message);
-      }
+    try {
+      const response = await apiEstoque.get(`/pedidos/${pedido.id}`);
+      await fetchClientes();
+      await fetchProdutos();
+      setEditingPedido(response.data);
+      setDialogTitle('Editar Pedido');
+    } catch (error) {
+      console.error('Erro ao carregar detalhes do pedido:', error.response?.data || error.message);
+    } finally {
+      setDialogLoading(false);
     }
   };
 
+  // Gerencia a exclusão utilizando confirmPopup
+  const deletePedido = async (id) => {
+    try {
+      await apiEstoque.delete(`/pedidos/${id}`);
+      fetchPedidos();
+    } catch (error) {
+      console.error('Erro ao deletar pedido:', error.response?.data || error.message);
+    }
+  };
+
+  const handleDelete = (event, id) => {
+    confirmPopup({
+      target: event.currentTarget,
+      message: 'Tem certeza que deseja deletar este pedido?',
+      icon: 'pi pi-info-circle',
+      accept: () => deletePedido(id)
+    });
+  };
+
   const handleFormSubmit = (pedidoData) => {
-    // Se estiver em modo de edição, pode ser necessário chamar o PUT,
-    // mas para criação (quando editingPedido é null) não chamamos o POST novamente.
     if (editingPedido) {
+      // Modo de edição: atualiza o pedido via PUT
       apiEstoque.put(`/pedidos/${editingPedido.id}`, pedidoData)
         .then(() => {
           setShowDialog(false);
@@ -90,8 +118,7 @@ const Pedidos = () => {
           alert('Erro ao salvar pedido!');
         });
     } else {
-      // Para novo pedido, já que o formulário já fez a criação,
-      // basta fechar o diálogo e atualizar a listagem.
+      // No modo de criação, o formulário já realizou o POST e apenas fecha o diálogo
       setShowDialog(false);
       fetchPedidos();
     }
@@ -118,7 +145,13 @@ const Pedidos = () => {
           onClick={openNewPedidoDialog}
         />
         <Divider type="solid" />
-        <DataTable value={pedidos} paginator rows={10} dataKey="id" responsiveLayout="scroll">
+        <DataTable
+          value={pedidos}
+          paginator
+          rows={10}
+          dataKey="id"
+          loading={tableLoading}
+        >
           <Column field="id" header="ID" sortable />
           <Column header="Cliente" body={clienteBodyTemplate} sortable />
           <Column header="Data" body={dateBodyTemplate} sortable />
@@ -137,14 +170,20 @@ const Pedidos = () => {
         modal
         onHide={() => setShowDialog(false)}
       >
-        <PedidoFormWithItems
-          initialData={editingPedido || {}}
-          clientes={clientes}
-          produtos={produtos}
-          statusOptions={statusOptions}
-          onSubmit={handleFormSubmit}
-          onCancel={() => setShowDialog(false)}
-        />
+        {dialogLoading ? (
+          <div className="flex justify-content-center align-items-center" style={{ minHeight: '200px' }}>
+            <ProgressSpinner />
+          </div>
+        ) : (
+          <PedidoForm
+            initialData={editingPedido || {}}
+            clientes={clientes}
+            produtos={produtos}
+            statusOptions={statusOptions}
+            onSubmit={handleFormSubmit}
+            onCancel={() => setShowDialog(false)}
+          />
+        )}
       </Dialog>
     </SakaiLayout>
   );
