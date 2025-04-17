@@ -13,6 +13,7 @@ import Perfis from './pages/Perfis';
 import Permissoes from './pages/Permissoes';
 import { isTokenValid } from './helper';
 import Depositos from "./pages/Depositos";
+import EstoqueMovimentacoes from "./pages/EstoqueMovimentacoes";
 
 const App = () => {
   // Atualiza o localStorage se o token estiver expirado
@@ -38,6 +39,8 @@ const App = () => {
         <Route path="/perfis" element={isAuthenticated ? <Perfis /> : <Navigate to="/login" />} />
         <Route path="/permissoes" element={isAuthenticated ? <Permissoes /> : <Navigate to="/login" />} />
         <Route path="/depositos" element={isAuthenticated ? <Depositos /> : <Navigate to="/login" />} />
+        <Route path="/estoque/movimentacao" element={isAuthenticated ? <EstoqueMovimentacoes /> : <Navigate to="/login" />} />
+        <Route path="/depositos/:depositoId/movimentacoes" element={isAuthenticated ? <EstoqueMovimentacoes /> : <Navigate to="/login" />} />
       </Routes>
     </Router>
   );

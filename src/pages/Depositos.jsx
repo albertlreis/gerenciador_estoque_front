@@ -86,6 +86,14 @@ const Depositos = () => {
     });
   };
 
+  const handleMovimentacoes = (depositoId) => {
+    // Pode-se optar por:
+    // (a) Redirecionar para uma página de listagem de movimentações para esse depósito:
+    window.location.href = `/depositos/${depositoId}/movimentacoes`;
+    // (b) Ou abrir um diálogo com o formulário de registro (se desejar um fluxo inline).
+    // Exemplo: definir estado para abrir o diálogo com o componente MovimentacaoForm
+  };
+
   const handleFormSubmit = async (depositoData) => {
     try {
       if (editingDeposito) {
@@ -121,6 +129,18 @@ const Depositos = () => {
     }
   };
 
+  // Adicionamos uma coluna personalizada para movimentações
+  const movimentacoesColumnTemplate = (rowData) => {
+    return (
+      <Button
+        label="Movimentações"
+        icon="pi pi-exchange"
+        className="p-button-info p-button-sm"
+        onClick={() => handleMovimentacoes(rowData.id)}
+      />
+    );
+  };
+
   return (
     <SakaiLayout>
       <Toast ref={toast} />
@@ -138,6 +158,7 @@ const Depositos = () => {
           <Column field="id" header="ID" sortable />
           <Column field="nome" header="Nome" sortable />
           <Column field="endereco" header="Endereço" />
+          <Column header="Movimentações" body={movimentacoesColumnTemplate} />
           <Column
             header="Ações"
             body={(rowData) => (
