@@ -1,21 +1,24 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { Calendar } from 'primereact/calendar';
-import { Dropdown } from 'primereact/dropdown';
-import { InputTextarea } from 'primereact/inputtextarea';
-import { InputNumber } from 'primereact/inputnumber';
-import { Button } from 'primereact/button';
-import { ConfirmPopup, confirmPopup } from 'primereact/confirmpopup';
-import { Toast } from 'primereact/toast';
+import React, {useRef, useState, useEffect} from 'react';
+import {Calendar} from 'primereact/calendar';
+import {Dropdown} from 'primereact/dropdown';
+import {InputTextarea} from 'primereact/inputtextarea';
+import {InputNumber} from 'primereact/inputnumber';
+import {Button} from 'primereact/button';
+import {ConfirmPopup, confirmPopup} from 'primereact/confirmpopup';
+import {Toast} from 'primereact/toast';
 import apiEstoque from '../services/apiEstoque';
 
 const PedidoForm = ({
                       initialData = {},
                       clientes = [],
                       produtos = [],
+                      vendedores = [],
+                      parceiros = [],
                       statusOptions = [],
                       onSubmit,
                       onCancel
                     }) => {
+
   const [pedido, setPedido] = useState({
     id_cliente: initialData.id_cliente || initialData.cliente || null,
     data_pedido: initialData.data_pedido ? new Date(initialData.data_pedido) : new Date(),
@@ -38,7 +41,7 @@ const PedidoForm = ({
   }, [initialData, statusOptions]);
 
   const handleChangeHeader = (field, value) => {
-    setPedido(prev => ({ ...prev, [field]: value }));
+    setPedido(prev => ({...prev, [field]: value}));
   };
 
   const handleItemChange = (index, field, value) => {
@@ -52,12 +55,12 @@ const PedidoForm = ({
     } else {
       itens[index][field] = value;
     }
-    setPedido(prev => ({ ...prev, itens }));
+    setPedido(prev => ({...prev, itens}));
   };
 
   const handleAddItem = () => {
-    const newItem = { id_produto: null, quantidade: 1, preco_unitario: 0 };
-    setPedido(prev => ({ ...prev, itens: [...prev.itens, newItem] }));
+    const newItem = {id_produto: null, quantidade: 1, preco_unitario: 0};
+    setPedido(prev => ({...prev, itens: [...prev.itens, newItem]}));
   };
 
   // Remoção de item com confirmPopup e requisição ao back, se necessário
@@ -71,16 +74,21 @@ const PedidoForm = ({
         if (item.id && initialData && initialData.id) {
           try {
             await apiEstoque.delete(`/pedidos/${initialData.id}/itens/${item.id}`);
-            toast.current.show({ severity: 'success', summary: 'Sucesso', detail: 'Item removido com sucesso!', life: 3000 });
+            toast.current.show({
+              severity: 'success',
+              summary: 'Sucesso',
+              detail: 'Item removido com sucesso!',
+              life: 3000
+            });
           } catch (error) {
             console.error('Erro ao remover item:', error.response?.data || error.message);
-            toast.current.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao remover o item!', life: 3000 });
+            toast.current.show({severity: 'error', summary: 'Erro', detail: 'Erro ao remover o item!', life: 3000});
             return;
           }
         }
         const novosItens = [...pedido.itens];
         novosItens.splice(index, 1);
-        setPedido(prev => ({ ...prev, itens: novosItens }));
+        setPedido(prev => ({...prev, itens: novosItens}));
       }
     });
   };
@@ -90,7 +98,7 @@ const PedidoForm = ({
     e.preventDefault();
     setLoading(true);
     try {
-      await onSubmit({ ...initialData, ...pedido });
+      await onSubmit({...initialData, ...pedido});
     } catch (error) {
       console.error('Erro no envio:', error);
     } finally {
@@ -100,10 +108,10 @@ const PedidoForm = ({
 
   return (
     <>
-      <Toast ref={toast} />
+      <Toast ref={toast}/>
       <form onSubmit={handleSubmit} className="formgrid grid">
         <h3 className="col-12">Detalhes do Pedido</h3>
-        <ConfirmPopup />
+        <ConfirmPopup/>
         <div className="field col-12 md:col-4">
           <label htmlFor="id_cliente">Cliente</label>
           <Dropdown
@@ -126,6 +134,26 @@ const PedidoForm = ({
             onChange={(e) => handleChangeHeader('data_pedido', e.value)}
             dateFormat="dd/mm/yy"
             className="w-full"
+          />
+        </div>
+
+        <div className="field col-12 md:col-4">
+          <Dropdown
+            value={pedido.id_vendedor}
+            options={vendedores}
+            onChange={(e) => setPedido({...pedido, id_vendedor: e.value})}
+            optionLabel="nome"
+            placeholder="Selecione um vendedor"
+          />
+        </div>
+
+        <div className="field col-12 md:col-4">
+          <Dropdown
+            value={pedido.id_parceiro}
+            options={parceiros}
+            onChange={(e) => setPedido({...pedido, id_parceiro: e.value})}
+            optionLabel="nome"
+            placeholder="Selecione um parceiro"
           />
         </div>
 
@@ -199,7 +227,8 @@ const PedidoForm = ({
                 />
               </div>
 
-              <div className="field col-12 md:col-1" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div className="field col-12 md:col-1"
+                   style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                 <Button
                   type="button"
                   label=""

@@ -16,6 +16,8 @@ const Pedidos = () => {
   const [pedidos, setPedidos] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [produtos, setProdutos] = useState([]);
+  const [vendedores, setVendedores] = useState([]);
+  const [parceiros, setParceiros] = useState([]);
   const [showDialog, setShowDialog] = useState(false);
   const [editingPedido, setEditingPedido] = useState(null);
   const [dialogTitle, setDialogTitle] = useState('');
@@ -64,16 +66,38 @@ const Pedidos = () => {
     }
   };
 
+  const fetchVendedores = async () => {
+    try {
+      const response = await apiEstoque.get('/vendedores');
+      setVendedores(response.data);
+    } catch (error) {
+      console.error('Erro ao carregar vendedores:', error.response?.data || error.message);
+      toast.current.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao carregar vendedores!', life: 3000 });
+    }
+  };
+
+  const fetchParceiros = async () => {
+    try {
+      const response = await apiEstoque.get('/parceiros');
+      setParceiros(response.data);
+    } catch (error) {
+      console.error('Erro ao carregar parceiros:', error.response?.data || error.message);
+      toast.current.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao carregar parceiros!', life: 3000 });
+    }
+  };
+
+
   // Abre o formulário para novo pedido (carrega clientes e produtos antes de abrir)
   const openNewPedidoDialog = async () => {
     setShowDialog(true);
     await fetchClientes();
     await fetchProdutos();
+    await fetchVendedores();
+    await fetchParceiros();
     setEditingPedido(null);
     setDialogTitle('Cadastrar Pedido');
   };
 
-  // Ao editar, busca os dados atualizados e carrega as listas
   const openEditDialog = async (pedido) => {
     setDialogLoading(true);
     setShowDialog(true);
@@ -81,6 +105,8 @@ const Pedidos = () => {
       const response = await apiEstoque.get(`/pedidos/${pedido.id}`);
       await fetchClientes();
       await fetchProdutos();
+      await fetchVendedores();
+      await fetchParceiros();
       setEditingPedido(response.data);
       setDialogTitle('Editar Pedido');
     } catch (error) {
@@ -90,6 +116,7 @@ const Pedidos = () => {
       setDialogLoading(false);
     }
   };
+
 
   // Exclui o pedido com confirmPopup e exibe mensagem via Toast
   const deletePedido = async (id) => {
@@ -199,6 +226,8 @@ const Pedidos = () => {
             initialData={editingPedido || {}}
             clientes={clientes}
             produtos={produtos}
+            vendedores={vendedores}
+            parceiros={parceiros}
             statusOptions={statusOptions}
             onSubmit={handleFormSubmit}
             onCancel={() => setShowDialog(false)}
