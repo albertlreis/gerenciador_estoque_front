@@ -22,6 +22,7 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
   const [nome, setNome] = useState(initialData.nome || '');
   const [descricao, setDescricao] = useState(initialData.descricao || '');
   const [preco, setPreco] = useState(initialData.preco || 0);
+  const [fabricante, setFabricante] = useState(initialData.fabricante ||'');
   const [ativo, setAtivo] = useState(
     initialData.ativo !== undefined
       ? (initialData.ativo === true || initialData.ativo === 1 || initialData.ativo === "1")
@@ -334,17 +335,17 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
     <>
       <Toast ref={toastRef} position="top-center" />
       <ConfirmDialog />
-      <form onSubmit={handleSubmit} className="p-fluid p-formgrid p-grid" style={{ gap: '1rem' }}>
+      <form onSubmit={handleSubmit} className="p-fluid p-formgrid p-grid" style={{gap: '1rem'}}>
         {/* Campo Nome */}
         <div className="p-field p-col-12">
           <label htmlFor="nome">Nome</label>
-          <InputText id="nome" value={nome} onChange={(e) => setNome(e.target.value)} />
+          <InputText id="nome" value={nome} onChange={(e) => setNome(e.target.value)}/>
         </div>
 
         {/* Campo Descrição */}
         <div className="p-field p-col-12">
           <label htmlFor="descricao">Descrição</label>
-          <InputTextarea id="descricao" value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={3} />
+          <InputTextarea id="descricao" value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={3}/>
         </div>
 
         {/* Campo Categoria */}
@@ -373,13 +374,23 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
           />
         </div>
 
+        <div className="p-field p-col-12 p-md-6">
+          <label htmlFor="fabricante">Fabricante</label>
+          <InputText
+            id="fabricante"
+            value={fabricante}
+            onChange={(e) => setFabricante(e.value)}
+            placeholder="Digite o nome do fabricante"
+          />
+        </div>
+
         {/* Campo Ativo */}
         <div className="p-field p-col-12 p-md-6">
           <label htmlFor="ativo">Ativo</label>
           <InputSwitch
             id="ativo"
             checked={ativo}
-            style={{ marginTop: '0.5rem' }}
+            style={{marginTop: '0.5rem'}}
             onChange={(e) => setAtivo(e.value)}
           />
         </div>
@@ -389,13 +400,13 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
           <>
             <div className="p-field p-col-12">
               <h4>Imagens Cadastradas</h4>
-              <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+              <div style={{display: 'flex', flexWrap: 'wrap'}}>
                 {existingImages.map((img) => (
-                  <div key={img.id} style={{ margin: '0.5rem', position: 'relative' }}>
+                  <div key={img.id} style={{margin: '0.5rem', position: 'relative'}}>
                     <img
                       src={`${backendUrl}/${productImagesFolder}/${img.url}`}
                       alt="produto"
-                      style={{ width: '100px', height: '100px', objectFit: 'cover' }}
+                      style={{width: '100px', height: '100px', objectFit: 'cover'}}
                     />
                     <Button
                       type="button"
@@ -437,13 +448,13 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
         )}
 
         {/* Botões */}
-        <div className="p-field p-col-12" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-          <Button label="Salvar" type="submit" icon="pi pi-check" loading={loading} className="p-mr-2" />
+        <div className="p-field p-col-12" style={{display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem'}}>
+          <Button label="Salvar" type="submit" icon="pi pi-check" loading={loading} className="p-mr-2"/>
           <Button
             label="Cancelar"
             type="button"
             className="p-button-secondary"
-            style={{ marginLeft: '0.5rem' }}
+            style={{marginLeft: '0.5rem'}}
             onClick={onCancel}
           />
         </div>
