@@ -38,38 +38,40 @@ const Login = () => {
   };
 
   return (
-    <div className="auth-layout">
-      <div className="auth-content">
-        <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-          <img src="/logo.png" alt="Logo" style={{ height: 60 }} />
+    <form onSubmit={handleLogin}>
+      <div className="auth-layout">
+        <div className="auth-content">
+          <div style={{textAlign: 'center', marginBottom: '1rem'}}>
+            <img src="/logo.png" alt="Logo" style={{height: 60}}/>
+          </div>
+          <h2 className="text-center mb-4">Bem-vindo!!</h2>
+          {erro && <p style={{color: 'red'}}>{erro}</p>}
+          <label htmlFor="email">E-mail</label>
+          <div className="input-icon">
+            <FiMail className="icon"/>
+            <InputText
+              placeholder="Digite seu e-mail"
+              keyfilter="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <label htmlFor="password">Senha</label>
+          <div className="input-icon">
+            <FiLock className="icon"/>
+            <input
+              type="password"
+              id="password"
+              placeholder="Digite sua senha"
+              value={senha}
+              className="p-inputtext p-component p-filled"
+              onChange={(e) => setSenha(e.target.value)}
+            />
+          </div>
+          <button className="login-button" type="submit">Entrar</button>
         </div>
-        <h2 className="text-center mb-4">Bem-vindo!!</h2>
-        {erro && <p style={{ color: 'red' }}>{erro}</p>}
-        <label htmlFor="email">E-mail</label>
-        <div className="input-icon">
-          <FiMail className="icon" />
-          <InputText
-            placeholder="Digite seu e-mail"
-            keyfilter="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
-        <label htmlFor="password">Senha</label>
-        <div className="input-icon">
-          <FiLock className="icon" />
-          <input
-            type="password"
-            id="password"
-            placeholder="Digite sua senha"
-            value={senha}
-            className="p-inputtext p-component p-filled"
-            onChange={(e) => setSenha(e.target.value)}
-          />
-        </div>
-        <button className="login-button" onClick={handleLogin}>Entrar</button>
       </div>
-    </div>
+    </form>
   );
 };
 
