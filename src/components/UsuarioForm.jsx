@@ -36,22 +36,24 @@ const UsuarioForm = ({ initialData = {}, perfisOptions = [], onSubmit, onCancel 
   return (
     <form onSubmit={handleSubmit} className="p-fluid">
       {/* Campo Nome */}
-      <div className="p-field p-grid">
+      <div className="field">
         <label className="p-col-12 p-md-3">Nome</label>
         <div className="p-col-12 p-md-9">
           <InputText
             value={usuario.nome}
+            className='text-base text-color surface-overlay p-2 border-2 border-solid  border-round focus:border-primary w-full'
             onChange={(e) => handleChange('nome', e.target.value)}
           />
         </div>
       </div>
 
       {/* Campo Email */}
-      <div className="p-field p-grid">
+      <div className="field">
         <label className="p-col-12 p-md-3">Email</label>
         <div className="p-col-12 p-md-9">
           <InputText
             value={usuario.email}
+            className='text-base text-color surface-overlay p-2 border-2 border-solid  border-round focus:border-primary w-full'
             onChange={(e) => handleChange('email', e.target.value)}
           />
         </div>
@@ -59,32 +61,21 @@ const UsuarioForm = ({ initialData = {}, perfisOptions = [], onSubmit, onCancel 
 
       {/* Campo Senha: exibido no cadastro; para edição, se mantiver vazio, não altera */}
       {!isEditMode && (
-        <div className="p-field p-grid">
+        <div className="field">
           <label className="p-col-12 p-md-3">Senha</label>
           <div className="p-col-12 p-md-9">
             <Password
               value={usuario.senha}
               onChange={(e) => handleChange('senha', e.target.value)}
+              className='text-base text-color surface-overlay p-2 border-2 border-solid  border-round focus:border-primary w-full'
               feedback={false}
               minLength={6}
             />
           </div>
         </div>
       )}
-
-      {/* Campo Ativo */}
-      <div className="p-field p-grid">
-        <label className="p-col-12 p-md-3">Ativo</label>
-        <div className="p-col-12 p-md-9">
-          <InputSwitch
-            checked={usuario.ativo}
-            onChange={(e) => handleChange('ativo', e.value)}
-          />
-        </div>
-      </div>
-
       {/* Campo Perfis: permite vincular e desvincular perfis em cadastro e edição */}
-      <div className="p-field p-grid">
+      <div className="field">
         <label className="p-col-12 p-md-3">Perfis</label>
         <div className="p-col-12 p-md-9">
           <MultiSelect
@@ -95,9 +86,25 @@ const UsuarioForm = ({ initialData = {}, perfisOptions = [], onSubmit, onCancel 
             optionValue="id"  // Define que o valor utilizado é o ID do perfil
             placeholder="Selecione os perfis"
             display="chip"
+            className='text-base text-color surface-overlay p-1 border-2 border-solid  border-round focus:border-primary w-full'
+
           />
         </div>
       </div>
+      {/* Campo Ativo */}
+      <div className="field">
+        <label className="p-col-12 p-md-3">Ativo</label>
+        <div className="p-col-12 p-md-9">
+          <InputSwitch
+            checked={usuario.ativo}
+            onChange={(e) => handleChange('ativo', e.value)}
+            className='text-base text-color surface-overlay p-2 border-round'
+
+          />
+        </div>
+      </div>
+
+
 
       {/* Botões Salvar/Cancelar */}
       <div className="p-field p-col-12" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
