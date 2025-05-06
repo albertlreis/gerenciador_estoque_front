@@ -380,9 +380,9 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
         {/* Se o produto já foi criado: Exibir imagens e permitir upload */}
         {initialData.id && (
           <>
-            <div className="field">
+            <div className="field col-12">
               <h4>Imagens Cadastradas</h4>
-              <div style={{display: 'flex', flexWrap: 'wrap'}}>
+              <div style={{display: 'flex', flexWrap: 'wrap'}} className="col-12">
                 {existingImages.map((img) => (
                   <div key={img.id} style={{margin: '0.5rem', position: 'relative'}}>
                     <img
@@ -400,8 +400,8 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
                 ))}
               </div>
             </div>
-            <div className="field">
-              <h4>Adicionar Imagens</h4>
+            <div className="field col-12">
+            <h4>Anexar Imagens</h4>
               <FileUpload
                 ref={fileUploadRef}
                 name="files"
