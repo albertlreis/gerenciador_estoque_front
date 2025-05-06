@@ -67,7 +67,7 @@ const UsuarioForm = ({ initialData = {}, perfisOptions = [], onSubmit, onCancel 
             <Password
               value={usuario.senha}
               onChange={(e) => handleChange('senha', e.target.value)}
-              className='text-base text-color surface-overlay p-2 border-2 border-solid  border-round focus:border-primary w-full'
+              className='text-base text-color surface-overlay border-1 border-solid  border-round focus:border-primary w-full'
               feedback={false}
               minLength={6}
             />

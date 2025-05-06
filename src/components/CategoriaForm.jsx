@@ -32,7 +32,7 @@ const CategoriaForm = ({ initialData = {}, onSubmit, onCancel }) => {
       style={{ gap: '1rem' }}
     >
       {/* Campo Nome */}
-      <div className="p-field p-col-12 p-md-6">
+      <div className="field">
         <label htmlFor="nome">Nome</label>
         <InputText
           id="nome"
@@ -42,7 +42,7 @@ const CategoriaForm = ({ initialData = {}, onSubmit, onCancel }) => {
       </div>
 
       {/* Campo Descrição */}
-      <div className="p-field p-col-12 p-md-6">
+      <div className="field">
         <label htmlFor="descricao">Descrição</label>
         <InputText
           id="descricao"

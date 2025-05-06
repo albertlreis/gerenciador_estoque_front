@@ -32,7 +32,7 @@ const PerfilForm = ({ initialData = {}, permissoesOptions = [], onSubmit, onCanc
   return (
     <form onSubmit={handleSubmit} className="p-fluid p-formgrid p-grid" style={{ gap: '1rem' }}>
       {/* Campo Nome */}
-      <div className="p-field p-col-12">
+      <div className="field">
         <label htmlFor="nome">Nome</label>
         <InputText
           id="nome"
@@ -42,7 +42,7 @@ const PerfilForm = ({ initialData = {}, permissoesOptions = [], onSubmit, onCanc
       </div>
 
       {/* Campo Descrição */}
-      <div className="p-field p-col-12">
+      <div className="field">
         <label htmlFor="descricao">Descrição</label>
         <InputText
           id="descricao"
@@ -52,7 +52,7 @@ const PerfilForm = ({ initialData = {}, permissoesOptions = [], onSubmit, onCanc
       </div>
 
       {/* Campo Permissões */}
-      <div className="p-field p-col-12">
+      <div className="field">
         <label htmlFor="permissoes">Permissões</label>
         <MultiSelect
           id="permissoes"
@@ -67,7 +67,7 @@ const PerfilForm = ({ initialData = {}, permissoesOptions = [], onSubmit, onCanc
       </div>
 
       {/* Botões */}
-      <div className="p-field p-col-12" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+      <div className="field" style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <Button
           label="Salvar"
           type="submit"
