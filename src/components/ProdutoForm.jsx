@@ -21,7 +21,6 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
   );
   const [nome, setNome] = useState(initialData.nome || '');
   const [descricao, setDescricao] = useState(initialData.descricao || '');
-  const [preco, setPreco] = useState(initialData.preco || 0);
   const [fabricante, setFabricante] = useState(initialData.fabricante ||'');
   const [ativo, setAtivo] = useState(
     initialData.ativo !== undefined
@@ -314,8 +313,7 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
         nome,
         descricao,
         id_categoria: idCategoria && idCategoria.id ? idCategoria.id : null,
-        ativo,
-        preco
+        ativo
       };
       await onSubmit(productData);
     } catch (error) {
@@ -335,21 +333,16 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
     <>
       <Toast ref={toastRef} position="top-center" />
       <ConfirmDialog />
-      <form onSubmit={handleSubmit} className="p-fluid p-formgrid p-grid" style={{gap: '1rem'}}>
+      <form onSubmit={handleSubmit} className="p-fluid">
+      <div className="formgrid grid">
         {/* Campo Nome */}
-        <div className="p-field p-col-12">
+        <div className="field md:col-8">
           <label htmlFor="nome">Nome</label>
           <InputText id="nome" value={nome} onChange={(e) => setNome(e.target.value)}/>
         </div>
 
-        {/* Campo Descrição */}
-        <div className="p-field p-col-12">
-          <label htmlFor="descricao">Descrição</label>
-          <InputTextarea id="descricao" value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={3}/>
-        </div>
-
         {/* Campo Categoria */}
-        <div className="p-field p-col-12 p-md-6">
+        <div className="field md:col-4">
           <label htmlFor="categoria">Categoria</label>
           <Dropdown
             id="categoria"
@@ -360,21 +353,12 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
             placeholder="Selecione a categoria"
           />
         </div>
-
-        {/* Campo Preço */}
-        <div className="p-field p-col-12 p-md-6">
-          <label htmlFor="preco">Preço</label>
-          <InputNumber
-            id="preco"
-            value={preco}
-            onValueChange={(e) => setPreco(e.value)}
-            mode="currency"
-            currency="BRL"
-            locale="pt-BR"
-          />
+        {/* Campo Descrição */}
+        <div className="field col-12">
+          <label htmlFor="descricao">Descrição</label>
+          <InputTextarea id="descricao" value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={3}/>
         </div>
-
-        <div className="p-field p-col-12 p-md-6">
+        <div className="field col-12 md:col-8">
           <label htmlFor="fabricante">Fabricante</label>
           <InputText
             id="fabricante"
@@ -383,14 +367,12 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
             placeholder="Digite o nome do fabricante"
           />
         </div>
-
-        {/* Campo Ativo */}
-        <div className="p-field p-col-12 p-md-6">
-          <label htmlFor="ativo">Ativo</label>
-          <InputSwitch
+        <div className="field col-12 md:col-4">
+        <label htmlFor="ativo">Ativo</label>
+        <InputSwitch
             id="ativo"
             checked={ativo}
-            style={{marginTop: '0.5rem'}}
+            style={{marginTop: '1.5rem', marginLeft:'0.8rem'}}
             onChange={(e) => setAtivo(e.value)}
           />
         </div>
@@ -398,9 +380,9 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
         {/* Se o produto já foi criado: Exibir imagens e permitir upload */}
         {initialData.id && (
           <>
-            <div className="p-field p-col-12">
+            <div className="field col-12">
               <h4>Imagens Cadastradas</h4>
-              <div style={{display: 'flex', flexWrap: 'wrap'}}>
+              <div style={{display: 'flex', flexWrap: 'wrap'}} className="col-12">
                 {existingImages.map((img) => (
                   <div key={img.id} style={{margin: '0.5rem', position: 'relative'}}>
                     <img
@@ -418,8 +400,8 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
                 ))}
               </div>
             </div>
-            <div className="p-field p-col-12">
-              <h4>Adicionar Imagens</h4>
+            <div className="field col-12">
+            <h4>Anexar Imagens</h4>
               <FileUpload
                 ref={fileUploadRef}
                 name="files"
@@ -446,17 +428,12 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
             </div>
           </>
         )}
-
         {/* Botões */}
-        <div className="p-field p-col-12" style={{display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem'}}>
-          <Button label="Salvar" type="submit" icon="pi pi-check" loading={loading} className="p-mr-2"/>
-          <Button
-            label="Cancelar"
-            type="button"
-            className="p-button-secondary"
-            style={{marginLeft: '0.5rem'}}
-            onClick={onCancel}
-          />
+        <div className="field col-12 flex justify-content-end">
+          <Button label="Salvar" type="submit" icon="pi pi-check" loading={loading} className="mr-2" />
+          <Button label="Cancelar" type="button" icon="pi pi-times" className="p-button-secondary" onClick={onCancel} />
+        </div>
+        
         </div>
       </form>
     </>

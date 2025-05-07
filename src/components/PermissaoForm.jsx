@@ -26,7 +26,7 @@ const PermissaoForm = ({ initialData = {}, onSubmit, onCancel }) => {
       style={{gap: '1rem'}}
     >
       {/* Campo Nome */}
-      <div className="p-field p-col-12">
+      <div className="field">
         <label htmlFor="nome">Nome</label>
         <InputText
           id="nome"
@@ -36,7 +36,7 @@ const PermissaoForm = ({ initialData = {}, onSubmit, onCancel }) => {
       </div>
 
       {/* Campo Descrição */}
-      <div className="p-field p-col-12">
+      <div className="field">
         <label htmlFor="descricao">Descrição</label>
         <InputText
           id="descricao"
@@ -47,7 +47,7 @@ const PermissaoForm = ({ initialData = {}, onSubmit, onCancel }) => {
 
       {/* Botões: alinhados à direita */}
       <div
-        className="p-field p-col-12"
+        className="field"
         style={{
           display: 'flex',
           justifyContent: 'flex-end',

@@ -92,11 +92,6 @@ const Produtos = () => {
     }
   };
 
-  const precoBodyTemplate = (rowData) => {
-    const preco = Number(rowData.preco);
-    return preco ? preco.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '';
-  };
-
   const categoriaBodyTemplate = (rowData) => {
     return rowData.categoria ? rowData.categoria.nome : '';
   };
@@ -118,7 +113,6 @@ const Produtos = () => {
           <Column field="nome" header="Nome" sortable />
           <Column field="descricao" header="Descrição" />
           <Column field="categoria" header="Categoria" sortable body={categoriaBodyTemplate} />
-          <Column field="preco" header="Preço" sortable body={precoBodyTemplate} />
           <Column field="ativo" header="Ativo" body={(rowData) => (rowData.ativo ? 'Sim' : 'Não')} />
           <Column header="Ações" body={(rowData) => (
             <TableActions rowData={rowData} onEdit={openEditDialog} onDelete={handleDelete} />

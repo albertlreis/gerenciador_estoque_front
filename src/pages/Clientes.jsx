@@ -104,7 +104,12 @@ const Clientes = () => {
         </DataTable>
       </div>
 
-      <Dialog header={dialogTitle} visible={showDialog} style={{ width: '450px' }} modal onHide={() => setShowDialog(false)}>
+      <Dialog 
+        header={dialogTitle} 
+        visible={showDialog} 
+        className='w-7'
+        modal onHide={() => setShowDialog(false)}
+        >
         <ClienteForm initialData={editingCliente || {}} onSubmit={handleFormSubmit} onCancel={() => setShowDialog(false)} />
       </Dialog>
     </SakaiLayout>

@@ -1,4 +1,30 @@
 @import '~primeflex/primeflex.css';
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea,
+select {
+  width: 100%;
+  padding: 10px 12px 10px 40px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  box-sizing: border-box;
+  display: block;
+}
+
+
+ .form-field {
+  width: 100%;
+  padding: 10px 12px 10px 40px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  box-sizing: border-box;
+  display: block;
+} 
+
 /* Layout para páginas autenticadas */
 .layout-wrapper {
   display: flex;

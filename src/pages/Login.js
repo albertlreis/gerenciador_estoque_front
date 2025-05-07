@@ -38,7 +38,7 @@ const Login = () => {
   };
 
   return (
-    <form onSubmit={handleLogin}>
+    // <form onSubmit={handleLogin}>
       <div className="auth-layout">
         <div className="auth-content">
           <div style={{textAlign: 'center', marginBottom: '1rem'}}>
@@ -68,10 +68,10 @@ const Login = () => {
               onChange={(e) => setSenha(e.target.value)}
             />
           </div>
-          <button className="login-button" type="submit">Entrar</button>
+          <button className="login-button" onClick={handleLogin}>Entrar</button>
         </div>
       </div>
-    </form>
+    // </form> 
   );
 };
 
