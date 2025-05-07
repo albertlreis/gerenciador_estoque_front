@@ -71,6 +71,7 @@ const ClienteForm = ({ initialData = {}, onSubmit, onCancel }) => {
   const documentoLabel = tipoSelecionado === 'pj' ? 'CNPJ' : 'CPF';
   const documentoMask = tipoSelecionado === 'pf' ? '999.999.999-99' : '99.999.999/9999-99';
   const telefoneMask = '(99) 99999-9999';
+  const cepMask = '99.999-999';
 
   return (
     <form onSubmit={handleSubmit} className="p-fluid">
@@ -116,19 +117,35 @@ const ClienteForm = ({ initialData = {}, onSubmit, onCancel }) => {
         </div>
         <div className="field col-12 md:col-3">
           <label htmlFor="whatsapp">Whatsapp</label>
-          <InputMask id="whatsapp" mask={telefoneMask} value={cliente.whatsapp} onChange={(e) => handleChange('whatsapp', e.target.value)} />
+          <InputMask id="whatsapp"  mask={telefoneMask} value={cliente.whatsapp} onChange={(e) => handleChange('whatsapp', e.target.value)} />
         </div>
 
         {/* Endereço, CEP, Complemento */}
         <div className="field col-12 md:col-3">
           <label htmlFor="cep">CEP</label>
-          <InputText id="cep" value={cliente.cep} onChange={(e) => handleChange('cep', e.target.value)} />
+          <InputMask id="cep" mask={cepMask}  value={cliente.cep} onChange={(e) => handleChange('cep', e.target.value)} />
         </div>
-        <div className="field col-12 md:col-9">
+        <div className="field col-12 md:col-5">
           <label htmlFor="endereco">Endereço</label>
           <InputText id="endereco" value={cliente.endereco} onChange={(e) => handleChange('endereco', e.target.value)} />
         </div>
-        <div className="field col-12 md:col-12">
+        <div className="field col-12 md:col-1">
+          <label htmlFor="numero">Número</label>
+          <InputText id="numero" value={cliente.numero} onChange={(e) => handleChange('numero', e.target.value)} />
+        </div>
+        <div className="field col-12 md:col-3">
+          <label htmlFor="bairro">Bairro</label>
+          <InputText id="bairro" value={cliente.bairro} onChange={(e) => handleChange('bairro', e.target.value)} />
+        </div>
+        <div className="field col-12 md:col-1">
+          <label htmlFor="uf">UF</label>
+          <InputText id="uf" value={cliente.uf} onChange={(e) => handleChange('uf', e.target.value)} />
+        </div>
+        <div className="field col-12 md:col-4">
+          <label htmlFor="municipio">Município</label>
+          <InputText id="municipio" value={cliente.municipio} onChange={(e) => handleChange('municipio', e.target.value)} />
+        </div>
+        <div className="field col-12 md:col-7">
           <label htmlFor="complemento">Complemento</label>
           <InputText id="complemento" value={cliente.complemento} onChange={(e) => handleChange('complemento', e.target.value)} />
         </div>
