@@ -192,7 +192,7 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
             color: 'var(--surface-d)'
           }}
         ></i>
-        <span style={{ fontSize: '1.2em', color: 'var(--text-color-secondary)' }} className="my-5">
+        <span style={{ fontSize: '1.2em', color: 'var(--text-color-secondary)' }}>
           Arraste e solte a imagem aqui
         </span>
       </div>
