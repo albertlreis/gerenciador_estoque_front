@@ -1,241 +1,172 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import { Dialog } from 'primereact/dialog';
+import { InputText } from 'primereact/inputtext';
+import { Dropdown } from 'primereact/dropdown';
+import { Calendar } from 'primereact/calendar';
 import { Button } from 'primereact/button';
-import { ConfirmPopup, confirmPopup } from 'primereact/confirmpopup';
-import { ProgressSpinner } from 'primereact/progressspinner';
+import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
-import SakaiLayout from '../layouts/SakaiLayout';
-import PedidoForm from '../components/PedidoForm';
+import { OverlayPanel } from 'primereact/overlaypanel';
 import apiEstoque from '../services/apiEstoque';
-import { Divider } from 'primereact/divider';
-import TableActions from '../components/TableActions';
+import { Menubar } from 'primereact/menubar';
+import {useNavigate} from "react-router-dom";
 
-const Pedidos = () => {
+
+const statusOptions = [
+  { label: 'Todos', value: null },
+  { label: 'Pendente', value: 'pendente' },
+  { label: 'Em andamento', value: 'andamento' },
+  { label: 'Concluído', value: 'concluido' },
+  { label: 'Cancelado', value: 'cancelado' },
+];
+
+export default function PedidosListagem() {
   const [pedidos, setPedidos] = useState([]);
-  const [clientes, setClientes] = useState([]);
-  const [produtos, setProdutos] = useState([]);
-  const [vendedores, setVendedores] = useState([]);
-  const [parceiros, setParceiros] = useState([]);
-  const [showDialog, setShowDialog] = useState(false);
-  const [editingPedido, setEditingPedido] = useState(null);
-  const [dialogTitle, setDialogTitle] = useState('');
-  const [dialogLoading, setDialogLoading] = useState(false);
-  const [tableLoading, setTableLoading] = useState(true);
+  const [filtroStatus, setFiltroStatus] = useState(null);
+  const [filtroTexto, setFiltroTexto] = useState('');
+  const [filtroData, setFiltroData] = useState(null);
+  const [loading, setLoading] = useState(false);
   const toast = useRef(null);
+  const navigate = useNavigate();
+  const overlayRef = useRef(null);
+  const [pedidoSelecionado, setPedidoSelecionado] = useState(null);
 
-  // Status conforme o banco
-  const statusOptions = ['novo', 'finalizado', 'pendente', 'cancelado'];
+  const fetchPedidos = async () => {
+    try {
+      setLoading(true);
+      const { data } = await apiEstoque.get('/pedidos');
+      setPedidos(data);
+    } catch (error) {
+      toast.current.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao carregar pedidos.' });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // Carrega os pedidos na carga inicial
+  const exportarPedidos = async (formato, detalhado = false) => {
+    try {
+      const params = new URLSearchParams({ formato });
+      if (detalhado) params.append('detalhado', 'true');
+
+      const response = await apiEstoque.get(`/pedidos/exportar?${params.toString()}`, {
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `pedidos${detalhado ? '-detalhado' : ''}.${formato === 'pdf' ? 'pdf' : 'xlsx'}`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      toast.current.show({ severity: 'error', summary: 'Erro', detail: `Falha ao exportar (${formato}).` });
+    }
+  };
+
   useEffect(() => {
     fetchPedidos();
   }, []);
 
-  const fetchPedidos = async () => {
-    setTableLoading(true);
-    try {
-      const response = await apiEstoque.get('/pedidos');
-      setPedidos(response.data);
-    } catch (error) {
-      console.error('Erro ao carregar pedidos:', error.response?.data || error.message);
-      toast.current.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao carregar pedidos!', life: 3000 });
-    } finally {
-      setTableLoading(false);
-    }
+  const statusTemplate = (rowData) => {
+    const statusMap = {
+      pendente: 'warning',
+      andamento: 'info',
+      concluido: 'success',
+      cancelado: 'danger',
+    };
+    return <Tag severity={statusMap[rowData.status]} value={rowData.status} />;
   };
 
-  const fetchClientes = async () => {
-    try {
-      const response = await apiEstoque.get('/clientes');
-      setClientes(response.data);
-    } catch (error) {
-      console.error('Erro ao carregar clientes:', error.response?.data || error.message);
-      toast.current.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao carregar clientes!', life: 3000 });
-    }
-  };
+  const acoesTemplate = (rowData) => (
+    <>
+      <Button icon="pi pi-eye" className="p-button-rounded p-button-text" onClick={(e) => {
+        setPedidoSelecionado(rowData);
+        overlayRef.current.toggle(e);
+      }} />
+    </>
+  );
 
-  const fetchProdutos = async () => {
-    try {
-      const response = await apiEstoque.get('/produtos');
-      setProdutos(response.data);
-    } catch (error) {
-      console.error('Erro ao carregar produtos:', error.response?.data || error.message);
-      toast.current.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao carregar produtos!', life: 3000 });
-    }
-  };
+  const produtosDetalhes = () => (
+    <div className="p-3" style={{ width: '300px' }}>
+      <h4>Produtos</h4>
+      {pedidoSelecionado?.produtos?.map((p, i) => (
+        <li key={i}>
+          {p.nome} - {p.quantidade}x R$ {Number(p.valor ?? 0).toFixed(2)}
+        </li>
+      ))}
 
-  const fetchVendedores = async () => {
-    try {
-      const response = await apiEstoque.get('/vendedores');
-      setVendedores(response.data);
-    } catch (error) {
-      console.error('Erro ao carregar vendedores:', error.response?.data || error.message);
-      toast.current.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao carregar vendedores!', life: 3000 });
-    }
-  };
+      {pedidoSelecionado?.observacoes && (
+        <>
+          <h5>Observações</h5>
+          <p>{pedidoSelecionado.observacoes}</p>
+        </>
+      )}
+    </div>
+  );
 
-  const fetchParceiros = async () => {
-    try {
-      const response = await apiEstoque.get('/parceiros');
-      setParceiros(response.data);
-    } catch (error) {
-      console.error('Erro ao carregar parceiros:', error.response?.data || error.message);
-      toast.current.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao carregar parceiros!', life: 3000 });
-    }
-  };
+  const pedidosFiltrados = pedidos.filter(p => {
+    const texto = filtroTexto.toLowerCase();
+    const cliente = typeof p.cliente === 'string' ? p.cliente.toLowerCase() : '';
+    const numero = typeof p.numero === 'string' ? p.numero : '';
 
+    return (
+      (!filtroStatus || p.status === filtroStatus) &&
+      (!filtroData || p.data === filtroData.toISOString().split('T')[0]) &&
+      (cliente.includes(texto) || numero.includes(filtroTexto))
+    );
+  });
 
-  // Abre o formulário para novo pedido (carrega clientes e produtos antes de abrir)
-  const openNewPedidoDialog = async () => {
-    setShowDialog(true);
-    await fetchClientes();
-    await fetchProdutos();
-    await fetchVendedores();
-    await fetchParceiros();
-    setEditingPedido(null);
-    setDialogTitle('Cadastrar Pedido');
-  };
-
-  const openEditDialog = async (pedido) => {
-    setDialogLoading(true);
-    setShowDialog(true);
-    try {
-      const response = await apiEstoque.get(`/pedidos/${pedido.id}`);
-      await fetchClientes();
-      await fetchProdutos();
-      await fetchVendedores();
-      await fetchParceiros();
-      setEditingPedido(response.data);
-      setDialogTitle('Editar Pedido');
-    } catch (error) {
-      console.error('Erro ao carregar detalhes do pedido:', error.response?.data || error.message);
-      toast.current.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao carregar os detalhes do pedido!', life: 3000 });
-    } finally {
-      setDialogLoading(false);
-    }
-  };
-
-
-  // Exclui o pedido com confirmPopup e exibe mensagem via Toast
-  const deletePedido = async (id) => {
-    try {
-      await apiEstoque.delete(`/pedidos/${id}`);
-      toast.current.show({ severity: 'success', summary: 'Sucesso', detail: 'Pedido removido com sucesso!', life: 3000 });
-      fetchPedidos();
-    } catch (error) {
-      console.error('Erro ao deletar pedido:', error.response?.data || error.message);
-      toast.current.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao deletar pedido!', life: 3000 });
-    }
-  };
-
-  const handleDelete = (event, id) => {
-    confirmPopup({
-      target: event.currentTarget,
-      message: 'Tem certeza que deseja deletar este pedido?',
-      icon: 'pi pi-info-circle',
-      accept: () => deletePedido(id)
-    });
-  };
-
-  // Função onSubmit que será chamada pelo PedidoForm.
-  // Ela é async e aguarda todas as operações antes de fechar a modal.
-  const handleFormSubmit = async (pedidoData) => {
-    try {
-      if (editingPedido) {
-        // Atualização do cabeçalho do pedido
-        await apiEstoque.put(`/pedidos/${editingPedido.id}`, pedidoData);
-        // Atualiza ou cria cada item
-        if (pedidoData.itens && pedidoData.itens.length > 0) {
-          for (const item of pedidoData.itens) {
-            if (item.id) {
-              await apiEstoque.put(`/pedidos/${editingPedido.id}/itens/${item.id}`, item);
-            } else {
-              await apiEstoque.post(`/pedidos/${editingPedido.id}/itens`, item);
-            }
-          }
-        }
-        await fetchPedidos();
-        toast.current.show({ severity: 'success', summary: 'Sucesso', detail: 'Pedido atualizado com sucesso!', life: 3000 });
-      } else {
-        // Criação do pedido
-        const response = await apiEstoque.post('/pedidos', pedidoData);
-        const createdPedido = response.data;
-        const pedidoId = createdPedido.id;
-
-        if (pedidoData.itens && pedidoData.itens.length > 0) {
-          for (const item of pedidoData.itens) {
-            await apiEstoque.post(`/pedidos/${pedidoId}/itens`, item);
-          }
-        }
-        await fetchPedidos();
-        toast.current.show({ severity: 'success', summary: 'Sucesso', detail: 'Pedido criado com sucesso!', life: 3000 });
-      }
-    } catch (error) {
-      console.error('Erro ao salvar pedido:', error.response?.data || error.message);
-      toast.current.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao salvar o pedido!', life: 3000 });
-    } finally {
-      // Modal é fechada somente no final do processamento
-      setShowDialog(false);
-    }
-  };
-
-  // Templates para exibição na tabela
-  const dateBodyTemplate = (rowData) => new Date(rowData.data_pedido).toLocaleDateString('pt-BR');
-  const clienteBodyTemplate = (rowData) => (rowData.cliente ? rowData.cliente.nome : 'N/D');
+  const menuItems = [
+    {
+      label: 'Início',
+      icon: 'pi pi-home',
+      command: () => navigate('/')
+    },
+    {
+      label: 'Clientes',
+      key: 'clientes',
+      icon: 'pi pi-fw pi-user',
+      command: () => navigate('/clientes')
+    },
+    {
+      label: 'Pedidos',
+      key: 'pedidos',
+      icon: 'pi pi-fw pi-shopping-cart',
+      command: () => navigate('/pedidos')
+    },
+  ];
 
   return (
-    <SakaiLayout>
+    <div className="p-4">
+      <Menubar model={menuItems} className="mb-4 shadow-2" />
       <Toast ref={toast} />
-      <ConfirmPopup />
-      <div className="pedido-gestao" style={{ margin: '2rem' }}>
-        <h2>Gestão de Pedidos</h2>
-        <Button
-          label="Novo Pedido"
-          icon="pi pi-plus"
-          className="p-button-success p-mb-3"
-          onClick={openNewPedidoDialog}
-        />
-        <Divider type="solid" />
-        <DataTable value={pedidos} paginator rows={10} dataKey="id" loading={tableLoading}>
-          <Column field="id" header="ID" sortable />
-          <Column header="Cliente" body={clienteBodyTemplate} sortable />
-          <Column header="Data" body={dateBodyTemplate} sortable />
-          <Column field="status" header="Status" sortable />
-          <Column field="observacoes" header="Observações" sortable />
-          <Column header="Ações" body={(rowData) => (
-            <TableActions rowData={rowData} onEdit={openEditDialog} onDelete={handleDelete} />
-          )} />
-        </DataTable>
+      <div className="flex flex-wrap gap-3 mb-4 align-items-end">
+        <Button label="Novo Pedido" icon="pi pi-plus" />
+        <Calendar value={filtroData} onChange={e => setFiltroData(e.value)} placeholder="Data" />
+        <Dropdown value={filtroStatus} options={statusOptions} onChange={e => setFiltroStatus(e.value)} placeholder="Status" />
+        <span className="p-input-icon-left">
+          <i className="pi pi-search" />
+          <InputText value={filtroTexto} onChange={e => setFiltroTexto(e.target.value)} placeholder="Buscar por cliente ou nº pedido" />
+        </span>
+        <div className="flex gap-2">
+          <Button label="PDF Simples" icon="pi pi-file-pdf" className="p-button-outlined p-button-danger" onClick={() => exportarPedidos('pdf', false)} />
+          <Button label="PDF Detalhado" icon="pi pi-file-pdf" className="p-button-danger" onClick={() => exportarPedidos('pdf', true)} />
+          <Button label="Excel" icon="pi pi-file-excel" className="p-button-success" onClick={() => exportarPedidos('excel')} />
+        </div>
       </div>
 
-      <Dialog
-        header={dialogTitle}
-        visible={showDialog}
-        style={{ width: '1024px' }}
-        modal
-        onHide={() => setShowDialog(false)}
-      >
-        {dialogLoading ? (
-          <div className="flex justify-content-center align-items-center" style={{ minHeight: '200px' }}>
-            <ProgressSpinner />
-          </div>
-        ) : (
-          <PedidoForm
-            initialData={editingPedido || {}}
-            clientes={clientes}
-            produtos={produtos}
-            vendedores={vendedores}
-            parceiros={parceiros}
-            statusOptions={statusOptions}
-            onSubmit={handleFormSubmit}
-            onCancel={() => setShowDialog(false)}
-          />
-        )}
-      </Dialog>
-    </SakaiLayout>
-  );
-};
+      <DataTable value={pedidosFiltrados} paginator rows={5} loading={loading} emptyMessage="Nenhum pedido encontrado." responsiveLayout="scroll">
+        <Column field="id" header="Nº Pedido" style={{ minWidth: '120px' }} />
+        <Column header="Data" body={row => new Date(row.data).toLocaleDateString('pt-BR')} />
+        <Column header="Cliente" body={row => row.cliente?.nome ?? '-'} />
+        <Column header="Parceiro" body={row => row.parceiro?.nome ?? '-'} />
+        <Column header="Total" body={row => `R$ ${Number(row.total ?? 0).toFixed(2)}`} />
+        <Column field="status" header="Status" body={statusTemplate} />
+        <Column header="Produtos" body={acoesTemplate} style={{ width: '100px' }} />
+      </DataTable>
 
-export default Pedidos;
+      <OverlayPanel ref={overlayRef} showCloseIcon dismissable>{produtosDetalhes()}</OverlayPanel>
+    </div>
+  );
+}
