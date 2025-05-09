@@ -178,3 +178,7 @@ input, .p-inputtext {
 .hover\:shadow-4:hover {
     box-shadow: var(--p-shadow-4);
 }
+
+.bg-yellow-50 {
+  background-color: #fffbea !important;
+}
