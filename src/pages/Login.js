@@ -42,7 +42,7 @@ const Login = () => {
       <div className="auth-layout">
         <div className="auth-content">
           <div style={{textAlign: 'center', marginBottom: '1rem'}}>
-            <img src="/logo.png" alt="Logo" style={{height: 60}}/>
+            <img src="/logo.png" alt="Logo" style={{height: 100}}/>
           </div>
           <h2 className="text-center mb-4">Bem-vindo!!</h2>
           {erro && <p style={{color: 'red'}}>{erro}</p>}
@@ -71,7 +71,7 @@ const Login = () => {
           <button className="login-button" onClick={handleLogin}>Entrar</button>
         </div>
       </div>
-    // </form> 
+    // </form>
   );
 };
 
