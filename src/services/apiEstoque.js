@@ -4,18 +4,16 @@ const apiEstoque = axios.create({
   baseURL: `${process.env.REACT_APP_BASE_URL_ESTOQUE}/api/v1`,
   timeout: Number(process.env.REACT_APP_TIMEOUT),
   headers: {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
   },
-
 });
 
-// Interceptor para adicionar o token à requisição
+// Interceptor para incluir token
 apiEstoque.interceptors.request.use(
   (config) => {
     const userStr = localStorage.getItem('user');
     if (userStr) {
       try {
-        // Tenta fazer o parse apenas se houver um valor e que comece com "{" (indicando JSON)
         if (userStr.trim().startsWith('{')) {
           const parsedUser = JSON.parse(userStr);
           if (parsedUser.token) {
@@ -30,5 +28,24 @@ apiEstoque.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
+
+// Interceptor de resposta para lidar com 401
+apiEstoque.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      const isLoginPage = window.location.pathname === '/login';
+      const hasUser = !!localStorage.getItem('user');
+
+      if (!isLoginPage && hasUser) {
+        localStorage.removeItem('user');
+        // Em vez de redirecionar aqui diretamente, delegue à lógica do roteador
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 
 export default apiEstoque;

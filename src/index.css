@@ -165,3 +165,16 @@ input, .p-inputtext {
   font-size: 0.75rem;
   border-radius: 50%;
 }
+
+.p-fluid .p-button {
+  margin-top: 1rem;
+}
+
+.mt-4 {
+  margin-top: 2rem;
+}
+
+/* home.css */
+.hover\:shadow-4:hover {
+    box-shadow: var(--p-shadow-4);
+}

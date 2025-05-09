@@ -1,11 +1,22 @@
-export const isTokenValid = () => {
-  const storedUser = localStorage.getItem('user');
-  if (!storedUser) return false;
+export function isTokenValid() {
+  const userStr = localStorage.getItem('user');
+  if (!userStr) return false;
+
   try {
-    const user = JSON.parse(storedUser);
-    return user.expiresAt && new Date().getTime() < user.expiresAt;
-  } catch (error) {
-    console.error('Erro ao verificar o token:', error);
+    const user = JSON.parse(userStr);
+
+    // Verifica existência e validade do token e tempo de expiração
+    if (
+      typeof user.token !== 'string' ||
+      typeof user.expiresAt !== 'number' ||
+      new Date().getTime() >= user.expiresAt
+    ) {
+      return false;
+    }
+
+    return true;
+  } catch (err) {
+    console.error('Erro ao validar token:', err);
     return false;
   }
-};
+}
