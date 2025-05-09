@@ -14,6 +14,7 @@ import Permissoes from './pages/Permissoes';
 import { isTokenValid } from './helper';
 import Depositos from "./pages/Depositos";
 import EstoqueMovimentacoes from "./pages/EstoqueMovimentacoes";
+import CatalogoProdutos from "./pages/CatalogoProdutos";
 
 const App = () => {
   // Atualiza o localStorage se o token estiver expirado
@@ -34,6 +35,7 @@ const App = () => {
         <Route path="/usuarios" element={isAuthenticated ? <Usuarios /> : <Navigate to="/login" />} />
         <Route path="/categorias" element={isAuthenticated ? <Categorias /> : <Navigate to="/login" />} />
         <Route path="/produtos" element={isAuthenticated ? <Produtos /> : <Navigate to="/login" />} />
+        <Route path="/catalogo" element={isAuthenticated ? <CatalogoProdutos /> : <Navigate to="/login" />} />
         <Route path="/pedidos" element={isAuthenticated ? <Pedidos /> : <Navigate to="/login" />} />
         <Route path="/produto-variacoes" element={isAuthenticated ? <ProdutoVariacoes /> : <Navigate to="/login" />} />
         <Route path="/perfis" element={isAuthenticated ? <Perfis /> : <Navigate to="/login" />} />
