@@ -7,10 +7,13 @@ import 'primereact/resources/primereact.min.css';
 import 'primeicons/primeicons.css';
 import './index.css';
 import 'primeflex/themes/primeone-light.css';
+import {CarrinhoProvider} from "./context/CarrinhoContext";
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <App />
+    <CarrinhoProvider>
+      <App />
+    </CarrinhoProvider>
   </React.StrictMode>
 );

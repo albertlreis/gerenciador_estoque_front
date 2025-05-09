@@ -23,7 +23,7 @@ select {
   font-size: 1rem;
   box-sizing: border-box;
   display: block;
-} 
+}
 
 /* Layout para páginas autenticadas */
 .layout-wrapper {
@@ -140,4 +140,28 @@ input, .p-inputtext {
   padding: 0.5rem !important;  /* ou menos: 0.4rem */
   height: auto !important;
   font-size: 0.9rem;           /* opcional */
+}
+
+/* Estilo para animação de pulso no carrinho */
+.p-cart-pulse {
+  animation: pulse-bounce 0.3s ease-in-out;
+}
+
+@keyframes pulse-bounce {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+.p-cart-icon {
+  position: relative;
+}
+
+.p-overlay-badge {
+  position: absolute;
+  top: -8px;
+  right: -10px;
+  padding: 4px 6px;
+  font-size: 0.75rem;
+  border-radius: 50%;
 }

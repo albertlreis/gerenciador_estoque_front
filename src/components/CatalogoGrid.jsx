@@ -3,7 +3,14 @@ import ProdutoCard from './ProdutoCard';
 import { Dialog } from 'primereact/dialog';
 import { Divider } from 'primereact/divider';
 
-const CatalogoGrid = ({ produtos }) => {
+/**
+ * Componente responsável por exibir os produtos em grid com suporte ao botão de "Detalhes"
+ * e integração com o carrinho de compras.
+ *
+ * @param {Array} produtos - Lista de produtos para exibir
+ * @param {Function} onAdicionarAoCarrinho - Função chamada ao clicar em "Adicionar" no ProdutoCard
+ */
+const CatalogoGrid = ({ produtos, onAdicionarAoCarrinho }) => {
   const [selectedProduto, setSelectedProduto] = useState(null);
 
   const openDetalhes = (produto) => {
@@ -23,7 +30,11 @@ const CatalogoGrid = ({ produtos }) => {
       <div className="grid">
         {produtos.map((produto) => (
           <div key={produto.id} className="col-12 sm:col-6 md:col-4 lg:col-3">
-            <ProdutoCard produto={produto} onDetalhes={() => openDetalhes(produto)} />
+            <ProdutoCard
+              produto={produto}
+              onDetalhes={() => openDetalhes(produto)}
+              onAdicionar={() => onAdicionarAoCarrinho && onAdicionarAoCarrinho(produto)}
+            />
           </div>
         ))}
       </div>
@@ -52,7 +63,7 @@ const CatalogoGrid = ({ produtos }) => {
                 ? '-'
                 : Number(selectedProduto.variacoes[0].preco).toFixed(2)
             }</p>
-            <Divider/>
+            <Divider />
             <p><strong>Atributos:</strong></p>
             <ul>
               {selectedProduto.variacoes?.[0]?.atributos?.map((attr, index) => (
