@@ -63,7 +63,16 @@ const FiltroLateral = ({ filtros, onChange, disabled = false }) => {
           <h5 className="mb-2">SOMENTE ATIVOS</h5>
           <InputSwitch
             checked={filtros.ativo === true}
-            onChange={(e) => onChange({ ativo: e.value ? true : null })}
+            onChange={(e) => onChange({ativo: e.value ? true : null})}
+            disabled={disabled}
+          />
+        </div>
+
+        <div className="mb-4">
+          <h5 className="mb-2">SOMENTE OUTLET</h5>
+          <InputSwitch
+            checked={filtros.outlet === true}
+            onChange={(e) => onChange({outlet: e.value ? true : null})}
             disabled={disabled}
           />
         </div>

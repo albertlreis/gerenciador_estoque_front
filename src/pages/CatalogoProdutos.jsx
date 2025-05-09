@@ -19,26 +19,25 @@ const filtrosIniciais = {
   nome: '',
   categoria: [],
   ativo: null,
+  outlet: null,
   atributos: {},
 };
 
 const CatalogoProdutos = () => {
   const [produtos, setProdutos] = useState([]);
   const [filtros, setFiltros] = useState(filtrosIniciais);
+  const [pagina, setPagina] = useState(1);
+  const [temMais, setTemMais] = useState(true);
   const [loading, setLoading] = useState(false);
   const [carrinhoVisible, setCarrinhoVisible] = useState(false);
   const [animateCart, setAnimateCart] = useState(false);
   const [finalizando, setFinalizando] = useState(false);
-
+  const sentinelaRef = useRef(null);
   const toast = useRef(null);
   const navigate = useNavigate();
   const { adicionarItem, limparCarrinho, quantidadeTotal } = useCarrinho();
 
-  useEffect(() => {
-    fetchProdutos();
-  }, [filtros]);
-
-  const fetchProdutos = async () => {
+  const fetchProdutos = async (append = false) => {
     setLoading(true);
     try {
       const response = await apiEstoque.get('/produtos', {
@@ -46,19 +45,54 @@ const CatalogoProdutos = () => {
           nome: filtros.nome,
           id_categoria: filtros.categoria,
           ativo: filtros.ativo,
+          is_outlet: filtros.outlet,
+          page: pagina,
+          per_page: 20,
           ...Object.entries(filtros.atributos || {}).reduce((acc, [chave, valores]) => {
             acc[`atributos[${chave}]`] = valores;
             return acc;
           }, {})
         },
       });
-      setProdutos(response.data.data || []);
+
+      const novos = response.data.data || [];
+      setProdutos(prev => append ? [...prev, ...novos] : novos);
+
+      const meta = response.data.meta || {};
+      setTemMais(meta.current_page < meta.last_page);
     } catch (err) {
       console.error('Erro ao buscar produtos:', err);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    setPagina(1);
+    setTemMais(true);
+    fetchProdutos(false);
+  }, [filtros]);
+
+  useEffect(() => {
+    if (pagina > 1) fetchProdutos(true);
+  }, [pagina]);
+
+  useEffect(() => {
+    if (!temMais || loading || !sentinelaRef.current) return;
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setPagina(prev => prev + 1);
+      }
+    }, { threshold: 1 });
+
+    const target = sentinelaRef.current;
+    observer.observe(target);
+
+    return () => {
+      if (target) observer.unobserve(target);
+    };
+  }, [sentinelaRef.current, temMais, loading]);
 
   const handleFiltroChange = (novosFiltros) => {
     setFiltros(prev => ({ ...prev, ...novosFiltros }));
@@ -123,31 +157,15 @@ const CatalogoProdutos = () => {
   };
 
   const menuItems = [
-    {
-      label: 'Início',
-      icon: 'pi pi-home',
-      command: () => navigate('/')
-    },
-    {
-      label: 'Clientes',
-      key: 'clientes',
-      icon: 'pi pi-fw pi-user',
-      command: () => navigate('/clientes')
-    },
-    {
-      label: 'Pedidos',
-      key: 'pedidos',
-      icon: 'pi pi-fw pi-shopping-cart',
-      command: () => navigate('/pedidos')
-    },
+    { label: 'Início', icon: 'pi pi-home', command: () => navigate('/') },
+    { label: 'Clientes', key: 'clientes', icon: 'pi pi-fw pi-user', command: () => navigate('/clientes') },
+    { label: 'Pedidos', key: 'pedidos', icon: 'pi pi-fw pi-shopping-cart', command: () => navigate('/pedidos') },
   ];
 
   return (
     <>
       <Toast ref={toast} />
-
       <Menubar model={menuItems} className="mb-4 shadow-2" />
-
       <div className="grid p-4">
         <div className="col-12 md:col-3">
           <FiltroLateral filtros={filtros} onChange={handleFiltroChange} disabled={loading} />
@@ -166,10 +184,7 @@ const CatalogoProdutos = () => {
                 />
               </span>
               <div className="relative cursor-pointer" onClick={() => setCarrinhoVisible(true)}>
-                <i
-                  className={`pi pi-shopping-cart text-2xl ${animateCart ? 'p-cart-pulse' : ''}`}
-                  onAnimationEnd={() => setAnimateCart(false)}
-                />
+                <i className={`pi pi-shopping-cart text-2xl ${animateCart ? 'p-cart-pulse' : ''}`} onAnimationEnd={() => setAnimateCart(false)} />
                 {quantidadeTotal > 0 && (
                   <Badge value={quantidadeTotal} severity="info" className="p-overlay-badge" />
                 )}
@@ -189,11 +204,12 @@ const CatalogoProdutos = () => {
             />
           </div>
 
-          <OverlayLoading visible={loading} message="Carregando produtos do catálogo...">
-            <CatalogoGrid
-              produtos={produtos}
-              onAdicionarAoCarrinho={handleAdicionarAoCarrinho}
-            />
+          <OverlayLoading visible={loading && pagina === 1} message="Carregando produtos do catálogo...">
+            <CatalogoGrid produtos={produtos} onAdicionarAoCarrinho={handleAdicionarAoCarrinho} />
+            <div ref={sentinelaRef} style={{ height: '1px', marginTop: '80px' }} />
+            {loading && pagina > 1 && (
+              <p className="text-center mt-3 mb-4">Carregando mais produtos...</p>
+            )}
           </OverlayLoading>
         </div>
       </div>

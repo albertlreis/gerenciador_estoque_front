@@ -2,19 +2,16 @@ import React, { useState, useEffect, useRef } from 'react';
 import { PanelMenu } from 'primereact/panelmenu';
 import { useNavigate, useLocation } from 'react-router-dom';
 import apiAuth from '../services/apiAuth';
-import Topbar from './Topbar'; // Componente do header inspirado no Sakai
+import Topbar from './Topbar';
 
 const SakaiLayout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [expandedKeys, setExpandedKeys] = useState({});
-  // Estado para controlar se a sidebar está recolhida
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  // Para permitir que o usuário expanda ou recolha o menu manualmente
   const userHasToggled = useRef(false);
 
-  // Atualiza os expandedKeys automaticamente somente se o usuário não interagiu previamente
   useEffect(() => {
     if (!userHasToggled.current) {
       if (
@@ -23,11 +20,18 @@ const SakaiLayout = ({ children }) => {
         location.pathname.startsWith('/permissoes')
       ) {
         setExpandedKeys({ acesso: true });
+      } else if (
+        location.pathname.startsWith('/catalogo') ||
+        location.pathname.startsWith('/produtos-outlet') ||
+        location.pathname.startsWith('/configuracao-outlet')
+      ) {
+        setExpandedKeys({ produtos: true });
       } else {
         setExpandedKeys({});
       }
     }
   }, [location]);
+
 
   // Quando o usuário interage manualmente, atualizamos o estado e marcamos que houve toggle
   const handleExpandedKeysChange = (e) => {
@@ -95,7 +99,26 @@ const SakaiLayout = ({ children }) => {
       label: 'Produtos',
       key: 'produtos',
       icon: 'pi pi-fw pi-tags',
-      command: () => navigate('/catalogo')
+      items: [
+        {
+          label: 'Catálogo',
+          key: 'produtos-catalogo',
+          icon: 'pi pi-fw pi-list',
+          command: () => navigate('/catalogo')
+        },
+        {
+          label: 'Produtos Outlet',
+          key: 'produtos-outlet',
+          icon: 'pi pi-fw pi-exclamation-circle',
+          command: () => navigate('/produtos-outlet')
+        },
+        {
+          label: 'Configurar Outlet',
+          key: 'configurar-outlet',
+          icon: 'pi pi-fw pi-cog',
+          command: () => navigate('/configuracao-outlet')
+        }
+      ]
     },
     {
       label: 'Pedidos',
