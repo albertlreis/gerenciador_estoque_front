@@ -4,6 +4,8 @@ import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 import { Badge } from 'primereact/badge';
+import { Menubar } from 'primereact/menubar';
+import { useNavigate } from 'react-router-dom';
 
 import FiltroLateral from '../components/FiltroLateral';
 import CatalogoGrid from '../components/CatalogoGrid';
@@ -29,6 +31,7 @@ const CatalogoProdutos = () => {
   const [finalizando, setFinalizando] = useState(false);
 
   const toast = useRef(null);
+  const navigate = useNavigate();
   const { adicionarItem, limparCarrinho, quantidadeTotal } = useCarrinho();
 
   useEffect(() => {
@@ -119,9 +122,31 @@ const CatalogoProdutos = () => {
     }
   };
 
+  const menuItems = [
+    {
+      label: 'Início',
+      icon: 'pi pi-home',
+      command: () => navigate('/')
+    },
+    {
+      label: 'Clientes',
+      key: 'clientes',
+      icon: 'pi pi-fw pi-user',
+      command: () => navigate('/clientes')
+    },
+    {
+      label: 'Pedidos',
+      key: 'pedidos',
+      icon: 'pi pi-fw pi-shopping-cart',
+      command: () => navigate('/pedidos')
+    },
+  ];
+
   return (
     <>
       <Toast ref={toast} />
+
+      <Menubar model={menuItems} className="mb-4 shadow-2" />
 
       <div className="grid p-4">
         <div className="col-12 md:col-3">

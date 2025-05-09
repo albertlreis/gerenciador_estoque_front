@@ -15,7 +15,6 @@ const Home = () => {
     <SakaiLayout>
       <div className="home-container">
         <h2>Bem-vindo à Home</h2>
-        <p>Apenas usuários autenticados podem ver esta página.</p>
         <Button label="Sair" onClick={handleLogout} />
       </div>
     </SakaiLayout>

@@ -95,7 +95,7 @@ const SakaiLayout = ({ children }) => {
       label: 'Produtos',
       key: 'produtos',
       icon: 'pi pi-fw pi-tags',
-      command: () => navigate('/produtos')
+      command: () => navigate('/catalogo')
     },
     {
       label: 'Pedidos',
