@@ -3,7 +3,6 @@ import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { InputSwitch } from 'primereact/inputswitch';
 import { Dropdown } from 'primereact/dropdown';
-import { InputNumber } from 'primereact/inputnumber';
 import { Button } from 'primereact/button';
 import { FileUpload } from 'primereact/fileupload';
 import { Toast } from 'primereact/toast';
@@ -21,32 +20,32 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
   );
   const [nome, setNome] = useState(initialData.nome || '');
   const [descricao, setDescricao] = useState(initialData.descricao || '');
-  const [fabricante, setFabricante] = useState(initialData.fabricante ||'');
+  const [fabricante, setFabricante] = useState(initialData.fabricante || '');
   const [ativo, setAtivo] = useState(
     initialData.ativo !== undefined
-      ? (initialData.ativo === true || initialData.ativo === 1 || initialData.ativo === "1")
+      ? (initialData.ativo === true || initialData.ativo === 1 || initialData.ativo === '1')
       : true
   );
   const [categorias, setCategorias] = useState([]);
   const [existingImages, setExistingImages] = useState(initialData.imagens || []);
   const [loading, setLoading] = useState(false);
   const [totalSize, setTotalSize] = useState(0);
+  const [variacoes, setVariacoes] = useState(initialData.variacoes || [
+    { nome: '', preco: '', custo: '', sku: '', codigo_barras: '', atributos: [] }
+  ]);
 
-  // Referências do Toast e do FileUpload
   const toastRef = useRef(null);
   const fileUploadRef = useRef(null);
 
-  // Busca categorias assim que o componente for montado
   useEffect(() => {
     const fetchCategorias = async () => {
       try {
         const response = await apiEstoque.get('/categorias');
         setCategorias(response.data);
       } catch (error) {
-        console.error('Erro ao buscar categorias:', error);
         toastRef.current.show({
           severity: 'error',
-          summary: 'Ops!',
+          summary: 'Erro',
           detail: 'Erro ao buscar categorias',
           life: 3000
         });
@@ -55,166 +54,41 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
     fetchCategorias();
   }, []);
 
-  // Se idCategoria estiver como número, converte para o objeto da categoria
   useEffect(() => {
     if (categorias.length > 0 && typeof idCategoria === 'number') {
       const catObj = categorias.find((c) => c.id === idCategoria);
-      if (catObj) {
-        setIdCategoria(catObj);
-      }
+      if (catObj) setIdCategoria(catObj);
     }
   }, [categorias, idCategoria]);
 
-  // onTemplateSelect realiza a validação prévia dos arquivos
-  const onTemplateSelect = (e) => {
-    const validFiles = [];
-    let invalidFound = false;
-
-    e.files.forEach(file => {
-      if (file.type && file.type.startsWith("image/")) {
-        validFiles.push(file);
-      } else {
-        invalidFound = true;
-        toastRef.current.show({
-          severity: 'error',
-          summary: 'Formato inválido',
-          detail: 'Apenas arquivos de imagem são permitidos.',
-          life: 3000
-        });
-      }
-    });
-
-    // Se algum arquivo for inválido, seta a flag e limpa a seleção para evitar envio
-    if (invalidFound) {
-      if (fileUploadRef && fileUploadRef.current) {
-        fileUploadRef.current.clear();
-      }
-      return;
-    }
-
-    // Atualiza o total de tamanho somente com arquivos válidos
-    let _totalSize = 0;
-    validFiles.forEach(file => {
-      _totalSize += file.size || 0;
-    });
-    setTotalSize(_totalSize);
+  const addVariacao = () => {
+    setVariacoes([...variacoes, { nome: '', preco: '', custo: '', sku: '', codigo_barras: '', atributos: [] }]);
   };
 
-  // Quando o upload terminar, exibe mensagem de sucesso e reseta o total
-  const onTemplateUpload = (e) => {
-    let _totalSize = 0;
-    e.files.forEach((file) => {
-      _totalSize += file.size || 0;
-    });
-    setTotalSize(_totalSize);
-    toastRef.current.show({
-      severity: 'info',
-      summary: 'Sucesso',
-      detail: 'Imagem(s) enviada(s)',
-      life: 3000
-    });
-    // Limpa a fila após o upload
-    if (fileUploadRef && fileUploadRef.current) {
-      fileUploadRef.current.clear();
-    }
+  const updateVariacao = (index, field, value) => {
+    const novas = [...variacoes];
+    novas[index][field] = value;
+    setVariacoes(novas);
   };
 
-  const onTemplateRemove = (file, callback) => {
-    setTotalSize(totalSize - (file.size || 0));
-    callback();
+  const updateAtributo = (varIndex, attrIndex, field, value) => {
+    const novas = [...variacoes];
+    novas[varIndex].atributos[attrIndex][field] = value;
+    setVariacoes(novas);
   };
 
-  const onTemplateClear = () => {
-    setTotalSize(0);
+  const addAtributo = (varIndex) => {
+    const novas = [...variacoes];
+    novas[varIndex].atributos.push({ atributo: '', valor: '' });
+    setVariacoes(novas);
   };
 
-  // Header template para o FileUpload (mostra botões e progresso)
-  const headerTemplate = (options) => {
-    const { className, chooseButton, uploadButton, cancelButton } = options;
-    // Cálculo do percentual: (tamanho total / 2MB) convertido em porcentagem
-    const value = (totalSize / 2097152) * 100;
-    const formatedValue =
-      fileUploadRef && fileUploadRef.current ? fileUploadRef.current.formatSize(totalSize) : '0 B';
-
-    return (
-      <div
-        className={className}
-        style={{ backgroundColor: 'transparent', display: 'flex', alignItems: 'center' }}
-      >
-        {chooseButton}
-        {uploadButton}
-        {cancelButton}
-        <div className="flex align-items-center gap-3 ml-auto">
-          <span>{formatedValue} / 2 MB</span>
-          <ProgressBar value={value} showValue={false} style={{ width: '10rem', height: '12px' }}></ProgressBar>
-        </div>
-      </div>
-    );
-  };
-
-  // Template para cada arquivo em upload
-  const itemTemplate = (file, props) => {
-    return (
-      <div className="flex align-items-center flex-wrap">
-        <div className="flex align-items-center" style={{ width: '40%' }}>
-          <img
-            alt={file.name}
-            role="presentation"
-            src={file.objectURL}
-            width={100}
-          />
-          <span className="flex flex-column text-left ml-3">
-            {file.name}
-            <small>{new Date().toLocaleDateString()}</small>
-          </span>
-        </div>
-        <Tag value={props.formatSize} severity="warning" className="px-3 py-2" />
-        <Button
-          type="button"
-          icon="pi pi-times"
-          className="p-button-outlined p-button-rounded p-button-danger ml-auto"
-          onClick={() => confirmDelete(file)} // Chama a confirmação para exclusão do arquivo
-        />
-      </div>
-    );
-  };
-
-  // Template para exibir uma mensagem quando não há arquivos
-  const emptyTemplate = () => {
-    return (
-      <div className="flex align-items-center flex-column">
-        <i
-          className="pi pi-image mt-3 p-5"
-          style={{
-            fontSize: '5em',
-            borderRadius: '50%',
-            backgroundColor: 'var(--surface-b)',
-            color: 'var(--surface-d)'
-          }}
-        ></i>
-        <span style={{ fontSize: '1.2em', color: 'var(--text-color-secondary)' }} className="my-5">
-          Arraste e solte a imagem aqui
-        </span>
-      </div>
-    );
-  };
-
-  // Opções para os botões personalizados (choose, upload, clear)
-  const chooseOptions = { icon: 'pi pi-fw pi-images', iconOnly: true, className: 'custom-choose-btn p-button-rounded p-button-outlined' };
-  const uploadOptions = { icon: 'pi pi-fw pi-cloud-upload', iconOnly: true, className: 'custom-upload-btn p-button-success p-button-rounded p-button-outlined' };
-  const cancelOptions = { icon: 'pi pi-fw pi-times', iconOnly: true, className: 'custom-cancel-btn p-button-danger p-button-rounded p-button-outlined' };
-
-  // Função que abre a confirmação antes de excluir uma imagem
   const confirmDelete = (imageOrFile) => {
-    // Caso queira confirmar exclusão de imagem já cadastrada ou ainda em seleção,
-    // você pode diferenciar pelo tipo (exemplo, se imageOrFile possui uma propriedade "id")
     const isExistingImage = imageOrFile && imageOrFile.id;
-    let message = isExistingImage
-      ? 'Tem certeza que deseja excluir esta imagem?'
-      : 'Tem certeza que deseja remover este arquivo da seleção?';
-
     confirmDialog({
-      message,
+      message: isExistingImage
+        ? 'Tem certeza que deseja excluir esta imagem?'
+        : 'Tem certeza que deseja remover este arquivo da seleção?',
       header: 'Confirmação',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Sim',
@@ -222,31 +96,32 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
       accept: () => {
         if (isExistingImage) {
           handleDeleteImage(imageOrFile.id);
-        } else {
-          // Se for um arquivo na fila, remova-o
-          onTemplateRemove(imageOrFile, () => {});
         }
-      },
-      reject: () => {
-        // Pode ser deixado vazio ou adicionar ação se necessário
       }
     });
   };
 
-  // Handler para upload customizado: Continua enviando para o backend e exibe mensagem via Toast.
-  const uploadHandler = async (event) => {
-    // Validação extra: filtra os arquivos de imagem
-    const validFiles = event.files.filter(file => file.type && file.type.startsWith("image/"));
+  const handleDeleteImage = async (imageId) => {
+    try {
+      await apiEstoque.delete(`/produtos/${initialData.id}/imagens/${imageId}`);
+      setExistingImages(existingImages.filter(img => img.id !== imageId));
+      toastRef.current.show({
+        severity: 'success', summary: 'Sucesso', detail: 'Imagem removida', life: 3000
+      });
+    } catch (error) {
+      toastRef.current.show({
+        severity: 'error', summary: 'Erro', detail: 'Erro ao remover imagem', life: 3000
+      });
+    }
+  };
 
-    // Se houver diferença no número de arquivos, significa que existem arquivos inválidos
+  const uploadHandler = async (event) => {
+    const validFiles = event.files.filter(file => file.type && file.type.startsWith('image/'));
     if (validFiles.length !== event.files.length) {
-      if (fileUploadRef && fileUploadRef.current) {
-        fileUploadRef.current.clear();
-      }
+      if (fileUploadRef?.current) fileUploadRef.current.clear();
       return;
     }
 
-    // Continua com o upload dos arquivos válidos
     for (const file of validFiles) {
       const formData = new FormData();
       formData.append('image', file);
@@ -258,71 +133,29 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
           formData,
           { headers: { 'Content-Type': 'multipart/form-data' } }
         );
-        setExistingImages(prevImages => [...prevImages, response.data]);
-        toastRef.current.show({
-          severity: 'success',
-          summary: 'Sucesso',
-          detail: 'Imagem enviada com sucesso',
-          life: 3000
-        });
+        setExistingImages(prev => [...prev, response.data]);
+        toastRef.current.show({ severity: 'success', summary: 'Sucesso', detail: 'Imagem enviada', life: 3000 });
       } catch (error) {
-        console.error('Erro ao enviar imagem:', error);
-        toastRef.current.show({
-          severity: 'error',
-          summary: 'Ops!',
-          detail: 'Erro ao enviar imagem',
-          life: 3000
-        });
+        toastRef.current.show({ severity: 'error', summary: 'Erro', detail: 'Erro no upload', life: 3000 });
       }
     }
-
-    // Limpa a seleção dos arquivos após o upload
-    if (fileUploadRef && fileUploadRef.current) {
-      fileUploadRef.current.clear();
-    }
+    if (fileUploadRef?.current) fileUploadRef.current.clear();
   };
 
-  // Handler para exclusão de imagem já cadastrada
-  const handleDeleteImage = async (imageId) => {
-    try {
-      await apiEstoque.delete(`/produtos/${initialData.id}/imagens/${imageId}`);
-      setExistingImages(existingImages.filter(img => img.id !== imageId));
-      toastRef.current.show({
-        severity: 'success',
-        summary: 'Sucesso',
-        detail: 'Imagem removida',
-        life: 3000
-      });
-    } catch (error) {
-      console.error('Erro ao deletar imagem:', error);
-      toastRef.current.show({
-        severity: 'error',
-        summary: 'Ops!',
-        detail: 'Erro ao deletar imagem',
-        life: 3000
-      });
-    }
-  };
-
-  // Envio do formulário principal
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
       const productData = {
-        nome,
-        descricao,
-        id_categoria: idCategoria && idCategoria.id ? idCategoria.id : null,
-        ativo
+        nome, descricao,
+        id_categoria: idCategoria?.id || null,
+        ativo, fabricante,
+        variacoes
       };
       await onSubmit(productData);
     } catch (error) {
-      console.error('Erro no submit:', error);
       toastRef.current.show({
-        severity: 'error',
-        summary: 'Ops!',
-        detail: 'Erro ao salvar produto',
-        life: 3000
+        severity: 'error', summary: 'Erro', detail: 'Erro ao salvar produto', life: 3000
       });
     } finally {
       setLoading(false);
@@ -334,106 +167,139 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
       <Toast ref={toastRef} position="top-center" />
       <ConfirmDialog />
       <form onSubmit={handleSubmit} className="p-fluid">
-      <div className="formgrid grid">
-        {/* Campo Nome */}
-        <div className="field md:col-8">
-          <label htmlFor="nome">Nome</label>
-          <InputText id="nome" value={nome} onChange={(e) => setNome(e.target.value)}/>
-        </div>
+        <div className="formgrid grid">
+          <div className="field md:col-8">
+            <label htmlFor="nome">Nome</label>
+            <InputText id="nome" value={nome} onChange={(e) => setNome(e.target.value)} />
+          </div>
+          <div className="field md:col-4">
+            <label htmlFor="categoria">Categoria</label>
+            <Dropdown id="categoria" value={idCategoria} options={categorias} onChange={(e) => setIdCategoria(e.value)} optionLabel="nome" placeholder="Selecione a categoria" />
+          </div>
+          <div className="field col-12">
+            <label htmlFor="descricao">Descrição</label>
+            <InputTextarea id="descricao" value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={3} />
+          </div>
+          <div className="field col-12 md:col-8">
+            <label htmlFor="fabricante">Fabricante</label>
+            <InputText id="fabricante" value={fabricante} onChange={(e) => setFabricante(e.target.value)} />
+          </div>
+          <div className="field col-12 md:col-4">
+            <label htmlFor="ativo">Ativo</label>
+            <InputSwitch id="ativo" checked={ativo} onChange={(e) => setAtivo(e.value)} />
+          </div>
 
-        {/* Campo Categoria */}
-        <div className="field md:col-4">
-          <label htmlFor="categoria">Categoria</label>
-          <Dropdown
-            id="categoria"
-            value={idCategoria}
-            options={categorias}
-            onChange={(e) => setIdCategoria(e.value)}
-            optionLabel="nome"
-            placeholder="Selecione a categoria"
-          />
-        </div>
-        {/* Campo Descrição */}
-        <div className="field col-12">
-          <label htmlFor="descricao">Descrição</label>
-          <InputTextarea id="descricao" value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={3}/>
-        </div>
-        <div className="field col-12 md:col-8">
-          <label htmlFor="fabricante">Fabricante</label>
-          <InputText
-            id="fabricante"
-            value={fabricante}
-            onChange={(e) => setFabricante(e.value)}
-            placeholder="Digite o nome do fabricante"
-          />
-        </div>
-        <div className="field col-12 md:col-4">
-        <label htmlFor="ativo">Ativo</label>
-        <InputSwitch
-            id="ativo"
-            checked={ativo}
-            style={{marginTop: '1.5rem', marginLeft:'0.8rem'}}
-            onChange={(e) => setAtivo(e.value)}
-          />
-        </div>
+          <div className="field col-12">
+            <h4>Variações do Produto</h4>
+            <p className="text-sm text-color-secondary mb-3">
+              Um mesmo móvel pode ter diferentes variações, como <strong>cor</strong>, <strong>acabamento</strong> ou <strong>material</strong> (ex: "Mesa Retangular - Madeira Clara"). Cada variação pode ter um preço e código de barras distintos.
+            </p>
 
-        {/* Se o produto já foi criado: Exibir imagens e permitir upload */}
-        {initialData.id && (
-          <>
+            {variacoes.map((v, i) => (
+              <div key={i} className="p-fluid p-3 mb-4 border-round surface-border border-1">
+                <div className="formgrid grid align-items-start">
+                  <div className="field md:col-6">
+                    <label>Nome da Variação</label>
+                    <InputText value={v.nome} onChange={(e) => updateVariacao(i, 'nome', e.target.value)} />
+                  </div>
+                  <div className="field md:col-3">
+                    <label>Preço</label>
+                    <InputText value={v.preco} onChange={(e) => updateVariacao(i, 'preco', e.target.value)} />
+                  </div>
+                  <div className="field md:col-3">
+                    <label>Custo</label>
+                    <InputText value={v.custo} onChange={(e) => updateVariacao(i, 'custo', e.target.value)} />
+                  </div>
+                  <div className="field md:col-6">
+                    <label>SKU</label>
+                    <InputText value={v.sku} onChange={(e) => updateVariacao(i, 'sku', e.target.value)} />
+                  </div>
+                  <div className="field md:col-5">
+                    <label>Código de Barras</label>
+                    <InputText value={v.codigo_barras} onChange={(e) => updateVariacao(i, 'codigo_barras', e.target.value)} />
+                  </div>
+                  <div className="field md:col-1 text-right">
+                    <Button icon="pi pi-trash" className="p-button-rounded p-button-danger mt-4" type="button" onClick={() => {
+                      const novas = [...variacoes];
+                      novas.splice(i, 1);
+                      setVariacoes(novas);
+                    }} tooltip="Remover Variação" />
+                  </div>
+                </div>
+
+                <h5 className="mt-3">Atributos</h5>
+                <p className="text-sm text-color-secondary mb-2">
+                  Use os atributos para detalhar esta variação. Exemplos: <strong>cor: nogueira</strong>, <strong>material: MDF</strong>.
+                </p>
+
+                {v.atributos.map((attr, j) => (
+                  <div key={j} className="formgrid grid align-items-center">
+                    <div className="field md:col-5">
+                      <InputText value={attr.atributo} placeholder="Atributo (ex: cor)" onChange={(e) => updateAtributo(i, j, 'atributo', e.target.value)} />
+                    </div>
+                    <div className="field md:col-5">
+                      <InputText value={attr.valor} placeholder="Valor (ex: nogueira)" onChange={(e) => updateAtributo(i, j, 'valor', e.target.value)} />
+                    </div>
+                    <div className="field md:col-2 text-right">
+                      <Button icon="pi pi-trash" className="p-button-rounded p-button-danger" type="button" onClick={() => {
+                        const novas = [...variacoes];
+                        novas[i].atributos.splice(j, 1);
+                        setVariacoes(novas);
+                      }} tooltip="Remover Atributo" />
+                    </div>
+                  </div>
+                ))}
+
+                <Button type="button" label="Adicionar Atributo" icon="pi pi-plus" onClick={() => addAtributo(i)} className="p-button-sm mt-2" />
+              </div>
+            ))}
+            <Button type="button" label="Adicionar Variação" icon="pi pi-plus" className="p-button-secondary mt-2" onClick={addVariacao} />
+          </div>
+
+
+          {initialData.id && (
             <div className="field col-12">
-              <h4>Imagens Cadastradas</h4>
+              <h4>Imagens do Produto</h4>
+
+              <p className="text-sm text-color-secondary mb-2">
+                As imagens são compartilhadas entre todas as variações do produto. Envie imagens que representem bem o
+                item.
+              </p>
+
               <div style={{display: 'flex', flexWrap: 'wrap'}} className="col-12">
                 {existingImages.map((img) => (
                   <div key={img.id} style={{margin: '0.5rem', position: 'relative'}}>
-                    <img
-                      src={`${backendUrl}/${productImagesFolder}/${img.url}`}
-                      alt="produto"
-                      style={{width: '100px', height: '100px', objectFit: 'cover'}}
-                    />
-                    <Button
-                      type="button"
-                      icon="pi pi-times"
-                      className="p-button-rounded p-button-danger"
-                      onClick={() => confirmDelete(img)}
-                    />
+                    <img src={`${backendUrl}/${productImagesFolder}/${img.url}`} alt="produto"
+                         style={{width: '100px', height: '100px', objectFit: 'cover'}}/>
+                    <Button type="button" icon="pi pi-times" className="p-button-rounded p-button-danger"
+                            onClick={() => confirmDelete(img)}/>
                   </div>
                 ))}
               </div>
-            </div>
-            <div className="field col-12">
-            <h4>Anexar Imagens</h4>
               <FileUpload
                 ref={fileUploadRef}
                 name="files"
                 customUpload
                 auto
-                onSelect={onTemplateSelect}
-                onUpload={onTemplateUpload}
-                onError={onTemplateClear}
-                onClear={onTemplateClear}
                 uploadHandler={uploadHandler}
                 multiple
                 accept="image/*"
-                maxFileSize={2097152} // 2 MB em bytes
-                invalidFileSizeMessageSummary="Arquivo muito grande!"
-                invalidFileSizeMessageDetail="O tamanho máximo permitido é 2 MB."
-                invalidFileSizeMessage="Cada imagem deve ter no máximo 2MB"
-                headerTemplate={headerTemplate}
-                itemTemplate={itemTemplate}
-                emptyTemplate={emptyTemplate}
-                chooseOptions={chooseOptions}
-                uploadOptions={uploadOptions}
-                cancelOptions={cancelOptions}
+                maxFileSize={2097152}
               />
+
+              <div className="mt-3">
+                <span className="block mb-1">Espaço ocupado:</span>
+                <ProgressBar value={(totalSize / 2097152) * 100} showValue={false} style={{height: '10px'}}/>
+                <Tag value={`${(totalSize / 1024).toFixed(1)} KB`} severity="info" className="mt-2"/>
+              </div>
             </div>
-          </>
-        )}
-        {/* Botões */}
-        <div className="field col-12 flex justify-content-end">
-          <Button label="Salvar" type="submit" icon="pi pi-check" loading={loading} className="mr-2" />
-          <Button label="Cancelar" type="button" icon="pi pi-times" className="p-button-secondary" onClick={onCancel} />
-        </div>
-        
+          )}
+
+          <div className="field col-12 flex justify-content-end">
+            <Button label="Salvar" type="submit" icon="pi pi-check" loading={loading} className="mr-2"/>
+            <Button label="Cancelar" type="button" icon="pi pi-times" className="p-button-secondary"
+                    onClick={onCancel}/>
+          </div>
         </div>
       </form>
     </>

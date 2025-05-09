@@ -77,15 +77,15 @@ const Produtos = () => {
         await apiEstoque.put(`/produtos/${editingProduto.id}`, produtoData);
         toastTopCenter.current.show({ severity: 'success', summary: 'Sucesso', detail: 'Produto atualizado com sucesso', life: 3000 });
         setShowDialog(false);
-        fetchProdutos();
       } else {
         // Cria novo produto e converte o formulário para edição
         const response = await apiEstoque.post('/produtos', produtoData);
         setEditingProduto(response.data);
         setDialogTitle('Editar Produto');
-        fetchProdutos();
         toastTopCenter.current.show({ severity: 'success', summary: 'Sucesso', detail: 'Produto cadastrado com sucesso', life: 3000 });
       }
+
+      fetchProdutos();
     } catch (error) {
       console.error('Erro ao salvar produto:', error.response?.data || error.message);
       toastTopCenter.current.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao salvar produto', life: 3000 });
