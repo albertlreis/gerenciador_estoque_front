@@ -57,28 +57,53 @@ const FiltroLateral = ({ filtros, onChange, disabled = false }) => {
   return (
     <OverlayLoading visible={disabled} message="Carregando filtros...">
       <div className="p-3 surface-card shadow-2 border-round">
-        <h4 className="mb-3">Filtrar por</h4>
+        <h4 className="mb-4">Filtrar por</h4>
 
-        <div className="mb-4">
-          <h5 className="mb-2">SOMENTE ATIVOS</h5>
+        {/* Ativos */}
+        <div className="mb-4 border-bottom-1 surface-border pb-3">
+          <h5 className="text-sm mb-2">Somente Ativos</h5>
           <InputSwitch
             checked={filtros.ativo === true}
-            onChange={(e) => onChange({ativo: e.value ? true : null})}
+            onChange={(e) => onChange({ ativo: e.value ? true : null })}
             disabled={disabled}
           />
         </div>
 
-        <div className="mb-4">
-          <h5 className="mb-2">SOMENTE OUTLET</h5>
+        {/* Outlet */}
+        <div className="mb-4 border-bottom-1 surface-border pb-3">
+          <h5 className="text-sm mb-2">Somente Outlet</h5>
           <InputSwitch
             checked={filtros.outlet === true}
-            onChange={(e) => onChange({outlet: e.value ? true : null})}
+            onChange={(e) => onChange({ outlet: e.value ? true : null })}
             disabled={disabled}
           />
         </div>
 
-        <div className="mb-4">
-          <h5 className="mb-2">CATEGORIA</h5>
+        {/* Estoque */}
+        <div className="mb-4 border-bottom-1 surface-border pb-3">
+          <h5 className="text-sm mb-2">Estoque</h5>
+          {[
+            { id: 'estoque_todos', label: 'Todos', value: null },
+            { id: 'estoque_com', label: 'Com estoque', value: 'com_estoque' },
+            { id: 'estoque_sem', label: 'Sem estoque', value: 'sem_estoque' }
+          ].map(opcao => (
+            <div key={opcao.id} className="field-radiobutton">
+              <input
+                type="radio"
+                id={opcao.id}
+                name="estoque_status"
+                checked={filtros.estoque_status === opcao.value}
+                onChange={() => onChange({ estoque_status: opcao.value })}
+                disabled={disabled}
+              />
+              <label htmlFor={opcao.id} className="ml-2">{opcao.label}</label>
+            </div>
+          ))}
+        </div>
+
+        {/* Categoria */}
+        <div className="mb-4 border-bottom-1 surface-border pb-3">
+          <h5 className="text-sm mb-2">Categoria</h5>
           {categorias.map(cat => (
             <div key={cat.id} className="field-checkbox">
               <Checkbox
@@ -93,9 +118,10 @@ const FiltroLateral = ({ filtros, onChange, disabled = false }) => {
           ))}
         </div>
 
+        {/* Atributos dinâmicos */}
         {atributos.map(attr => (
-          <div key={attr.nome} className="mb-3">
-            <h5 className="mb-2">{formatarTexto(attr.nome)}</h5>
+          <div key={attr.nome} className="mb-4 border-bottom-1 surface-border pb-3">
+            <h5 className="text-sm mb-2">{formatarTexto(attr.nome)}</h5>
             {attr.valores.map(v => (
               <div key={v} className="field-checkbox">
                 <Checkbox

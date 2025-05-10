@@ -21,6 +21,7 @@ const filtrosIniciais = {
   ativo: null,
   outlet: null,
   atributos: {},
+  estoque_status: null,
 };
 
 const CatalogoProdutos = () => {
@@ -40,19 +41,32 @@ const CatalogoProdutos = () => {
   const fetchProdutos = async (append = false) => {
     setLoading(true);
     try {
+      // Montar os filtros para envio
+      const filtrosParaEnvio = {
+        nome: filtros.nome?.trim() || null,
+        id_categoria: filtros.categoria,
+        ativo: filtros.ativo,
+        is_outlet: filtros.outlet,
+        estoque_status: filtros.estoque_status,
+        ...Object.entries(filtros.atributos || {}).reduce((acc, [chave, valores]) => {
+          acc[`atributos[${chave}]`] = valores;
+          return acc;
+        }, {})
+      };
+
+      // Remover campos com valor null
+      Object.keys(filtrosParaEnvio).forEach((key) => {
+        if (filtrosParaEnvio[key] === null) {
+          delete filtrosParaEnvio[key];
+        }
+      });
+
       const response = await apiEstoque.get('/produtos', {
         params: {
-          nome: filtros.nome,
-          id_categoria: filtros.categoria,
-          ativo: filtros.ativo,
-          is_outlet: filtros.outlet,
+          ...filtrosParaEnvio,
           page: pagina,
-          per_page: 20,
-          ...Object.entries(filtros.atributos || {}).reduce((acc, [chave, valores]) => {
-            acc[`atributos[${chave}]`] = valores;
-            return acc;
-          }, {})
-        },
+          per_page: 20
+        }
       });
 
       const novos = response.data.data || [];
