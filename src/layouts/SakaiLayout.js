@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { PanelMenu } from 'primereact/panelmenu';
 import { useNavigate, useLocation } from 'react-router-dom';
-import apiAuth from '../services/apiAuth';
+import { useAuth } from '../context/AuthContext';
 import Topbar from './Topbar';
+import menuItems from '../utils/menuItems';
 
 const SakaiLayout = ({ children }) => {
   const navigate = useNavigate();
@@ -14,17 +15,13 @@ const SakaiLayout = ({ children }) => {
 
   useEffect(() => {
     if (!userHasToggled.current) {
-      if (
-        location.pathname.startsWith('/usuarios') ||
+      if (location.pathname.startsWith('/usuarios') ||
         location.pathname.startsWith('/perfis') ||
-        location.pathname.startsWith('/permissoes')
-      ) {
+        location.pathname.startsWith('/permissoes')) {
         setExpandedKeys({ acesso: true });
-      } else if (
-        location.pathname.startsWith('/catalogo') ||
+      } else if (location.pathname.startsWith('/catalogo') ||
         location.pathname.startsWith('/produtos-outlet') ||
-        location.pathname.startsWith('/configuracao-outlet')
-      ) {
+        location.pathname.startsWith('/configuracao-outlet')) {
         setExpandedKeys({ produtos: true });
       } else {
         setExpandedKeys({});
@@ -32,116 +29,31 @@ const SakaiLayout = ({ children }) => {
     }
   }, [location]);
 
-
-  // Quando o usuário interage manualmente, atualizamos o estado e marcamos que houve toggle
   const handleExpandedKeysChange = (e) => {
     userHasToggled.current = true;
     setExpandedKeys(e.value);
   };
 
-  // Toggle para recolher/expandir a sidebar
   const toggleSidebar = () => {
     setIsSidebarCollapsed((prev) => !prev);
   };
 
-  // Logout: chama o endpoint, limpa os dados e redireciona para a página de login.
   const handleLogout = async () => {
     try {
-      await apiAuth.post('/logout');
       window.location.reload();
-    } catch (error) {
-      navigate('/login');
     } finally {
       localStorage.removeItem('user');
       navigate('/login');
     }
   };
 
-  const sidebarItems = [
-    {
-      label: 'Acesso',
-      key: 'acesso',
-      icon: 'pi pi-fw pi-briefcase',
-      items: [
-        {
-          label: 'Usuários',
-          key: 'acesso-usuarios',
-          icon: 'pi pi-fw pi-users',
-          command: () => navigate('/usuarios')
-        },
-        {
-          label: 'Perfis',
-          key: 'acesso-perfis',
-          icon: 'pi pi-fw pi-id-card',
-          command: () => navigate('/perfis')
-        },
-        {
-          label: 'Permissões',
-          key: 'acesso-permissoes',
-          icon: 'pi pi-fw pi-lock',
-          command: () => navigate('/permissoes')
-        }
-      ]
-    },
-    {
-      label: 'Clientes',
-      key: 'clientes',
-      icon: 'pi pi-fw pi-user',
-      command: () => navigate('/clientes')
-    },
-    {
-      label: 'Categorias',
-      key: 'categorias',
-      icon: 'pi pi-fw pi-book',
-      command: () => navigate('/categorias')
-    },
-    {
-      label: 'Produtos',
-      key: 'produtos',
-      icon: 'pi pi-fw pi-tags',
-      items: [
-        {
-          label: 'Catálogo',
-          key: 'produtos-catalogo',
-          icon: 'pi pi-fw pi-list',
-          command: () => navigate('/catalogo')
-        },
-        {
-          label: 'Produtos Outlet',
-          key: 'produtos-outlet',
-          icon: 'pi pi-fw pi-exclamation-circle',
-          command: () => navigate('/produtos-outlet')
-        },
-        {
-          label: 'Configurar Outlet',
-          key: 'configurar-outlet',
-          icon: 'pi pi-fw pi-cog',
-          command: () => navigate('/configuracao-outlet')
-        }
-      ]
-    },
-    {
-      label: 'Pedidos',
-      key: 'pedidos',
-      icon: 'pi pi-fw pi-shopping-cart',
-      command: () => navigate('/pedidos')
-    },
-    {
-      label: 'Depósitos',
-      key: 'depositos',
-      // Ícone alterado para refletir melhor a funcionalidade
-      icon: 'pi pi-fw pi-box',
-      command: () => navigate('/depositos')
-    }
-  ];
+  const { hasPermission } = useAuth();
+  const sidebarItems = menuItems(navigate, hasPermission);
 
   return (
     <div className="layout-wrapper">
-      {/* Header com o Topbar customizado */}
       <Topbar onToggleMenu={toggleSidebar} handleLogout={handleLogout} />
-
       <div className="layout-container">
-        {/* Sidebar com comportamento de recolhimento */}
         <div
           className={`layout-sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}
           style={{ width: isSidebarCollapsed ? '80px' : '300px' }}
@@ -154,8 +66,6 @@ const SakaiLayout = ({ children }) => {
             multiple
           />
         </div>
-
-        {/* Conteúdo principal renderizado conforme as rotas */}
         <div className="layout-content">
           {children}
         </div>
