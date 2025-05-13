@@ -51,8 +51,8 @@ const CatalogoGrid = ({ produtos, onAdicionarAoCarrinho }) => {
           return (
             <div className="p-fluid">
               <img
-                src={selectedProduto.imagens?.[0]?.url
-                  ? `${process.env.REACT_APP_BASE_URL_ESTOQUE}/${process.env.REACT_APP_PRODUCT_IMAGES_FOLDER}/${selectedProduto.imagens[0].url}`
+                src={selectedProduto.imagem_principal
+                  ? `${selectedProduto.imagem_principal}`
                   : 'https://placehold.co/500x300?text=Sem+Imagem'}
                 alt={selectedProduto.nome}
                 style={{ width: '100%', objectFit: 'cover' }}

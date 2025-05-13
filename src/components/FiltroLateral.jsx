@@ -8,11 +8,19 @@ const FiltroLateral = ({ filtros, onChange, disabled = false }) => {
   const [categorias, setCategorias] = useState([]);
   const [atributos, setAtributos] = useState([]);
 
+  const renderCategorias = (lista, nivel = 0) => {
+    return lista.flatMap(cat => [
+      { ...cat, nivel },
+      ...(cat.subcategorias?.length ? renderCategorias(cat.subcategorias, nivel + 1) : [])
+    ]);
+  };
+
   useEffect(() => {
     const fetchCategorias = async () => {
       try {
         const response = await apiEstoque.get('/categorias');
-        setCategorias(response.data);
+        const hierarquicas = renderCategorias(response.data);
+        setCategorias(hierarquicas);
       } catch (err) {
         console.error('Erro ao buscar categorias:', err);
       }
@@ -105,7 +113,7 @@ const FiltroLateral = ({ filtros, onChange, disabled = false }) => {
         <div className="mb-4 border-bottom-1 surface-border pb-3">
           <h5 className="text-sm mb-2">Categoria</h5>
           {categorias.map(cat => (
-            <div key={cat.id} className="field-checkbox">
+            <div key={cat.id} className="field-checkbox" style={{ paddingLeft: `${cat.nivel * 16}px` }}>
               <Checkbox
                 inputId={`cat-${cat.id}`}
                 value={cat.id}
@@ -113,7 +121,7 @@ const FiltroLateral = ({ filtros, onChange, disabled = false }) => {
                 checked={filtros.categoria.includes(cat.id)}
                 disabled={disabled}
               />
-              <label htmlFor={`cat-${cat.id}`} className="ml-2">{formatarTexto(cat.nome)}</label>
+              <label htmlFor={`cat-${cat.id}`} className="ml-2">{cat.nome}</label>
             </div>
           ))}
         </div>

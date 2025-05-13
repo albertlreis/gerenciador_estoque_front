@@ -21,8 +21,8 @@ const ProdutoCard = ({ produto, onDetalhes, onAdicionar }) => {
       )}
 
       <img
-        src={produto.imagens?.[0]?.url
-          ? `${process.env.REACT_APP_BASE_URL_ESTOQUE}/${process.env.REACT_APP_PRODUCT_IMAGES_FOLDER}/${produto.imagens[0].url}`
+        src={produto.imagem_principal
+          ? `${produto.imagem_principal}`
           : 'https://placehold.co/500x300?text=Sem+Imagem'}
         alt={produto.nome}
         className="w-full mb-2 border-round"
@@ -67,11 +67,13 @@ const ProdutoCard = ({ produto, onDetalhes, onAdicionar }) => {
             </div>
 
             <div className="mb-3 text-sm">
-              <strong>Estoque:</strong>{' '}
-              <Tag
-                value={`${quantidade} un.`}
-                severity={quantidade > 0 ? 'success' : 'danger'}
-              />
+              <p><strong>Estoque:</strong>{' '}
+                <Tag
+                  value={`${produto.estoque_total} un.`}
+                  severity={produto.estoque_total > 0 ? 'success' : 'danger'}
+                />
+              </p>
+
             </div>
           </>
         )}
