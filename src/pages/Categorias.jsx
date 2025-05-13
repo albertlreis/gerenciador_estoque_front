@@ -18,14 +18,18 @@ const Categorias = () => {
   const [dialogTitle, setDialogTitle] = useState('');
   const toast = useRef(null);
 
-  useEffect(() => {
-    fetchCategorias();
-  }, []);
+  const renderCategorias = (lista, nivel = 0) => {
+    return lista.flatMap((cat) => [
+      { ...cat, nivel },
+      ...(cat.subcategorias ? renderCategorias(cat.subcategorias, nivel + 1) : [])
+    ]);
+  };
 
   const fetchCategorias = async () => {
     try {
       const response = await apiEstoque.get('/categorias');
-      setCategorias(response.data);
+      const hierarquia = renderCategorias(response.data);
+      setCategorias(hierarquia);
     } catch (error) {
       console.error('Erro ao carregar categorias:', error.response?.data || error.message);
       toast.current.show({
@@ -36,6 +40,10 @@ const Categorias = () => {
       });
     }
   };
+
+  useEffect(() => {
+    fetchCategorias();
+  }, []);
 
   const openNewCategoriaDialog = () => {
     setEditingCategoria(null);
@@ -49,7 +57,6 @@ const Categorias = () => {
     setShowDialog(true);
   };
 
-  // Atualizamos a função de deleção para usar confirmPopup
   const handleDelete = (event, id) => {
     confirmPopup({
       target: event.currentTarget,
@@ -59,8 +66,7 @@ const Categorias = () => {
       accept: async () => {
         try {
           await apiEstoque.delete(`/categorias/${id}`);
-          // Atualiza o estado local removendo a categoria deletada
-          setCategorias(prev => prev.filter(cat => cat.id !== id));
+          await fetchCategorias();
           toast.current.show({
             severity: 'success',
             summary: 'Sucesso',
@@ -91,27 +97,20 @@ const Categorias = () => {
   const handleFormSubmit = async (categoriaData) => {
     try {
       if (editingCategoria) {
-        const response = await apiEstoque.put(`/categorias/${editingCategoria.id}`, categoriaData);
-        // Atualiza estado local: substitui a categoria editada
-        setCategorias(prev => prev.map(cat => (cat.id === editingCategoria.id ? response.data : cat)));
-        toast.current.show({
-          severity: 'success',
-          summary: 'Sucesso',
-          detail: 'Categoria atualizada',
-          life: 3000,
-        });
+        await apiEstoque.put(`/categorias/${editingCategoria.id}`, categoriaData);
       } else {
-        const response = await apiEstoque.post('/categorias', categoriaData);
-        // Atualiza o estado local adicionando a nova categoria
-        setCategorias(prev => [...prev, response.data]);
-        toast.current.show({
-          severity: 'success',
-          summary: 'Sucesso',
-          detail: 'Categoria criada',
-          life: 3000,
-        });
+        await apiEstoque.post('/categorias', categoriaData);
       }
+
+      await fetchCategorias();
       setShowDialog(false);
+
+      toast.current.show({
+        severity: 'success',
+        summary: 'Sucesso',
+        detail: editingCategoria ? 'Categoria atualizada' : 'Categoria criada',
+        life: 3000,
+      });
     } catch (error) {
       console.error('Erro ao salvar categoria:', error.response?.data || error.message);
       toast.current.show({
@@ -138,7 +137,16 @@ const Categorias = () => {
         <Divider type="solid" />
         <DataTable value={categorias} paginator rows={10} dataKey="id" responsiveLayout="scroll">
           <Column field="id" header="ID" sortable />
-          <Column field="nome" header="Nome" sortable />
+          <Column
+            field="nome"
+            header="Nome"
+            sortable
+            body={(rowData) => (
+              <span style={{ paddingLeft: `${rowData.nivel * 20}px` }}>
+                {rowData.nome}
+              </span>
+            )}
+          />
           <Column field="descricao" header="Descrição" />
           <Column
             header="Ações"
@@ -146,7 +154,7 @@ const Categorias = () => {
               <TableActions
                 rowData={rowData}
                 onEdit={openEditDialog}
-                onDelete={handleDelete} // O TableActions deverá encaminhar o event para a função onDelete
+                onDelete={handleDelete}
               />
             )}
           />

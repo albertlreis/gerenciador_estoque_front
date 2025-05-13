@@ -1,13 +1,24 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
+import { Dropdown } from 'primereact/dropdown';
+import apiEstoque from "../services/apiEstoque";
 
 const CategoriaForm = ({ initialData = {}, onSubmit, onCancel }) => {
+  const [categoriasPai, setCategoriasPai] = useState([]);
   const [categoria, setCategoria] = useState({
     nome: initialData.nome || '',
     descricao: initialData.descricao || '',
+    categoria_pai_id: initialData.categoria_pai_id || null,
   });
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    apiEstoque.get('/categorias').then(res => {
+      const outras = res.data.filter(cat => cat.id !== initialData?.id);
+      setCategoriasPai(outras);
+    });
+  }, [initialData?.id]);
 
   const handleChange = (field, value) => {
     setCategoria({ ...categoria, [field]: value });
@@ -31,7 +42,6 @@ const CategoriaForm = ({ initialData = {}, onSubmit, onCancel }) => {
       className="p-fluid p-formgrid p-grid"
       style={{ gap: '1rem' }}
     >
-      {/* Campo Nome */}
       <div className="field">
         <label htmlFor="nome">Nome</label>
         <InputText
@@ -41,7 +51,6 @@ const CategoriaForm = ({ initialData = {}, onSubmit, onCancel }) => {
         />
       </div>
 
-      {/* Campo Descrição */}
       <div className="field">
         <label htmlFor="descricao">Descrição</label>
         <InputText
@@ -51,7 +60,20 @@ const CategoriaForm = ({ initialData = {}, onSubmit, onCancel }) => {
         />
       </div>
 
-      {/* Botões */}
+      <div className="field">
+        <label htmlFor="categoria_pai_id">Categoria Pai</label>
+        <Dropdown
+          id="categoria_pai_id"
+          value={categoria.categoria_pai_id}
+          options={categoriasPai}
+          optionLabel="nome"
+          optionValue="id"
+          placeholder="Nenhuma (Categoria Raiz)"
+          onChange={(e) => handleChange('categoria_pai_id', e.value)}
+          showClear
+        />
+      </div>
+
       <div
         className="p-field p-col-12"
         style={{
