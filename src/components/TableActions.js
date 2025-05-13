@@ -1,12 +1,10 @@
 import React from 'react';
 import { Button } from 'primereact/button';
-import { ButtonGroup } from 'primereact/buttongroup';
 
 const TableActions = ({ rowData, onEdit, onDelete }) => {
   return (
-    <ButtonGroup>
+    <div className="flex align-items-center gap-2">
       <Button
-        label=""
         icon="pi pi-pencil"
         severity="info"
         onClick={() => onEdit(rowData)}
@@ -14,15 +12,13 @@ const TableActions = ({ rowData, onEdit, onDelete }) => {
         tooltipOptions={{ position: 'top' }}
       />
       <Button
-        label=""
         icon="pi pi-trash"
         severity="danger"
-        style={{ marginLeft: '0.5em' }}
         onClick={(e) => onDelete(e, rowData.id)}
         tooltip="Excluir"
         tooltipOptions={{ position: 'top' }}
       />
-    </ButtonGroup>
+    </div>
   );
 };
 

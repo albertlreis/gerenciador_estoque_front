@@ -48,18 +48,18 @@ export default function PedidosFiltro({ filtros, setFiltros, onBuscar }) {
             placeholder="Status"
             className="w-full md:w-1/5"
           />
-          <InputText
-            value={filtros.texto}
-            onChange={(e) => setFiltros({ ...filtros, texto: e.target.value })}
-            placeholder="Buscar..."
-            className="w-full md:w-2/5"
-          />
           <Dropdown
             value={filtros.tipo}
             options={tipoBuscaOptions}
             onChange={(e) => setFiltros({ ...filtros, tipo: e.value })}
             placeholder="Buscar em"
             className="w-full md:w-1/5"
+          />
+          <InputText
+            value={filtros.texto}
+            onChange={(e) => setFiltros({ ...filtros, texto: e.target.value })}
+            placeholder="Buscar..."
+            className="w-full md:w-2/5"
           />
           <div className="flex gap-2">
             <Button

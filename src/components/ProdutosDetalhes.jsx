@@ -18,7 +18,7 @@ const ProdutosDetalhes = ({ pedido }) => (
           <tr key={i}>
             <td>{p.nome}{p.variacao ? ` (${p.variacao})` : ''}</td>
             <td className="text-center">{p.quantidade}</td>
-            <td className="text-right">{formatarReal(p.valor)}</td>
+            <td className="text-right">{formatarReal(p.subtotal)}</td>
           </tr>
         ))}
         </tbody>
