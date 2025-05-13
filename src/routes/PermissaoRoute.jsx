@@ -3,7 +3,12 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const PermissaoRoute = ({ element, permissoes }) => {
-  const { hasPermission } = useAuth();
+  const { hasPermission, isLoadingUser } = useAuth();
+
+  if (isLoadingUser) {
+    return null;
+  }
+
   return hasPermission(permissoes) ? element : <Navigate to="/" replace />;
 };
 

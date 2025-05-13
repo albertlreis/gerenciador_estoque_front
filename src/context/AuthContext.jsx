@@ -6,7 +6,8 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
-  // Carrega o usuário do localStorage (se válido)
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
+
   useEffect(() => {
     const stored = localStorage.getItem('user');
     if (stored && isTokenValid()) {
@@ -17,7 +18,9 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
       }
     }
+    setIsLoadingUser(false);
   }, []);
+
 
   const login = (userData) => {
     localStorage.setItem('user', JSON.stringify(userData));
@@ -43,6 +46,7 @@ export const AuthProvider = ({ children }) => {
         logout,
         isAuthenticated: !!user,
         hasPermission,
+        isLoadingUser
       }}
     >
       {children}
