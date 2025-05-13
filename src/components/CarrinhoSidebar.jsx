@@ -6,6 +6,8 @@ import { ConfirmDialog } from 'primereact/confirmdialog';
 import { confirmDialog } from 'primereact/confirmdialog';
 import { useCarrinho } from '../context/CarrinhoContext';
 import api from '../services/apiEstoque';
+import {useAuth} from "../context/AuthContext";
+import apiAuth from "../services/apiAuth";
 
 const CarrinhoSidebar = ({ visible, onHide, onFinalizar, finalizando }) => {
   const { itens, removerItem, limparCarrinho, carregarCarrinho } = useCarrinho();
@@ -13,6 +15,11 @@ const CarrinhoSidebar = ({ visible, onHide, onFinalizar, finalizando }) => {
   const [parceiros, setParceiros] = useState([]);
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
   const [parceiroSelecionado, setParceiroSelecionado] = useState(null);
+  const [vendedores, setVendedores] = useState([]);
+  const [vendedorSelecionado, setVendedorSelecionado] = useState(null);
+
+  const { user } = useAuth();
+  const isAdmin = user?.perfil === 'Administrador';
 
   const total = itens.reduce((sum, item) => sum + Number(item.subtotal || 0), 0);
 
@@ -20,6 +27,11 @@ const CarrinhoSidebar = ({ visible, onHide, onFinalizar, finalizando }) => {
     if (visible) {
       carregarClientes();
       carregarParceiros();
+      if (isAdmin) {
+        carregarVendedores();
+      } else {
+        setVendedorSelecionado(user);
+      }
     }
   }, [visible]);
 
@@ -38,6 +50,15 @@ const CarrinhoSidebar = ({ visible, onHide, onFinalizar, finalizando }) => {
       setParceiros(Array.isArray(data) ? data : data.data || []);
     } catch (err) {
       console.error('Erro ao carregar parceiros', err);
+    }
+  };
+
+  const carregarVendedores = async () => {
+    try {
+      const { data } = await apiAuth().get('/usuarios');
+      setVendedores(Array.isArray(data) ? data : data.data || []);
+    } catch (err) {
+      console.error('Erro ao carregar vendedores', err);
     }
   };
 
@@ -67,7 +88,8 @@ const CarrinhoSidebar = ({ visible, onHide, onFinalizar, finalizando }) => {
       accept: () =>
         onFinalizar({
           id_cliente: clienteSelecionado.id,
-          id_parceiro: parceiroSelecionado?.id || null
+          id_parceiro: parceiroSelecionado?.id || null,
+          id_usuario: vendedorSelecionado?.id || user?.id
         })
     });
   };
@@ -121,6 +143,33 @@ const CarrinhoSidebar = ({ visible, onHide, onFinalizar, finalizando }) => {
           className="w-full"
         />
       </div>
+
+      {isAdmin ? (
+        <div className="mb-3">
+          <label className="block mb-1 font-medium">Vendedor</label>
+          <Dropdown
+            value={vendedorSelecionado}
+            onChange={(e) => setVendedorSelecionado(e.value)}
+            options={vendedores}
+            optionLabel="nome"
+            filter
+            showClear
+            placeholder="Selecione o vendedor"
+            className="w-full"
+          />
+        </div>
+      ) : (
+        <div className="mb-3">
+          <label className="block mb-1 font-medium">Vendedor</label>
+          <input
+            type="text"
+            value={user?.nome}
+            disabled
+            className="w-full p-inputtext"
+          />
+        </div>
+      )}
+
 
       {itens.length === 0 && <p>Nenhum item no carrinho.</p>}
 
