@@ -6,6 +6,7 @@ import apiAuth from '../services/apiAuth';
 import { isTokenValid } from '../helper';
 import { useAuth } from '../context/AuthContext';
 import '../Login.css';
+import InputWithIcon from "../components/InputWithIcon";
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -39,33 +40,31 @@ const Login = () => {
   return (
     <div className="auth-layout">
       <div className="auth-content">
-        <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-          <img src="/logo.png" alt="Logo" style={{ height: 100 }} />
+        <div style={{textAlign: 'center', marginBottom: '1rem'}}>
+          <img src="/logo.png" alt="Logo" style={{height: 100}}/>
         </div>
         <h2 className="text-center mb-4">Bem-vindo!!</h2>
-        {erro && <p style={{ color: 'red' }}>{erro}</p>}
+        {erro && <p style={{color: 'red'}}>{erro}</p>}
         <label htmlFor="email">E-mail</label>
-        <div className="input-icon">
-          <FiMail className="icon" />
-          <InputText
-            placeholder="Digite seu e-mail"
-            keyfilter="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
-        <label htmlFor="password">Senha</label>
-        <div className="input-icon">
-          <FiLock className="icon" />
-          <input
-            type="password"
-            id="password"
-            placeholder="Digite sua senha"
-            value={senha}
-            className="p-inputtext p-component p-filled"
-            onChange={(e) => setSenha(e.target.value)}
-          />
-        </div>
+        <InputWithIcon
+          icon={FiMail}
+          type="email"
+          name="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Digite seu e-mail"
+        />
+
+        <label htmlFor="senha">Senha</label>
+        <InputWithIcon
+          icon={FiLock}
+          type="password"
+          name="senha"
+          value={senha}
+          onChange={(e) => setSenha(e.target.value)}
+          placeholder="Digite sua senha"
+        />
+
         <button className="login-button" onClick={handleLogin}>Entrar</button>
       </div>
     </div>

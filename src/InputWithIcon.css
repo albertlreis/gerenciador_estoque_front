@@ -1,0 +1,47 @@
+.input-icon-wrapper {
+    margin-bottom: 1.5rem;
+}
+
+.input-label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+    color: #333;
+}
+
+.input-icon {
+    position: relative;
+    width: 100%;
+}
+
+.input-icon .icon {
+    position: absolute;
+    top: 50%;
+    left: 12px;
+    transform: translateY(-50%);
+    color: #999;
+    font-size: 1.1rem;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.input-icon .with-icon {
+    padding-left: 40px !important;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.input-error {
+    color: #dc3545;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+.has-error .with-icon {
+    border-color: #dc3545;
+}
+
+.text-danger {
+    color: #dc3545;
+}
