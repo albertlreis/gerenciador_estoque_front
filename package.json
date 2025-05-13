@@ -10,6 +10,7 @@
     "axios": "^1.8.4",
     "chart.js": "^4.4.9",
     "lucide-react": "^0.510.0",
+    "md5": "^2.3.0",
     "primeflex": "^4.0.0",
     "primeicons": "^7.0.0",
     "primereact": "^10.9.4",
