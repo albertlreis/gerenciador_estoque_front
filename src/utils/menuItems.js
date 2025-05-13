@@ -50,6 +50,12 @@ const menuItems = (navigate, hasPermission) => {
       key: 'produtos',
       icon: 'pi pi-fw pi-tags',
       items: [
+        hasPermission('produtos.visualizar') && {
+          label: 'Gerenciar Produtos',
+          key: 'produtos-gerenciar',
+          icon: 'pi pi-fw pi-pencil',
+          command: () => navigate('/produtos')
+        },
         hasPermission('produtos.catalogo') && {
           label: 'Catálogo',
           key: 'produtos-catalogo',
