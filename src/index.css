@@ -182,3 +182,7 @@ input, .p-inputtext {
 .bg-yellow-50 {
   background-color: #fffbea !important;
 }
+
+.card-kpi .p-card-content {
+  min-height: 80px;
+}
