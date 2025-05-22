@@ -1,96 +1,25 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Sidebar } from 'primereact/sidebar';
 import { Button } from 'primereact/button';
-import { Dropdown } from 'primereact/dropdown';
 import { ConfirmDialog } from 'primereact/confirmdialog';
 import { confirmDialog } from 'primereact/confirmdialog';
 import { useCarrinho } from '../context/CarrinhoContext';
 import api from '../services/apiEstoque';
-import {useAuth} from "../context/AuthContext";
-import apiAuth from "../services/apiAuth";
 
-const CarrinhoSidebar = ({ visible, onHide, onFinalizar, finalizando }) => {
+const CarrinhoSidebar = ({ visible, onHide }) => {
   const { itens, removerItem, limparCarrinho, carregarCarrinho } = useCarrinho();
-  const [clientes, setClientes] = useState([]);
-  const [parceiros, setParceiros] = useState([]);
-  const [clienteSelecionado, setClienteSelecionado] = useState(null);
-  const [parceiroSelecionado, setParceiroSelecionado] = useState(null);
-  const [vendedores, setVendedores] = useState([]);
-  const [vendedorSelecionado, setVendedorSelecionado] = useState(null);
-
-  const { user } = useAuth();
-  const isAdmin = user?.perfil === 'Administrador';
+  const [limpando, setLimpando] = useState(false);
 
   const total = itens.reduce((sum, item) => sum + Number(item.subtotal || 0), 0);
-
-  useEffect(() => {
-    if (visible) {
-      carregarClientes();
-      carregarParceiros();
-      if (isAdmin) {
-        carregarVendedores();
-      } else {
-        setVendedorSelecionado(user);
-      }
-    }
-  }, [visible]);
-
-  const carregarClientes = async () => {
-    try {
-      const { data } = await api.get('/clientes');
-      setClientes(Array.isArray(data) ? data : data.data || []);
-    } catch (err) {
-      console.error('Erro ao carregar clientes', err);
-    }
-  };
-
-  const carregarParceiros = async () => {
-    try {
-      const { data } = await api.get('/parceiros');
-      setParceiros(Array.isArray(data) ? data : data.data || []);
-    } catch (err) {
-      console.error('Erro ao carregar parceiros', err);
-    }
-  };
-
-  const carregarVendedores = async () => {
-    try {
-      const { data } = await apiAuth().get('/usuarios');
-      setVendedores(Array.isArray(data) ? data : data.data || []);
-    } catch (err) {
-      console.error('Erro ao carregar vendedores', err);
-    }
-  };
 
   const confirmarRemocaoItem = (itemId) => {
     confirmDialog({
       message: 'Deseja remover este item do carrinho?',
-      header: 'Confirmação',
+      header: 'Remover Item',
       icon: 'pi pi-trash',
       acceptLabel: 'Sim',
       rejectLabel: 'Cancelar',
-      accept: () => removerItem(itemId)
-    });
-  };
-
-  const confirmarFinalizacao = () => {
-    if (!clienteSelecionado) {
-      alert('Selecione um cliente antes de finalizar o pedido.');
-      return;
-    }
-
-    confirmDialog({
-      message: 'Tem certeza que deseja finalizar este pedido?',
-      header: 'Finalizar Pedido',
-      icon: 'pi pi-check-circle',
-      acceptLabel: 'Sim',
-      rejectLabel: 'Cancelar',
-      accept: () =>
-        onFinalizar({
-          id_cliente: clienteSelecionado.id,
-          id_parceiro: parceiroSelecionado?.id || null,
-          id_usuario: vendedorSelecionado?.id || user?.id
-        })
+      accept: () => removerItem(itemId),
     });
   };
 
@@ -101,116 +30,88 @@ const CarrinhoSidebar = ({ visible, onHide, onFinalizar, finalizando }) => {
     }
 
     try {
-      await api.post('/carrinho', {
+      await api.post('/carrinho-itens', {
+        id_carrinho: item.id_carrinho,
         id_variacao: item.id_variacao,
         quantidade: novaQtd,
         preco_unitario: Number(item.preco_unitario),
       });
-      await carregarCarrinho();
+      await carregarCarrinho(item.id_carrinho);
     } catch (err) {
       console.error('Erro ao atualizar quantidade', err);
     }
   };
 
+  const handleLimparCarrinho = () => {
+    confirmDialog({
+      message: 'Tem certeza que deseja limpar o carrinho?',
+      header: 'Limpar Carrinho',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sim',
+      rejectLabel: 'Cancelar',
+      accept: async () => {
+        setLimpando(true);
+        await limparCarrinho();
+        setLimpando(false);
+      }
+    });
+  };
+
   return (
-    <Sidebar visible={visible} onHide={onHide} position="right" showCloseIcon>
-      <h3>Carrinho</h3>
+    <Sidebar visible={visible} onHide={onHide} position="right" showCloseIcon style={{ width: '400px' }}>
+      <h3 className="mb-3 border-bottom pb-2">Carrinho</h3>
 
-      <div className="mb-3">
-        <label className="block mb-1 font-medium">Cliente <span className="text-red-500">*</span></label>
-        <Dropdown
-          value={clienteSelecionado}
-          onChange={(e) => setClienteSelecionado(e.value)}
-          options={clientes}
-          optionLabel="nome"
-          filter
-          showClear
-          placeholder="Selecione o cliente"
-          className="w-full"
-        />
-      </div>
-
-      <div className="mb-3">
-        <label className="block mb-1 font-medium">Parceiro (opcional)</label>
-        <Dropdown
-          value={parceiroSelecionado}
-          onChange={(e) => setParceiroSelecionado(e.value)}
-          options={parceiros}
-          optionLabel="nome"
-          filter
-          showClear
-          placeholder="Selecione o parceiro"
-          className="w-full"
-        />
-      </div>
-
-      {isAdmin ? (
-        <div className="mb-3">
-          <label className="block mb-1 font-medium">Vendedor</label>
-          <Dropdown
-            value={vendedorSelecionado}
-            onChange={(e) => setVendedorSelecionado(e.value)}
-            options={vendedores}
-            optionLabel="nome"
-            filter
-            showClear
-            placeholder="Selecione o vendedor"
-            className="w-full"
-          />
+      {itens.length === 0 ? (
+        <div className="text-center text-gray-500 mt-5">
+          <i className="pi pi-shopping-cart" style={{ fontSize: '2rem' }}></i>
+          <p className="mt-2">Nenhum item no carrinho.</p>
         </div>
       ) : (
-        <div className="mb-3">
-          <label className="block mb-1 font-medium">Vendedor</label>
-          <input
-            type="text"
-            value={user?.nome}
-            disabled
-            className="w-full p-inputtext"
-          />
-        </div>
+        itens.map((item) => (
+          <div key={item.id} className="mb-4 border-bottom pb-2">
+            <div className="font-semibold mb-1">{item.variacao?.produto?.nome || 'Produto'}</div>
+            <div className="text-sm text-gray-600 mb-1">{item.variacao?.descricao || 'Variação'}</div>
+
+            {/* Atributos como badges */}
+            {Array.isArray(item.variacao?.atributos) && item.variacao.atributos.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {item.variacao.atributos.map((attr, idx) => (
+                  <span key={idx} className="text-xs px-2 py-1 bg-blue-100 border-round">
+                    {attr.nome}: {attr.valor}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Medidas do produto */}
+            {item.variacao?.produto && (
+              <div className="text-xs text-gray-600 mb-2">
+                MED: {item.variacao.produto.largura} x {item.variacao.produto.profundidade} x {item.variacao.produto.altura} cm
+              </div>
+            )}
+
+            <div className="flex align-items-center gap-2">
+              <Button icon="pi pi-minus" text onClick={() => atualizarQuantidadeItem(item, item.quantidade - 1)} />
+              <span className="font-medium">{item.quantidade}</span>
+              <Button icon="pi pi-plus" text onClick={() => atualizarQuantidadeItem(item, item.quantidade + 1)} />
+              <span className="ml-2 text-sm">x R$ {Number(item.preco_unitario).toFixed(2)}</span>
+              <Button icon="pi pi-trash" className="p-button-text p-button-danger ml-auto" onClick={() => confirmarRemocaoItem(item.id)} />
+            </div>
+          </div>
+        ))
       )}
 
-
-      {itens.length === 0 && <p>Nenhum item no carrinho.</p>}
-
-      {itens.map((item) => (
-        <div key={item.id} className="mb-3 border-bottom pb-2">
-          <div><strong>{item.variacao?.nome || 'Variação'}</strong></div>
-          <div className="flex align-items-center gap-2 mt-1">
-            <Button icon="pi pi-minus" text onClick={() => atualizarQuantidadeItem(item, item.quantidade - 1)} />
-            <span>{item.quantidade}</span>
-            <Button icon="pi pi-plus" text onClick={() => atualizarQuantidadeItem(item, item.quantidade + 1)} />
-            <span>x R$ {Number(item.preco_unitario).toFixed(2)}</span>
-          </div>
-        </div>
-      ))}
-
       <hr />
-      <div><strong>Total: R$ {total.toFixed(2)}</strong></div>
+      <div className="text-right font-bold text-lg">Total: R$ {total.toFixed(2)}</div>
 
-      <div className="mt-3 flex gap-2">
-        <Button
-          label="Finalizar"
-          icon="pi pi-check"
-          loading={finalizando}
-          disabled={itens.length === 0 || finalizando}
-          onClick={confirmarFinalizacao}
-        />
+      <div className="mt-4 flex gap-2 justify-end">
         <Button
           label="Limpar"
           icon="pi pi-trash"
           severity="danger"
-          disabled={itens.length === 0 || finalizando}
-          onClick={() => {
-            confirmDialog({
-              message: 'Tem certeza que deseja limpar o carrinho?',
-              header: 'Confirmação',
-              icon: 'pi pi-exclamation-triangle',
-              acceptLabel: 'Sim',
-              rejectLabel: 'Cancelar',
-              accept: limparCarrinho
-            });
-          }}
+          disabled={itens.length === 0 || limpando}
+          loading={limpando}
+          onClick={handleLimparCarrinho}
         />
       </div>
 

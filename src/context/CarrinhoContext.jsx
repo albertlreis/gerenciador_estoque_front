@@ -4,72 +4,99 @@ import api from '../services/apiEstoque';
 const CarrinhoContext = createContext();
 
 export const CarrinhoProvider = ({ children }) => {
+  const [carrinhos, setCarrinhos] = useState([]);
+  const [carrinhoAtual, setCarrinhoAtual] = useState(null);
   const [itens, setItens] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const carregarCarrinho = async () => {
-    setLoading(true);
-    try {
-      const { data } = await api.get('/carrinho');
-      setItens(data.itens || data || []);
-    } catch (err) {
-      console.error('Erro ao carregar carrinho:', err);
-    } finally {
-      setLoading(false);
-    }
+  const listarCarrinhos = async () => {
+    const { data } = await api.get('/carrinhos');
+    setCarrinhos(data);
   };
 
-  const adicionarItem = async (novoItem) => {
-    try {
-      const existente = itens.find(i => i.id_variacao === novoItem.id_variacao);
-      const quantidade = existente ? existente.quantidade + novoItem.quantidade : novoItem.quantidade;
+  const carregarCarrinho = async (id) => {
+    const { data } = await api.get(`/carrinhos/${id}`);
+    setCarrinhoAtual(data);
+    setItens(data.itens);
+  };
 
-      await api.post('/carrinho', {
-        ...novoItem,
-        quantidade,
-        preco_unitario: Number(novoItem.preco_unitario),
-      });
+  const criarCarrinho = async (id_cliente) => {
+    const { data } = await api.post('/carrinhos', { id_cliente });
+    await carregarCarrinho(data.id);
+    await listarCarrinhos();
+  };
 
-      await carregarCarrinho();
-    } catch (err) {
-      console.error('Erro ao adicionar item ao carrinho:', err);
-    }
+  const atualizarCarrinho = async (id, dados) => {
+    const { data } = await api.put(`/carrinhos/${id}`, dados);
+    setCarrinhoAtual(data);
+  };
+
+  const adicionarItem = async ({ id_variacao, quantidade, preco_unitario }) => {
+    if (!carrinhoAtual?.id) return;
+
+    await api.post('/carrinho-itens', {
+      id_carrinho: carrinhoAtual.id,
+      id_variacao,
+      quantidade,
+      preco_unitario
+    });
+    await carregarCarrinho(carrinhoAtual.id);
   };
 
   const removerItem = async (id) => {
-    try {
-      await api.delete(`/carrinho/${id}`);
-      await carregarCarrinho();
-    } catch (err) {
-      console.error('Erro ao remover item do carrinho:', err);
-    }
+    await api.delete(`/carrinho-itens/${id}`);
+    await carregarCarrinho(carrinhoAtual.id);
   };
 
   const limparCarrinho = async () => {
-    try {
-      await api.delete('/carrinho');
-      await carregarCarrinho();
-    } catch (err) {
-      console.error('Erro ao limpar carrinho:', err);
-    }
+    if (!carrinhoAtual?.id) return;
+    await api.delete(`/carrinho-itens/limpar/${carrinhoAtual.id}`);
+    await carregarCarrinho(carrinhoAtual.id);
+  };
+
+  const finalizarPedido = async ({ id_parceiro, observacoes }) => {
+    const { data } = await api.post('/pedidos', {
+      id_carrinho: carrinhoAtual.id,
+      id_cliente: carrinhoAtual.id_cliente,
+      id_parceiro,
+      observacoes
+    });
+    setCarrinhoAtual(null);
+    setItens([]);
+    await listarCarrinhos();
+    return data;
+  };
+
+  const cancelarCarrinho = async () => {
+    if (!carrinhoAtual?.id) return;
+    await api.post(`/carrinhos/${carrinhoAtual.id}/cancelar`);
+    setCarrinhoAtual(null);
+    setItens([]);
+    await listarCarrinhos();
   };
 
   const quantidadeTotal = itens.reduce((sum, item) => sum + Number(item.quantidade || 0), 0);
 
   useEffect(() => {
-    carregarCarrinho();
+    listarCarrinhos();
   }, []);
 
   return (
     <CarrinhoContext.Provider
       value={{
+        carrinhos,
+        carrinhoAtual,
         itens,
         loading,
+        criarCarrinho,
+        carregarCarrinho,
+        atualizarCarrinho,
         adicionarItem,
         removerItem,
         limparCarrinho,
-        carregarCarrinho,
-        quantidadeTotal,
+        finalizarPedido,
+        cancelarCarrinho,
+        quantidadeTotal
       }}
     >
       {children}
