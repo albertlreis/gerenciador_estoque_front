@@ -67,16 +67,6 @@ const FiltroLateral = ({ filtros, onChange, disabled = false }) => {
       <div className="p-3 surface-card shadow-2 border-round">
         <h4 className="mb-4">Filtrar por</h4>
 
-        {/* Ativos */}
-        <div className="mb-4 border-bottom-1 surface-border pb-3">
-          <h5 className="text-sm mb-2">Somente Ativos</h5>
-          <InputSwitch
-            checked={filtros.ativo === true}
-            onChange={(e) => onChange({ ativo: e.value ? true : null })}
-            disabled={disabled}
-          />
-        </div>
-
         {/* Outlet */}
         <div className="mb-4 border-bottom-1 surface-border pb-3">
           <h5 className="text-sm mb-2">Somente Outlet</h5>
