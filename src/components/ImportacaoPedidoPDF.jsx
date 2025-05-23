@@ -135,42 +135,16 @@ const ImportacaoPedidoPDF = () => {
         <>
           <Card title="Dados do Cliente" className="mt-4">
             <div className="p-grid p-fluid">
-              <div className="p-col-12 p-md-6">
-                <label>Nome</label>
-                <InputText value={cliente.nome || ''} onChange={(e) => onChangeCliente('nome', e.target.value)} />
-              </div>
-              <div className="p-col-12 p-md-6">
-                <label>Documento</label>
-                <InputText value={cliente.documento || ''} onChange={(e) => onChangeCliente('documento', e.target.value)} />
-              </div>
-              <div className="p-col-12 p-md-6">
-                <label>E-mail</label>
-                <InputText value={cliente.email || ''} onChange={(e) => onChangeCliente('email', e.target.value)} />
-              </div>
-              <div className="p-col-12 p-md-6">
-                <label>Telefone</label>
-                <InputText value={cliente.telefone || ''} onChange={(e) => onChangeCliente('telefone', e.target.value)} />
-              </div>
-              <div className="p-col-12">
-                <label>Endereço</label>
-                <InputText value={cliente.endereco || ''} onChange={(e) => onChangeCliente('endereco', e.target.value)} />
-              </div>
-              <div className="p-col-12 p-md-6">
-                <label>Bairro</label>
-                <InputText value={cliente.bairro || ''} onChange={(e) => onChangeCliente('bairro', e.target.value)} />
-              </div>
-              <div className="p-col-12 p-md-6">
-                <label>Cidade</label>
-                <InputText value={cliente.cidade || ''} onChange={(e) => onChangeCliente('cidade', e.target.value)} />
-              </div>
-              <div className="p-col-12 p-md-6">
-                <label>CEP</label>
-                <InputText value={cliente.cep || ''} onChange={(e) => onChangeCliente('cep', e.target.value)} />
-              </div>
-              <div className="p-col-12">
-                <label>Endereço de Entrega</label>
-                <InputText value={cliente.endereco_entrega || ''} onChange={(e) => onChangeCliente('endereco_entrega', e.target.value)} />
-              </div>
+              {[
+                ['nome', 'Nome'], ['documento', 'Documento'], ['email', 'E-mail'], ['telefone', 'Telefone'],
+                ['endereco', 'Endereço'], ['bairro', 'Bairro'], ['cidade', 'Cidade'], ['cep', 'CEP'],
+                ['endereco_entrega', 'Endereço de Entrega']
+              ].map(([field, label]) => (
+                <div className={`p-col-12 ${field === 'endereco' || field === 'endereco_entrega' ? '' : 'p-md-6'}`} key={field}>
+                  <label>{label}</label>
+                  <InputText value={cliente[field] || ''} onChange={(e) => onChangeCliente(field, e.target.value)} />
+                </div>
+              ))}
               <div className="p-col-12">
                 <label>Prazo de Entrega</label>
                 <InputTextarea value={cliente.prazo_entrega || ''} onChange={(e) => onChangeCliente('prazo_entrega', e.target.value)} rows={2} />
@@ -190,7 +164,7 @@ const ImportacaoPedidoPDF = () => {
               </div>
               <div className="p-col-12 p-md-4">
                 <label>Valor Total</label>
-                <InputNumber value={parseFloat(pedido.total || 0)} onValueChange={(e) => onChangePedido('total', e.value)} mode="currency" currency="BRL" />
+                <InputNumber value={pedido.total || 0} mode="currency" currency="BRL" locale="pt-BR" disabled />
               </div>
               <div className="p-col-12">
                 <label>Observações</label>
@@ -199,145 +173,112 @@ const ImportacaoPedidoPDF = () => {
             </div>
           </Card>
 
+          {pedido.parcelas?.length > 0 && (
+            <Card title="Parcelas" className="mt-4">
+              <DataTable value={pedido.parcelas}>
+                <Column field="descricao" header="Descrição" />
+                <Column field="vencimento" header="Vencimento" />
+                <Column field="forma" header="Forma de Pagamento" />
+                <Column
+                  field="valor"
+                  header="Valor"
+                  body={(row) =>
+                    Number(row.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                  }
+                />
+              </DataTable>
+            </Card>
+          )}
+
           <Card title="Produtos" className="mt-4">
-            <DataTable value={itens} editMode="row" dataKey="descricao_original" responsiveLayout="scroll" scrollable scrollHeight="400px">
+            <DataTable value={itens} editMode="row" dataKey="descricao" responsiveLayout="scroll" scrollable scrollHeight="400px">
               <Column field="descricao" header="Descrição Completa" style={{ minWidth: '250px' }} />
 
-              <Column
-                header="Cor"
-                editor={(options) => {
-                  const updated = [...itens];
-                  if (!updated[options.rowIndex].atributos) updated[options.rowIndex].atributos = {};
-                  return (
-                    <InputText
-                      value={options.rowData.atributos?.cor || ''}
-                      onChange={(e) => {
-                        updated[options.rowIndex].atributos.cor = e.target.value;
-                        setItens(updated);
-                      }}
-                    />
-                  );
-                }}
-              />
+              {/** Dicionário de rótulos para cabeçalhos legíveis */}
+              {(() => {
+                const atributoLabels = {
+                  cores: { cor: 'Cor', cor_do_ferro: 'Cor do Ferro', cor_inox: 'Cor Inox' },
+                  tecidos: { tecido: 'Tecido', tec: 'Tec' },
+                  acabamentos: { pesp: 'Pesponto', marmore: 'Mármore' },
+                  observacoes: { observacao: 'Observação', observacao_extra: 'Observação Extra' },
+                };
 
-              <Column
-                header="Tecido"
-                editor={(options) => {
-                  const updated = [...itens];
-                  if (!updated[options.rowIndex].atributos) updated[options.rowIndex].atributos = {};
-                  return (
-                    <InputText
-                      value={options.rowData.atributos?.tecido || ''}
-                      onChange={(e) => {
-                        updated[options.rowIndex].atributos.tecido = e.target.value;
-                        setItens(updated);
+                return Object.entries(itens[0]?.atributos || {}).flatMap(([grupo, campos]) =>
+                  Object.keys(campos || {}).map((campo) => (
+                    <Column
+                      key={`${grupo}_${campo}`}
+                      header={atributoLabels?.[grupo]?.[campo] ?? `${grupo} - ${campo}`}
+                      editor={(options) => {
+                        const updated = [...itens];
+                        if (!updated[options.rowIndex].atributos[grupo]) {
+                          updated[options.rowIndex].atributos[grupo] = {};
+                        }
+                        return (
+                          <InputText
+                            value={options.rowData.atributos[grupo]?.[campo] || ''}
+                            onChange={(e) => {
+                              updated[options.rowIndex].atributos[grupo][campo] = e.target.value;
+                              setItens(updated);
+                            }}
+                          />
+                        );
                       }}
+                      body={(row) => row.atributos?.[grupo]?.[campo] || '-'}
                     />
-                  );
-                }}
-              />
+                  ))
+                );
+              })()}
 
-              <Column
-                header="Medidas"
-                editor={(options) => {
-                  const updated = [...itens];
-                  if (!updated[options.rowIndex].atributos) updated[options.rowIndex].atributos = {};
-                  return (
-                    <InputText
-                      value={options.rowData.atributos?.medidas || ''}
-                      onChange={(e) => {
-                        updated[options.rowIndex].atributos.medidas = e.target.value;
-                        setItens(updated);
-                      }}
-                    />
-                  );
-                }}
-              />
+              {/** Campos fixos (medidas) com body e editor */}
+              {['largura', 'profundidade', 'altura'].map((chave) => (
+                <Column
+                  key={chave}
+                  header={chave.charAt(0).toUpperCase() + chave.slice(1)}
+                  body={(row) => row.fixos?.[chave] ?? '-'}
+                  editor={(options) => {
+                    const updated = [...itens];
+                    if (!updated[options.rowIndex].fixos) updated[options.rowIndex].fixos = {};
+                    return (
+                      <InputNumber
+                        value={options.rowData.fixos?.[chave] || null}
+                        onValueChange={(e) => {
+                          updated[options.rowIndex].fixos[chave] = e.value;
+                          setItens(updated);
+                        }}
+                        mode="decimal"
+                        minFractionDigits={0}
+                      />
+                    );
+                  }}
+                />
+              ))}
 
-              <Column
-                header="Pesponto"
-                editor={(options) => {
-                  const updated = [...itens];
-                  if (!updated[options.rowIndex].atributos) updated[options.rowIndex].atributos = {};
-                  return (
-                    <InputText
-                      value={options.rowData.atributos?.pesponto || ''}
-                      onChange={(e) => {
-                        updated[options.rowIndex].atributos.pesponto = e.target.value;
-                        setItens(updated);
-                      }}
-                    />
-                  );
-                }}
-              />
+              <Column field="quantidade" header="Qtd" editor={(options) => (
+                <InputNumber
+                  value={options.rowData.quantidade}
+                  onValueChange={(e) => onChangeItem(options.rowIndex, 'quantidade', e.value)}
+                  mode="decimal"
+                  minFractionDigits={0}
+                />
+              )} />
 
-              {/* Atributos Fixos */}
-              <Column
-                header="Altura (cm)"
-                editor={(options) => {
-                  const updated = [...itens];
-                  if (!updated[options.rowIndex].fixos) updated[options.rowIndex].fixos = {};
-                  return (
-                    <InputNumber
-                      value={options.rowData.fixos?.altura || null}
-                      onValueChange={(e) => {
-                        updated[options.rowIndex].fixos.altura = e.value;
-                        setItens(updated);
-                      }}
-                      mode="decimal"
-                      minFractionDigits={0}
-                    />
-                  );
-                }}
-              />
+              <Column field="valor" header="Valor Unit." editor={(options) => (
+                <InputNumber
+                  value={options.rowData.valor}
+                  onValueChange={(e) => onChangeItem(options.rowIndex, 'valor', e.value)}
+                  mode="currency"
+                  currency="BRL"
+                />
+              )} />
 
-              <Column
-                header="Largura (cm)"
-                editor={(options) => {
-                  const updated = [...itens];
-                  if (!updated[options.rowIndex].fixos) updated[options.rowIndex].fixos = {};
-                  return (
-                    <InputNumber
-                      value={options.rowData.fixos?.largura || null}
-                      onValueChange={(e) => {
-                        updated[options.rowIndex].fixos.largura = e.value;
-                        setItens(updated);
-                      }}
-                      mode="decimal"
-                      minFractionDigits={0}
-                    />
-                  );
-                }}
-              />
-
-              <Column
-                header="Profundidade (cm)"
-                editor={(options) => {
-                  const updated = [...itens];
-                  if (!updated[options.rowIndex].fixos) updated[options.rowIndex].fixos = {};
-                  return (
-                    <InputNumber
-                      value={options.rowData.fixos?.profundidade || null}
-                      onValueChange={(e) => {
-                        updated[options.rowIndex].fixos.profundidade = e.value;
-                        setItens(updated);
-                      }}
-                      mode="decimal"
-                      minFractionDigits={0}
-                    />
-                  );
-                }}
-              />
-
-              {/* Qtd e Valor */}
-              <Column field="quantidade" header="Qtd" editor={(options) => editorNumber(options, 'quantidade')} />
-              <Column field="valor" header="Valor Unit." editor={(options) => editorNumber(options, 'valor')} />
               <Column
                 header="Total"
-                body={(row) => (row.quantidade * row.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                body={(row) => (row.quantidade * row.valor).toLocaleString('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL',
+                })}
               />
             </DataTable>
-
           </Card>
 
           <Button label="Salvar Pedido" icon="pi pi-check" className="mt-4" onClick={confirmarImportacao} />
