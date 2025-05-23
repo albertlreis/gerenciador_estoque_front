@@ -22,12 +22,14 @@ import ConfiguracaoOutlet from './pages/ConfiguracaoOutlet';
 import PrivateRoute from './routes/PrivateRoute';
 import PermissaoRoute from './routes/PermissaoRoute';
 import FinalizarPedido from "./pages/FinalizarPedido";
+import ImportacaoPedidos from "./pages/ImportacaoPedidos";
 
 const App = () => {
   return (
     <Routes>
       <Route path="/login" element={<Login/>}/>
       <Route path="/register" element={<Register/>}/>
+      <Route path="/pedidos/importar" element={<ImportacaoPedidos/>}/>
 
       <Route path="/" element={<PrivateRoute element={<HomePage/>}/>}/>
       <Route path="/clientes" element={<PrivateRoute
