@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useCarrinho } from '../context/CarrinhoContext';
-import { useBeforeUnload, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Dropdown } from 'primereact/dropdown';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { Button } from 'primereact/button';
@@ -35,6 +35,8 @@ const FinalizarPedido = () => {
   const [clientes, setClientes] = useState([]);
   const [parceiros, setParceiros] = useState([]);
   const [observacoes, setObservacoes] = useState('');
+  const [modoConsignacao, setModoConsignacao] = useState(false);
+  const [prazoConsignacao, setPrazoConsignacao] = useState(null);
 
   useEffect(() => {
     carregarCarrinho(id);
@@ -97,8 +99,11 @@ const FinalizarPedido = () => {
     try {
       await finalizarPedido({
         id_parceiro: carrinhoAtual?.id_parceiro,
-        observacoes
+        observacoes,
+        modo_consignacao: modoConsignacao,
+        prazo_consignacao: prazoConsignacao
       });
+
       toast.current.show({ severity: 'success', summary: 'Pedido finalizado!', detail: 'Pedido criado com sucesso.' });
       navigate('/pedidos');
     } catch (err) {
@@ -187,6 +192,35 @@ const FinalizarPedido = () => {
                 className="w-full"
               />
             </div>
+          </div>
+
+          <div className="grid mb-4 gap-3">
+            <div className="col-12">
+              <div className="flex align-items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="consignacao"
+                  checked={modoConsignacao}
+                  onChange={(e) => setModoConsignacao(e.target.checked)}
+                />
+                <label htmlFor="consignacao" className="font-medium">Pedido em consignação</label>
+              </div>
+            </div>
+
+            {modoConsignacao && (
+              <div className="col-12 md:col-6">
+                <label className="block mb-1 font-medium">Prazo para resposta</label>
+                <InputNumber
+                  value={prazoConsignacao}
+                  onValueChange={(e) => setPrazoConsignacao(e.value)}
+                  suffix=" dias"
+                  min={1}
+                  max={30}
+                  placeholder="Informe o prazo"
+                  className="w-full"
+                />
+              </div>
+            )}
           </div>
 
           <div className="mb-4">
