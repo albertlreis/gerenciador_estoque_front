@@ -7,16 +7,21 @@ import { Calendar } from 'primereact/calendar';
 import { Button } from 'primereact/button';
 import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
-import api from '../services/apiEstoque';
 import SakaiLayout from '../layouts/SakaiLayout';
+import api from '../services/apiEstoque';
 import ConsignacaoModal from '../components/consignacoes/ConsignacaoModal';
 
 const statusOptions = [
   { label: 'Pendente', value: 'pendente' },
-  { label: 'Aceita', value: 'aceita' },
-  { label: 'Devolvida', value: 'devolvida' },
-  { label: 'Vencida', value: 'vencida' },
+  { label: 'Comprado', value: 'comprado' },
+  { label: 'Devolvido', value: 'devolvido' },
+  { label: 'Vencido', value: 'vencido' }
 ];
+
+const formatarData = (data) => {
+  const [dia, mes, ano] = data.split('/');
+  return new Date(`${ano}-${mes}-${dia}`);
+};
 
 const Consignacoes = () => {
   const [consignacoes, setConsignacoes] = useState([]);
@@ -30,13 +35,23 @@ const Consignacoes = () => {
       const { data } = await api.get('/consignacoes', {
         params: {
           ...filtros,
-          data_ini: filtros.data_ini?.toISOString().split('T')[0],
-          data_fim: filtros.data_fim?.toISOString().split('T')[0],
           page: paginacao.page + 1,
           per_page: paginacao.rows
         }
       });
-      setConsignacoes(data.data);
+
+      const hoje = new Date();
+
+      // Marca como vencido no front se necessário
+      const atualizadas = data.data.map(c => {
+        if (c.status === 'pendente' && c.prazo_resposta) {
+          const prazo = formatarData(c.prazo_resposta);
+          if (prazo < hoje) return { ...c, status: 'vencido' };
+        }
+        return c;
+      });
+
+      setConsignacoes(atualizadas);
       setPaginacao(prev => ({ ...prev, totalRecords: data.total }));
     } catch (err) {
       toast.current.show({ severity: 'error', summary: 'Erro', detail: 'Falha ao carregar consignações' });
@@ -50,12 +65,19 @@ const Consignacoes = () => {
   const statusTemplate = (rowData) => {
     const cor = {
       pendente: 'warning',
-      aceita: 'success',
-      devolvida: 'info',
-      vencida: 'danger'
+      comprado: 'success',
+      devolvido: 'info',
+      vencido: 'danger'
     }[rowData.status] || 'secondary';
 
-    return <Tag value={rowData.status} severity={cor} />;
+    const label = {
+      pendente: 'Pendente',
+      comprado: 'Comprado',
+      devolvido: 'Devolvido',
+      vencido: 'Vencido'
+    }[rowData.status] || rowData.status;
+
+    return <Tag value={label} severity={cor} />;
   };
 
   return (
@@ -129,11 +151,10 @@ const Consignacoes = () => {
 
         <ConsignacaoModal
           id={modalId}
-          visible={modalId !== null}
+          visible={!!modalId}
           onHide={() => setModalId(null)}
           onAtualizar={fetchConsignacoes}
         />
-
       </div>
     </SakaiLayout>
   );
