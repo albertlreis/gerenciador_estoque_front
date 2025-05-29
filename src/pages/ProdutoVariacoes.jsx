@@ -109,7 +109,7 @@ const ProdutoVariacoes = () => {
         <DataTable value={variacoes} paginator rows={10} dataKey="id" responsiveLayout="scroll">
           <Column field="id" header="ID" sortable />
           <Column header="Produto" body={produtoBodyTemplate} sortable />
-          <Column field="sku" header="SKU" sortable />
+          <Column field="referencia" header="Referência" sortable />
           <Column field="nome" header="Nome" sortable />
           <Column header="Preço" body={(rowData) => valorBodyTemplate(rowData, 'preco')} sortable />
           <Column header="Custo" body={(rowData) => valorBodyTemplate(rowData, 'custo')} sortable />

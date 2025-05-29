@@ -8,7 +8,7 @@ const ProdutoVariacaoForm = ({ initialData = {}, produtos = [], onSubmit, onCanc
   // Valores iniciais: se houver edição, usa os dados passados; caso contrário, define valores padrão.
   const [variacao, setVariacao] = useState({
     id_produto: initialData.id_produto || null,
-    sku: initialData.sku || '',
+    referencia: initialData.referencia || '',
     nome: initialData.nome || '',
     preco: initialData.preco || 0,
     custo: initialData.custo || 0,
@@ -42,15 +42,15 @@ const ProdutoVariacaoForm = ({ initialData = {}, produtos = [], onSubmit, onCanc
           placeholder="Selecione um produto"
         />
       </div>
-      {/* SKU */}
+      {/* Referência */}
       <div className="p-field">
         <span className="p-float-label">
           <InputText
-            id="sku"
-            value={variacao.sku}
-            onChange={(e) => handleChange('sku', e.target.value)}
+            id="referencia"
+            value={variacao.referencia}
+            onChange={(e) => handleChange('referencia', e.target.value)}
           />
-          <label htmlFor="sku">SKU</label>
+          <label htmlFor="referencia">Referência</label>
         </span>
       </div>
       {/* Nome */}

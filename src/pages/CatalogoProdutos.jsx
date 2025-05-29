@@ -275,7 +275,7 @@ const CatalogoProdutos = () => {
                       {isSelecionada && <i className="pi pi-check-circle text-green-600 text-xl" />}
                     </div>
 
-                    <div className="text-xs text-gray-600 mb-1">SKU: {variacao.sku}</div>
+                    <div className="text-xs text-gray-600 mb-1">Referência: {variacao.referencia}</div>
                     <div className="text-xs mb-2">MED: {medidas} CM</div>
 
                     <div className="flex flex-wrap gap-2 mb-2">

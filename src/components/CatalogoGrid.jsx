@@ -77,7 +77,7 @@ const CatalogoGrid = ({ produtos, onAdicionarAoCarrinho }) => {
                   return (
                     <div key={idx} className="mb-3 border-bottom-1 surface-border pb-2">
                       <p><strong>Nome:</strong> {variacao.nome}</p>
-                      <p><strong>SKU:</strong> {variacao.sku || 'N/A'}</p>
+                      <p><strong>Referência:</strong> {variacao.referencia || 'N/A'}</p>
                       <p><strong>Preço:</strong>{' '}
                         {temDesconto ? (
                           <>

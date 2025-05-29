@@ -31,7 +31,7 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
   const [loading, setLoading] = useState(false);
   const [totalSize, setTotalSize] = useState(0);
   const [variacoes, setVariacoes] = useState(initialData.variacoes || [
-    { nome: '', preco: '', custo: '', sku: '', codigo_barras: '', atributos: [] }
+    { nome: '', preco: '', custo: '', referencia: '', codigo_barras: '', atributos: [] }
   ]);
 
   const toastRef = useRef(null);
@@ -62,7 +62,7 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
   }, [categorias, idCategoria]);
 
   const addVariacao = () => {
-    setVariacoes([...variacoes, { nome: '', preco: '', custo: '', sku: '', codigo_barras: '', atributos: [] }]);
+    setVariacoes([...variacoes, { nome: '', preco: '', custo: '', referencia: '', codigo_barras: '', atributos: [] }]);
   };
 
   const updateVariacao = (index, field, value) => {
@@ -211,8 +211,8 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
                     <InputText value={v.custo} onChange={(e) => updateVariacao(i, 'custo', e.target.value)} />
                   </div>
                   <div className="field md:col-6">
-                    <label>SKU</label>
-                    <InputText value={v.sku} onChange={(e) => updateVariacao(i, 'sku', e.target.value)} />
+                    <label>Referência</label>
+                    <InputText value={v.referencia} onChange={(e) => updateVariacao(i, 'referencia', e.target.value)} />
                   </div>
                   <div className="field md:col-5">
                     <label>Código de Barras</label>

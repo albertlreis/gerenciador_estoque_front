@@ -17,8 +17,8 @@ export const formatarNomeVariacao = (produto, variacao) => {
     partes.push(`* ${chave}: ${valor}`);
   });
 
-  // SKU ou código
-  if (variacao.sku) partes.push(`* SKU: ${variacao.sku.toUpperCase()}`);
+  // Referência ou código
+  if (variacao.referencia) partes.push(`* Referência: ${variacao.referencia.toUpperCase()}`);
 
   // Medidas
   const largura = produto.largura ? parseFloat(produto.largura) : null;
