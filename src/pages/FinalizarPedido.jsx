@@ -37,6 +37,7 @@ const FinalizarPedido = () => {
   const [observacoes, setObservacoes] = useState('');
   const [modoConsignacao, setModoConsignacao] = useState(false);
   const [prazoConsignacao, setPrazoConsignacao] = useState(null);
+  const [itensEmFalta, setItensEmFalta] = useState([]);
 
   useEffect(() => {
     carregarCarrinho(id);
@@ -63,6 +64,12 @@ const FinalizarPedido = () => {
   const fetchParceiros = async () => {
     const { data } = await api.get('/parceiros');
     setParceiros(data);
+  };
+
+  const verificarEstoqueInsuficiente = () => {
+    return itens.filter(
+      (item) => (item.variacao?.estoque_total ?? 0) < item.quantidade
+    );
   };
 
   const handleAtualizarQuantidade = async (item, novaQtd) => {
@@ -96,6 +103,21 @@ const FinalizarPedido = () => {
   };
 
   const handleFinalizar = async () => {
+    if (modoConsignacao) {
+      const faltando = verificarEstoqueInsuficiente();
+
+      if (faltando.length > 0) {
+        toast.current.show({
+          severity: 'warn',
+          summary: 'Não é possível finalizar',
+          detail: 'Há itens sem estoque suficiente para consignação.',
+          life: 5000,
+        });
+        setItensEmFalta(faltando.map((i) => i.id));
+        return;
+      }
+    }
+
     try {
       await finalizarPedido({
         id_parceiro: carrinhoAtual?.id_parceiro,
@@ -156,8 +178,8 @@ const FinalizarPedido = () => {
                     acceptLabel: 'Sim',
                     rejectLabel: 'Cancelar',
                     accept: () => {
-                      atualizarCarrinho(carrinhoAtual.id, {id_cliente: novoId});
-                      toast.current.show({severity: 'success', summary: 'Cliente alterado'});
+                      atualizarCarrinho(carrinhoAtual.id, { id_cliente: novoId });
+                      toast.current.show({ severity: 'success', summary: 'Cliente alterado' });
                     }
                   });
                 }}
@@ -183,8 +205,8 @@ const FinalizarPedido = () => {
                     acceptLabel: 'Sim',
                     rejectLabel: 'Cancelar',
                     accept: () => {
-                      atualizarCarrinho(carrinhoAtual.id, {id_parceiro: novoId});
-                      toast.current.show({severity: 'success', summary: 'Parceiro alterado'});
+                      atualizarCarrinho(carrinhoAtual.id, { id_parceiro: novoId });
+                      toast.current.show({ severity: 'success', summary: 'Parceiro alterado' });
                     }
                   });
                 }}
@@ -201,7 +223,28 @@ const FinalizarPedido = () => {
                   type="checkbox"
                   id="consignacao"
                   checked={modoConsignacao}
-                  onChange={(e) => setModoConsignacao(e.target.checked)}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+
+                    if (checked) {
+                      const faltando = verificarEstoqueInsuficiente();
+
+                      if (faltando.length > 0) {
+                        setItensEmFalta(faltando.map((i) => i.id));
+
+                        toast.current.show({
+                          severity: 'warn',
+                          summary: 'Estoque insuficiente',
+                          detail: 'Alguns itens não possuem estoque disponível. Corrija antes de ativar consignação.',
+                          life: 5000,
+                        });
+                        return;
+                      }
+                    }
+
+                    setItensEmFalta([]);
+                    setModoConsignacao(checked);
+                  }}
                 />
                 <label htmlFor="consignacao" className="font-medium">Pedido em consignação</label>
               </div>
@@ -242,15 +285,19 @@ const FinalizarPedido = () => {
               itens.map((item) => {
                 const estoqueDisponivel = item.variacao?.estoque_total ?? 0;
                 const emFalta = estoqueDisponivel < item.quantidade;
+                const emFaltaNoConsignado = itensEmFalta.includes(item.id);
 
                 return (
-                  <div key={item.id} className="grid border-bottom pb-4 mb-4">
+                  <div
+                    key={item.id}
+                    className={`grid border-bottom pb-4 mb-4 transition-all duration-300 ${emFaltaNoConsignado ? 'border-red-500 bg-red-50' : ''}`}
+                  >
                     <div className="col-12 md:col-3 flex justify-content-center">
                       <img
                         src={item.variacao?.produto?.imagem_principal?.url || '/placeholder.jpg'}
                         alt={item.variacao?.nome_completo || 'Produto'}
                         className="shadow-1 border-round"
-                        style={{width: '100%', objectFit: 'cover'}}
+                        style={{ width: '100%', objectFit: 'cover' }}
                       />
                     </div>
 
@@ -258,7 +305,6 @@ const FinalizarPedido = () => {
                       <div className="font-medium text-lg mb-1">{item.variacao?.nome_completo || 'Produto'}</div>
                       <div className="text-sm text-gray-600 mb-2">{item.variacao?.descricao}</div>
 
-                      {/* Atributos como badges */}
                       {Array.isArray(item.variacao?.atributos) && item.variacao.atributos.length > 0 && (
                         <div className="flex flex-wrap gap-2 mb-2">
                           {item.variacao.atributos.map((attr, idx) => (
@@ -278,7 +324,7 @@ const FinalizarPedido = () => {
                           buttonLayout="horizontal"
                           decrementButtonClassName="p-button-text"
                           incrementButtonClassName="p-button-text"
-                          inputStyle={{width: 60}}
+                          inputStyle={{ width: 60 }}
                         />
                         <Button
                           icon="pi pi-trash"
@@ -312,7 +358,6 @@ const FinalizarPedido = () => {
               })
             )}
           </div>
-
         </div>
 
         <div className="col-12 md:col-4">
