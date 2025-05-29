@@ -10,25 +10,41 @@ export const CarrinhoProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
 
   const listarCarrinhos = async () => {
-    const { data } = await api.get('/carrinhos');
-    setCarrinhos(data);
+    try {
+      const { data } = await api.get('/carrinhos');
+      setCarrinhos(data);
+    } catch (e) {
+      return null;
+    }
   };
 
   const carregarCarrinho = async (id) => {
-    const { data } = await api.get(`/carrinhos/${id}`);
-    setCarrinhoAtual(data);
-    setItens(data.itens);
+    try {
+      const { data } = await api.get(`/carrinhos/${id}`);
+      setCarrinhoAtual(data);
+      setItens(data.itens);
+    } catch (e) {
+      return null;
+    }
   };
 
   const criarCarrinho = async (id_cliente) => {
-    const { data } = await api.post('/carrinhos', { id_cliente });
-    await carregarCarrinho(data.id);
-    await listarCarrinhos();
+    try {
+      const { data } = await api.post('/carrinhos', { id_cliente });
+      await carregarCarrinho(data.id);
+      await listarCarrinhos();
+    } catch (e) {
+      return null;
+    }
   };
 
   const atualizarCarrinho = async (id, dados) => {
-    const { data } = await api.put(`/carrinhos/${id}`, dados);
-    setCarrinhoAtual(data);
+    try {
+      const { data } = await api.put(`/carrinhos/${id}`, dados);
+      setCarrinhoAtual(data);
+    } catch (e) {
+      return null;
+    }
   };
 
   const adicionarItem = async ({ id_variacao, quantidade, preco_unitario }) => {
