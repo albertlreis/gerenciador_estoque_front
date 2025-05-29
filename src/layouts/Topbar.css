@@ -68,3 +68,12 @@
     border-radius: 50%;
     object-fit: cover;
 }
+
+.layout-topbar-user {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    color: #333;
+}

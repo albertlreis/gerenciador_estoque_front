@@ -4,24 +4,22 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Topbar from './Topbar';
 import menuItems from '../utils/menuItems';
+import './SakaiLayout.css';
 
 const SakaiLayout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, hasPermission, logout } = useAuth();
+
   const [expandedKeys, setExpandedKeys] = useState({});
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-
   const userHasToggled = useRef(false);
 
   useEffect(() => {
     if (!userHasToggled.current) {
-      if (location.pathname.startsWith('/usuarios') ||
-        location.pathname.startsWith('/perfis') ||
-        location.pathname.startsWith('/permissoes')) {
+      if (location.pathname.startsWith('/usuarios') || location.pathname.startsWith('/perfis') || location.pathname.startsWith('/permissoes')) {
         setExpandedKeys({ acesso: true });
-      } else if (location.pathname.startsWith('/catalogo') ||
-        location.pathname.startsWith('/produtos-outlet') ||
-        location.pathname.startsWith('/configuracao-outlet')) {
+      } else if (location.pathname.startsWith('/catalogo') || location.pathname.startsWith('/produtos-outlet') || location.pathname.startsWith('/configuracao-outlet')) {
         setExpandedKeys({ produtos: true });
       } else {
         setExpandedKeys({});
@@ -29,30 +27,20 @@ const SakaiLayout = ({ children }) => {
     }
   }, [location]);
 
-  const handleExpandedKeysChange = (e) => {
-    userHasToggled.current = true;
-    setExpandedKeys(e.value);
-  };
-
   const toggleSidebar = () => {
     setIsSidebarCollapsed((prev) => !prev);
   };
 
-  const handleLogout = async () => {
-    try {
-      window.location.reload();
-    } finally {
-      localStorage.removeItem('user');
-      navigate('/login');
-    }
+  const handleLogout = () => {
+    logout(); // useAuth deve cuidar de limpar o token e redirecionar
+    navigate('/login');
   };
 
-  const { hasPermission } = useAuth();
   const sidebarItems = menuItems(navigate, hasPermission);
 
   return (
     <div className="layout-wrapper">
-      <Topbar onToggleMenu={toggleSidebar} handleLogout={handleLogout} />
+      <Topbar onToggleMenu={toggleSidebar} usuario={user} onLogout={handleLogout} />
       <div className="layout-container">
         <div
           className={`layout-sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}
@@ -62,7 +50,10 @@ const SakaiLayout = ({ children }) => {
             model={sidebarItems}
             style={{ width: '100%' }}
             expandedKeys={expandedKeys}
-            onExpandedKeysChange={handleExpandedKeysChange}
+            onExpandedKeysChange={(e) => {
+              userHasToggled.current = true;
+              setExpandedKeys(e.value);
+            }}
             multiple
           />
         </div>

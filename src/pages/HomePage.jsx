@@ -30,11 +30,6 @@ const HomePage = () => {
     loadingKpis, loadingPedidos, loadingEstatisticas, loadingStatus
   } = useDashboardData();
 
-  const handleLogout = async () => {
-    logout();
-    navigate('/login', { replace: true });
-  };
-
   return (
     <SakaiLayout>
       <div className="p-4">
@@ -46,7 +41,7 @@ const HomePage = () => {
               <Tag value={user?.email} severity="info" />
             </div>
           </div>
-          <Button icon={<LogOut size={18} />} label="Sair" className="p-button-danger" onClick={handleLogout} />
+          <Button icon={<LogOut size={18} />} label="Sair" className="p-button-danger" onClick={logout} />
         </div>
 
         <KpiCards
