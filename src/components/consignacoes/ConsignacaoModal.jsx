@@ -14,10 +14,18 @@ const statusTag = (status) => {
     vencida: 'danger'
   }[status] || 'secondary';
 
-  return <Tag value={status} severity={cor} />;
+  const label = {
+    pendente: 'Pendente',
+    comprado: 'Comprado',
+    devolvido: 'Devolvido',
+    vencido: 'Vencido'
+  }[status] || status;
+
+  return <Tag value={label} severity={cor} />;
+
 };
 
-const ConsignacaoModal = ({ id, visible, onHide }) => {
+const ConsignacaoModal = ({ id, visible, onHide, onAtualizar }) => {
   const [consignacao, setConsignacao] = useState(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -42,13 +50,14 @@ const ConsignacaoModal = ({ id, visible, onHide }) => {
   const atualizarStatus = async (status) => {
     setSaving(true);
     try {
-      await api.put(`/consignacoes/${id}`, { status });
+      await api.patch(`/consignacoes/${id}`, { status });
       toastRef.current.show({ severity: 'success', summary: 'Sucesso', detail: `Status alterado para "${status}"` });
-      await carregar();
     } catch (e) {
       toastRef.current.show({ severity: 'error', summary: 'Erro', detail: 'Falha ao atualizar status' });
     } finally {
       setSaving(false);
+      onAtualizar?.();
+      onHide();
     }
   };
 
@@ -59,14 +68,14 @@ const ConsignacaoModal = ({ id, visible, onHide }) => {
         icon="pi pi-undo"
         severity="info"
         disabled={saving || consignacao?.status !== 'pendente'}
-        onClick={() => atualizarStatus('devolvida')}
+        onClick={() => atualizarStatus('devolvido')}
       />
       <Button
         label="Confirmar Compra"
         icon="pi pi-check"
         severity="success"
         disabled={saving || consignacao?.status !== 'pendente'}
-        onClick={() => atualizarStatus('aceita')}
+        onClick={() => atualizarStatus('comprado')}
       />
       <Button
         label="Fechar"
@@ -99,6 +108,9 @@ const ConsignacaoModal = ({ id, visible, onHide }) => {
             <div className="mb-3"><strong>Quantidade:</strong><p>{consignacao.quantidade}</p></div>
             <div className="mb-3"><strong>Data de Envio:</strong><p>{consignacao.data_envio}</p></div>
             <div className="mb-3"><strong>Prazo para Resposta:</strong><p>{consignacao.prazo_resposta}</p></div>
+            {consignacao.data_resposta && (
+              <div className="mb-3"><strong>Respondido em:</strong><p>{consignacao.data_resposta}</p></div>
+            )}
             <div className="mb-3"><strong>Status:</strong><p>{statusTag(consignacao.status)}</p></div>
             {consignacao.observacoes && (
               <div className="mb-3"><strong>Observações:</strong><p>{consignacao.observacoes}</p></div>

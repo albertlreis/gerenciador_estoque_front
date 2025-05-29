@@ -30,6 +30,8 @@ const Consignacoes = () => {
       const { data } = await api.get('/consignacoes', {
         params: {
           ...filtros,
+          data_ini: filtros.data_ini?.toISOString().split('T')[0],
+          data_fim: filtros.data_fim?.toISOString().split('T')[0],
           page: paginacao.page + 1,
           per_page: paginacao.rows
         }
@@ -129,7 +131,9 @@ const Consignacoes = () => {
           id={modalId}
           visible={modalId !== null}
           onHide={() => setModalId(null)}
+          onAtualizar={fetchConsignacoes}
         />
+
       </div>
     </SakaiLayout>
   );
