@@ -14,8 +14,8 @@ import KpiCards from '../components/home/KpiCards';
 import ChartsSection from '../components/home/ChartsSection';
 import QuickLinks from '../components/home/QuickLinks';
 import UltimosPedidosCard from '../components/home/UltimosPedidosCard';
-import Avisos from '../components/home/Avisos';
 import ModaisDashboard from '../components/home/ModaisDashboard';
+import ConsignacoesAlert from "../components/home/ConsignacoesAlert";
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -27,7 +27,8 @@ const HomePage = () => {
     modalKpi, exibirModalEstoque, periodo, tipoGrafico,
     setModalKpi, setExibirModalEstoque, setPeriodo, setTipoGrafico,
     handleAtualizarGrafico,
-    loadingKpis, loadingPedidos, loadingEstatisticas, loadingStatus
+    loadingKpis, loadingPedidos, loadingEstatisticas, loadingStatus,
+    consignacoesVencendo, loadingConsignacoes
   } = useDashboardData();
 
   return (
@@ -68,10 +69,13 @@ const HomePage = () => {
 
         <div className="grid">
           <div className="col-12 md:col-6">
-            <UltimosPedidosCard pedidos={ultimosPedidos} loading={loadingPedidos} navigate={navigate} />
+            <UltimosPedidosCard pedidos={ultimosPedidos} loading={loadingPedidos} navigate={navigate}/>
           </div>
           <div className="col-12 md:col-6">
-            <Avisos />
+            <ConsignacoesAlert
+              consignacoesVencendo={consignacoesVencendo}
+              loading={loadingConsignacoes}
+            />
           </div>
         </div>
 

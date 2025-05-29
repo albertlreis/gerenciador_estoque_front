@@ -23,6 +23,7 @@ import PrivateRoute from './routes/PrivateRoute';
 import PermissaoRoute from './routes/PermissaoRoute';
 import FinalizarPedido from "./pages/FinalizarPedido";
 import ImportacaoPedidos from "./pages/ImportacaoPedidos";
+import Consignacoes from "./pages/Consignacoes";
 
 const App = () => {
   return (
@@ -30,6 +31,7 @@ const App = () => {
       <Route path="/login" element={<Login/>}/>
       <Route path="/register" element={<Register/>}/>
       <Route path="/pedidos/importar" element={<ImportacaoPedidos/>}/>
+      <Route path="/consignacoes" element={<Consignacoes/>}/>
 
       <Route path="/" element={<PrivateRoute element={<HomePage/>}/>}/>
       <Route path="/clientes" element={<PrivateRoute

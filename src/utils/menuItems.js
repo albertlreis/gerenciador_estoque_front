@@ -73,6 +73,12 @@ const menuItems = (navigate, hasPermission) => {
           key: 'configurar-outlet',
           icon: 'pi pi-fw pi-cog',
           command: () => navigate('/configuracao-outlet')
+        },
+        hasPermission('produtos.importar') && {
+          label: 'Importar Produtos',
+          key: 'produtos-importar',
+          icon: 'pi pi-fw pi-pencil',
+          command: () => navigate('/produtos/importar')
         }
       ].filter(Boolean)
     },
@@ -82,6 +88,13 @@ const menuItems = (navigate, hasPermission) => {
       key: 'pedidos',
       icon: 'pi pi-fw pi-shopping-cart',
       command: () => navigate('/pedidos')
+    },
+
+    {
+      label: 'Consignações',
+      icon: 'pi pi-undo',
+      to: '/consignacoes',
+      command: () => navigate('/consignacoes')
     },
 
     hasPermission('depositos.visualizar') && {

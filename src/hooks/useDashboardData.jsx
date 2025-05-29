@@ -33,6 +33,9 @@ const useDashboardData = () => {
   const [periodo, setPeriodo] = useState(6);
   const [tipoGrafico, setTipoGrafico] = useState('bar');
 
+  const [consignacoesVencendo, setConsignacoesVencendo] = useState([]);
+  const [loadingConsignacoes, setLoadingConsignacoes] = useState(true);
+
   useEffect(() => {
     fetchKpis();
     fetchUltimosPedidos();
@@ -40,7 +43,20 @@ const useDashboardData = () => {
     fetchGraficoStatus();
     fetchEstoqueBaixo();
     fetchPedidosClientesMes();
+    carregarConsignacoesVencendo();
   }, []);
+
+  const carregarConsignacoesVencendo = async () => {
+    try {
+      const { data } = await apiEstoque.get('/consignacoes/vencendo');
+      setConsignacoesVencendo(data);
+    } catch (err) {
+      console.error('Erro ao buscar consignações vencendo', err);
+      setConsignacoesVencendo([]);
+    } finally {
+      setLoadingConsignacoes(false);
+    }
+  };
 
   const fetchPedidosClientesMes = async () => {
     try {
@@ -195,7 +211,9 @@ const useDashboardData = () => {
     loadingPedidos,
     loadingEstatisticas,
     loadingStatus,
-    loadingEstoqueBaixo
+    loadingEstoqueBaixo,
+    consignacoesVencendo,
+    loadingConsignacoes,
   };
 };
 
