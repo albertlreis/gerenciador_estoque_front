@@ -24,6 +24,7 @@ import PermissaoRoute from './routes/PermissaoRoute';
 import FinalizarPedido from "./pages/FinalizarPedido";
 import ImportacaoPedidos from "./pages/ImportacaoPedidos";
 import Consignacoes from "./pages/Consignacoes";
+import Configuracoes from "./pages/Configuracoes";
 
 const App = () => {
   return (
@@ -32,8 +33,9 @@ const App = () => {
       <Route path="/register" element={<Register/>}/>
       <Route path="/pedidos/importar" element={<ImportacaoPedidos/>}/>
       <Route path="/consignacoes" element={<Consignacoes/>}/>
+        <Route path="/configuracoes" element={<Configuracoes />} />
 
-      <Route path="/" element={<PrivateRoute element={<HomePage/>}/>}/>
+        <Route path="/" element={<PrivateRoute element={<HomePage/>}/>}/>
       <Route path="/clientes" element={<PrivateRoute
         element={<PermissaoRoute element={<Clientes/>} permissoes="clientes.visualizar"/>}/>}/>
       <Route path="/usuarios" element={<PrivateRoute

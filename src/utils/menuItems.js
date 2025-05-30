@@ -93,7 +93,6 @@ const menuItems = (navigate, hasPermission) => {
     {
       label: 'Consignações',
       icon: 'pi pi-undo',
-      to: '/consignacoes',
       command: () => navigate('/consignacoes')
     },
 
@@ -102,7 +101,14 @@ const menuItems = (navigate, hasPermission) => {
       key: 'depositos',
       icon: 'pi pi-fw pi-box',
       command: () => navigate('/depositos')
+    },
+
+    {
+      label: 'Configurações',
+      icon: 'pi pi-cog',
+      command: () => navigate('/configuracoes')
     }
+
   ].filter(Boolean);
 };
 
