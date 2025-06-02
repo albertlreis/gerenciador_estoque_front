@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Timeline } from 'primereact/timeline';
+import { format } from 'date-fns';
 import { Dialog } from 'primereact/dialog';
 import { Dropdown } from 'primereact/dropdown';
 import { InputTextarea } from 'primereact/inputtextarea';
@@ -25,6 +27,15 @@ const PedidoStatusDialog = ({ visible, onHide, pedido, onSalvo, toast }) => {
   const [status, setStatus] = useState(null);
   const [observacoes, setObservacoes] = useState('');
   const [loading, setLoading] = useState(false);
+  const [historico, setHistorico] = useState([]);
+
+  useEffect(() => {
+    if (visible && pedido?.id) {
+      api.get(`/pedidos/${pedido.id}/historico-status`).then(({ data }) => {
+        setHistorico(data);
+      });
+    }
+  }, [visible, pedido]);
 
   const salvar = async () => {
     if (!status) return;
@@ -56,6 +67,35 @@ const PedidoStatusDialog = ({ visible, onHide, pedido, onSalvo, toast }) => {
         <InputTextarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} rows={4} placeholder="Observações (opcional)" className="w-full" />
         <Button label="Salvar" icon="pi pi-save" loading={loading} onClick={salvar} />
       </div>
+
+      <Timeline
+        value={historico}
+        opposite={(item) => format(new Date(item.data_status), 'dd/MM/yyyy HH:mm')}
+        content={(item) => (
+          <div className="mb-3">
+            <div className="font-semibold">{item.label}</div>
+            {item.observacoes && <p className="text-sm text-gray-600">{item.observacoes}</p>}
+            {item.usuario && <span className="text-xs text-gray-500">Por: {item.usuario}</span>}
+          </div>
+        )}
+        marker={(item) => (
+          <span
+            className={`p-tag`}
+            style={{
+              backgroundColor: item.cor,
+              padding: '0.5rem',
+              borderRadius: '50%',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+      <i className={item.icone} style={{ color: 'white' }}></i>
+    </span>
+        )}
+        className="mt-4"
+      />
+
     </Dialog>
   );
 };

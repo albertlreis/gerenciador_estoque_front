@@ -9,6 +9,7 @@
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.8.4",
     "chart.js": "^4.4.9",
+    "date-fns": "^4.1.0",
     "framer-motion": "^12.11.0",
     "lucide-react": "^0.510.0",
     "md5": "^2.3.0",
