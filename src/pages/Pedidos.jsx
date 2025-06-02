@@ -12,6 +12,7 @@ import { Tag } from 'primereact/tag';
 import PedidosFiltro from '../components/PedidosFiltro';
 import ProdutosDetalhes from '../components/ProdutosDetalhes';
 import PedidosExportar from '../components/PedidosExportar';
+import PedidoStatusDialog from '../components/PedidoStatusDialog';
 import { usePedidos } from '../hooks/usePedidos';
 import { formatarReal } from '../utils/formatters';
 
@@ -42,6 +43,7 @@ export default function PedidosListagem() {
   const [pedidoSelecionado, setPedidoSelecionado] = useState(null);
 
   const { pedidos, total, paginaAtual, loading, fetchPedidos, setPaginaAtual } = usePedidos(filtros);
+  const [exibirDialogStatus, setExibirDialogStatus] = useState(false);
 
   useEffect(() => { fetchPedidos(1); }, []);
 
@@ -86,6 +88,20 @@ export default function PedidosListagem() {
         <Column header="Parceiro" body={(row) => row.parceiro?.nome ?? '-'} />
         <Column header="Total" body={(row) => formatarReal(row.valor_total)} />
         <Column field="status" header="Status" body={statusTemplate} />
+        <Column
+          header="Ações"
+          body={(row) => (
+            <Button
+              icon="pi pi-refresh"
+              severity="secondary"
+              onClick={() => {
+                setPedidoSelecionado(row);
+                setExibirDialogStatus(true);
+              }}
+              tooltip="Atualizar status"
+            />
+          )}
+        />
         <Column header="Produtos" body={(row) => (
           <Button icon="pi pi-eye" onClick={(e) => { setPedidoSelecionado(row); overlayRef.current.toggle(e); }} />
         )} />
@@ -94,6 +110,15 @@ export default function PedidosListagem() {
       <OverlayPanel ref={overlayRef} showCloseIcon dismissable>
         <ProdutosDetalhes pedido={pedidoSelecionado} />
       </OverlayPanel>
+      
+      <PedidoStatusDialog
+        visible={exibirDialogStatus}
+        onHide={() => setExibirDialogStatus(false)}
+        pedido={pedidoSelecionado}
+        toast={toast}
+        onSalvo={() => fetchPedidos(paginaAtual)}
+      />
+
     </div>
   );
 }
