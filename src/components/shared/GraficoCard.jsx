@@ -22,7 +22,7 @@ const GraficoCard = ({ titulo, tipo = 'bar', dados, opcoes, carregando, children
     <Card title={titulo} className="h-full">
       {children && <div className="mb-3">{children}</div>}
 
-      {carregando ? (
+      {carregando || !dados?.datasets?.length ? (
         <Skeleton height="360px" />
       ) : (
         <div style={chartContainerStyle}>

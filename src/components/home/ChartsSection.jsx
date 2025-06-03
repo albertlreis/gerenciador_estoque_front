@@ -6,13 +6,18 @@ import { defaultChartOptions } from '../../utils/chartOptions';
 const ChartsSection = ({
                          graficoPedidos,
                          graficoValores,
+                         graficoStatus,
                          carregandoGrafico,
+                         carregandoStatus,
                          periodo,
                          tipoGrafico,
                          setPeriodo,
                          setTipoGrafico,
                          handleAtualizarGrafico,
+                         perfil
                        }) => {
+  if (perfil !== 'admin') return null;
+
   return (
     <div className="grid">
       <div className="col-12 md:col-6">

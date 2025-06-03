@@ -3,11 +3,19 @@ import { Card } from 'primereact/card';
 import { Skeleton } from 'primereact/skeleton';
 import { motion } from 'framer-motion';
 
-const KpiCards = ({ kpis, setModalKpi, setExibirModalEstoque, loading }) => {
+/**
+ * Componente de KPIs dinâmicos baseado no perfil do usuário.
+ * @param {object} kpis - Dados dos indicadores.
+ * @param {string} perfil - "admin" ou "vendedor".
+ * @param {Function} setModalKpi - Controla exibição de modais de KPIs.
+ * @param {Function} setExibirModalEstoque - Controla exibição do modal de estoque.
+ * @param {boolean} loading - Indica se os dados estão carregando.
+ */
+const KpiCards = ({ kpis, perfil = 'Vendedor', setModalKpi, setExibirModalEstoque, loading }) => {
   if (loading) {
     return (
       <div className="grid mb-4">
-        {[...Array(8)].map((_, idx) => (
+        {[...Array(4)].map((_, idx) => (
           <div key={idx} className="col-12 md:col-3">
             <Skeleton height="6rem" className="mb-2" borderRadius="16px" />
           </div>
@@ -16,60 +24,62 @@ const KpiCards = ({ kpis, setModalKpi, setExibirModalEstoque, loading }) => {
     );
   }
 
+  const isAdmin = perfil === 'Administrador';
+
   const cards = [
     {
       title: 'Pedidos no mês',
       value: kpis.pedidosMes,
       icon: 'pi pi-shopping-cart',
       color: 'blue',
-      onClick: () => setModalKpi('pedidos'),
+      onClick: isAdmin ? () => setModalKpi?.('pedidos') : undefined
     },
     {
       title: 'Valor vendido',
       value: kpis.valorMes,
       icon: 'pi pi-dollar',
       color: 'green',
-      onClick: () => setModalKpi('pedidos'),
+      onClick: isAdmin ? () => setModalKpi?.('pedidos') : undefined
     },
     {
       title: 'Clientes únicos',
       value: kpis.clientesUnicos,
       icon: 'pi pi-users',
       color: 'purple',
-      onClick: () => setModalKpi('clientes'),
+      onClick: isAdmin ? () => setModalKpi?.('clientes') : undefined
     },
-    {
+    isAdmin && {
       title: 'Produtos em falta',
       value: kpis.estoqueBaixo,
       icon: 'pi pi-exclamation-triangle',
       color: 'orange',
-      onClick: () => setExibirModalEstoque(true),
+      onClick: () => setExibirModalEstoque?.(true)
     },
     {
       title: 'Ticket médio',
       value: kpis.ticketMedio,
       icon: 'pi pi-chart-line',
-      color: 'cyan',
+      color: 'cyan'
     },
-    {
+    isAdmin && {
       title: 'Confirmados',
       value: kpis.totalConfirmado,
       icon: 'pi pi-check',
-      color: 'teal',
+      color: 'teal'
     },
-    {
+    isAdmin && {
       title: 'Cancelados',
       value: kpis.totalCancelado,
       icon: 'pi pi-ban',
-      color: 'red',
+      color: 'red'
     },
-    {
+    isAdmin && {
       title: 'Rascunhos',
       value: kpis.totalRascunho,
       icon: 'pi pi-pencil',
-      color: 'yellow',
-    },
-  ];
+      color: 'yellow'
+    }
+  ].filter(Boolean);
 
   return (
     <div className="grid mb-4">

@@ -1,12 +1,19 @@
 import React from 'react';
 import { Card } from 'primereact/card';
 
-const QuickLinks = ({ hasPermission, navigate }) => {
-  const atalhos = [
-    { label: 'Catálogo de Produtos', route: '/produtos', permissao: 'ver_produtos', icon: 'pi pi-box' },
-    { label: 'Pedidos', route: '/pedidos', permissao: 'ver_pedidos', icon: 'pi pi-dollar' },
-    { label: 'Estoque', route: '/estoque', permissao: 'ver_estoque', icon: 'pi pi-inbox' },
+const QuickLinks = ({ hasPermission, navigate, perfil }) => {
+  const atalhosComuns = [
+    { label: 'Pedidos', route: '/pedidos', permissao: 'pedidos.visualizar', icon: 'pi pi-dollar' },
+    { label: 'Catálogo de Produtos', route: '/catalogo', permissao: 'produtos.catalogo', icon: 'pi pi-box' }
   ];
+
+  const atalhosAdmin = [
+    { label: 'Estoque', route: '/depositos', permissao: 'depositos.visualizar', icon: 'pi pi-inbox' },
+    { label: 'Usuários', route: '/usuarios', permissao: 'usuarios.visualizar', icon: 'pi pi-users' },
+    { label: 'Relatórios', route: '/relatorios', permissao: 'relatorios.visualizar', icon: 'pi pi-chart-bar' }
+  ];
+
+  const atalhos = perfil === 'Administrador' ? [...atalhosComuns, ...atalhosAdmin] : atalhosComuns;
 
   return (
     <div className="grid mb-4">

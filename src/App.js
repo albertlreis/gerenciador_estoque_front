@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import {Routes, Route} from 'react-router-dom';
 
 // Páginas públicas
 import Login from './pages/Login';
@@ -36,41 +36,51 @@ import PermissaoRoute from './routes/PermissaoRoute';
  * Wrapper para rotas com autenticação e permissão.
  */
 const renderProtectedRoute = (element, permissoes) => (
-  <PrivateRoute element={<PermissaoRoute element={element} permissoes={permissoes} />} />
+  <PrivateRoute element={<PermissaoRoute element={element} permissoes={permissoes}/>}/>
 );
 
 const App = () => {
   return (
     <Routes>
       {/* Rotas públicas */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/pedidos/importar" element={<ImportacaoPedidos />} />
-      <Route path="/consignacoes" element={<Consignacoes />} />
-      <Route path="/configuracoes" element={<Configuracoes />} />
-      <Route path="/acesso-negado" element={<AccessDeniedPage />} />
-      <Route path="*" element={<NotFoundPage />} />
+      <Route path="/login" element={<Login/>}/>
+      <Route path="/register" element={<Register/>}/>
+      <Route path="/pedidos/importar" element={<ImportacaoPedidos/>}/>
+      <Route path="/consignacoes" element={<Consignacoes/>}/>
+      <Route path="/configuracoes" element={<Configuracoes/>}/>
+      <Route path="/acesso-negado" element={<AccessDeniedPage/>}/>
+      <Route path="*" element={<NotFoundPage/>}/>
 
       {/* Página inicial protegida */}
-      <Route path="/" element={<PrivateRoute element={<HomePage />} />} />
+      <Route
+        path="/"
+        element={
+          <PrivateRoute
+            element={<PermissaoRoute element={<HomePage/>} permissoes="home.visualizar"/>}
+          />
+        }
+      />
 
       {/* Rotas protegidas por permissão */}
-      <Route path="/categorias" element={renderProtectedRoute(<Categorias />, 'categorias.visualizar')} />
-      <Route path="/clientes" element={renderProtectedRoute(<Clientes />, 'clientes.visualizar')} />
-      <Route path="/configuracao-outlet" element={renderProtectedRoute(<ConfiguracaoOutlet />, 'produtos.configurar_outlet')} />
-      <Route path="/depositos" element={renderProtectedRoute(<Depositos />, 'depositos.visualizar')} />
-      <Route path="/depositos/:depositoId/movimentacoes" element={renderProtectedRoute(<EstoqueMovimentacoes />, 'estoque.movimentacao')} />
-      <Route path="/estoque/movimentacao" element={renderProtectedRoute(<EstoqueMovimentacoes />, 'estoque.movimentacao')} />
-      <Route path="/finalizar-pedido/:id" element={renderProtectedRoute(<FinalizarPedido />, 'carrinho.finalizar')} />
-      <Route path="/pedidos" element={renderProtectedRoute(<Pedidos />, 'pedidos.visualizar')} />
-      <Route path="/perfis" element={renderProtectedRoute(<Perfis />, 'perfis.visualizar')} />
-      <Route path="/permissoes" element={renderProtectedRoute(<Permissoes />, 'permissoes.visualizar')} />
-      <Route path="/produto-variacoes" element={renderProtectedRoute(<ProdutoVariacoes />, 'produtos.variacoes')} />
-      <Route path="/produtos" element={renderProtectedRoute(<Produtos />, 'produtos.visualizar')} />
-      <Route path="/produtos/importar" element={renderProtectedRoute(<ImportacaoPage />, 'produtos.importar')} />
-      <Route path="/produtos-outlet" element={renderProtectedRoute(<ProdutosOutlet />, 'produtos.outlet')} />
-      <Route path="/catalogo" element={renderProtectedRoute(<CatalogoProdutos />, 'produtos.catalogo')} />
-      <Route path="/usuarios" element={renderProtectedRoute(<Usuarios />, 'usuarios.visualizar')} />
+      <Route path="/categorias" element={renderProtectedRoute(<Categorias/>, 'categorias.visualizar')}/>
+      <Route path="/clientes" element={renderProtectedRoute(<Clientes/>, 'clientes.visualizar')}/>
+      <Route path="/configuracao-outlet"
+             element={renderProtectedRoute(<ConfiguracaoOutlet/>, 'produtos.configurar_outlet')}/>
+      <Route path="/depositos" element={renderProtectedRoute(<Depositos/>, 'depositos.visualizar')}/>
+      <Route path="/depositos/:depositoId/movimentacoes"
+             element={renderProtectedRoute(<EstoqueMovimentacoes/>, 'estoque.movimentacao')}/>
+      <Route path="/estoque/movimentacao"
+             element={renderProtectedRoute(<EstoqueMovimentacoes/>, 'estoque.movimentacao')}/>
+      <Route path="/finalizar-pedido/:id" element={renderProtectedRoute(<FinalizarPedido/>, 'carrinho.finalizar')}/>
+      <Route path="/pedidos" element={renderProtectedRoute(<Pedidos/>, 'pedidos.visualizar')}/>
+      <Route path="/perfis" element={renderProtectedRoute(<Perfis/>, 'perfis.visualizar')}/>
+      <Route path="/permissoes" element={renderProtectedRoute(<Permissoes/>, 'permissoes.visualizar')}/>
+      <Route path="/produto-variacoes" element={renderProtectedRoute(<ProdutoVariacoes/>, 'produtos.variacoes')}/>
+      <Route path="/produtos" element={renderProtectedRoute(<Produtos/>, 'produtos.visualizar')}/>
+      <Route path="/produtos/importar" element={renderProtectedRoute(<ImportacaoPage/>, 'produtos.importar')}/>
+      <Route path="/produtos-outlet" element={renderProtectedRoute(<ProdutosOutlet/>, 'produtos.outlet')}/>
+      <Route path="/catalogo" element={renderProtectedRoute(<CatalogoProdutos/>, 'produtos.catalogo')}/>
+      <Route path="/usuarios" element={renderProtectedRoute(<Usuarios/>, 'usuarios.visualizar')}/>
     </Routes>
   );
 };
