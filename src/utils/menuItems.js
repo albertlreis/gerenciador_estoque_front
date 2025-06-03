@@ -1,3 +1,5 @@
+import { PERMISSOES } from '../constants/permissoes';
+
 /**
  * Gera os itens de menu com base nas permissões do usuário.
  * @param {Function} navigate - Função do React Router.
@@ -13,7 +15,7 @@ const menuItems = (navigate, has) => {
       command: () => navigate('/dashboard')
     },
 
-    has('pedidos.visualizar') && {
+    has(PERMISSOES.PEDIDOS.VISUALIZAR) && {
       label: 'Vendas',
       key: 'vendas',
       icon: 'pi pi-fw pi-shopping-cart',
@@ -24,16 +26,16 @@ const menuItems = (navigate, has) => {
           icon: 'pi pi-fw pi-list',
           command: () => navigate('/pedidos')
         },
-        {
+        has(PERMISSOES.CONSIGNACOES.VISUALIZAR) && {
           label: 'Consignações',
           key: 'vendas-consignacoes',
           icon: 'pi pi-undo',
           command: () => navigate('/consignacoes')
         }
-      ]
+      ].filter(Boolean)
     },
 
-    has('clientes.visualizar') && {
+    has(PERMISSOES.CLIENTES.VISUALIZAR) && {
       label: 'Relacionamentos',
       key: 'relacionamentos',
       icon: 'pi pi-fw pi-users',
@@ -48,41 +50,41 @@ const menuItems = (navigate, has) => {
     },
 
     has([
-      'produtos.visualizar',
-      'produtos.catalogo',
-      'produtos.outlet',
-      'produtos.configurar_outlet',
-      'produtos.importar'
+      PERMISSOES.PRODUTOS.VISUALIZAR,
+      PERMISSOES.PRODUTOS.CATALOGO,
+      PERMISSOES.PRODUTOS.OUTLET,
+      PERMISSOES.PRODUTOS.CONFIGURAR_OUTLET,
+      PERMISSOES.PRODUTOS.IMPORTAR
     ]) && {
       label: 'Produtos',
       key: 'produtos',
       icon: 'pi pi-fw pi-tags',
       items: [
-        has('produtos.visualizar') && {
+        has(PERMISSOES.PRODUTOS.VISUALIZAR) && {
           label: 'Gerenciar Produtos',
           key: 'produtos-gerenciar',
           icon: 'pi pi-fw pi-pencil',
           command: () => navigate('/produtos')
         },
-        has('produtos.catalogo') && {
+        has(PERMISSOES.PRODUTOS.CATALOGO) && {
           label: 'Catálogo',
           key: 'produtos-catalogo',
           icon: 'pi pi-fw pi-list',
           command: () => navigate('/catalogo')
         },
-        has('produtos.outlet') && {
+        has(PERMISSOES.PRODUTOS.OUTLET) && {
           label: 'Outlet',
           key: 'produtos-outlet',
           icon: 'pi pi-fw pi-star',
           command: () => navigate('/produtos-outlet')
         },
-        has('produtos.configurar_outlet') && {
+        has(PERMISSOES.PRODUTOS.CONFIGURAR_OUTLET) && {
           label: 'Configurar Outlet',
           key: 'produtos-configurar-outlet',
           icon: 'pi pi-fw pi-cog',
           command: () => navigate('/configuracao-outlet')
         },
-        has('produtos.importar') && {
+        has(PERMISSOES.PRODUTOS.IMPORTAR) && {
           label: 'Importar Produtos',
           key: 'produtos-importar',
           icon: 'pi pi-fw pi-upload',
@@ -91,7 +93,7 @@ const menuItems = (navigate, has) => {
       ].filter(Boolean)
     },
 
-    has('depositos.visualizar') && {
+    has(PERMISSOES.DEPOSITOS.VISUALIZAR) && {
       label: 'Estoque',
       key: 'estoque',
       icon: 'pi pi-fw pi-box',
@@ -105,24 +107,28 @@ const menuItems = (navigate, has) => {
       ]
     },
 
-    has(['usuarios.visualizar', 'perfis.visualizar', 'permissoes.visualizar']) && {
+    has([
+      PERMISSOES.USUARIOS.VISUALIZAR,
+      PERMISSOES.PERFIS.VISUALIZAR,
+      PERMISSOES.PERMISSOES.VISUALIZAR
+    ]) && {
       label: 'Administração',
       key: 'administracao',
       icon: 'pi pi-fw pi-briefcase',
       items: [
-        has('usuarios.visualizar') && {
+        has(PERMISSOES.USUARIOS.VISUALIZAR) && {
           label: 'Usuários',
           key: 'admin-usuarios',
           icon: 'pi pi-fw pi-users',
           command: () => navigate('/usuarios')
         },
-        has('perfis.visualizar') && {
+        has(PERMISSOES.PERFIS.VISUALIZAR) && {
           label: 'Perfis',
           key: 'admin-perfis',
           icon: 'pi pi-fw pi-id-card',
           command: () => navigate('/perfis')
         },
-        has('permissoes.visualizar') && {
+        has(PERMISSOES.PERMISSOES.VISUALIZAR) && {
           label: 'Permissões',
           key: 'admin-permissoes',
           icon: 'pi pi-fw pi-lock',
@@ -137,7 +143,6 @@ const menuItems = (navigate, has) => {
       icon: 'pi pi-fw pi-cog',
       command: () => navigate('/configuracoes')
     }
-
   ].filter(Boolean);
 };
 
