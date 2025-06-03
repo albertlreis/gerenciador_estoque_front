@@ -2,6 +2,7 @@ import React from 'react';
 import GraficoCard from '../shared/GraficoCard';
 import FiltrosGrafico from '../shared/FiltrosGrafico';
 import { defaultChartOptions } from '../../utils/chartOptions';
+import {PERFIS} from "../../constants/perfis";
 
 const ChartsSection = ({
                          graficoPedidos,
@@ -16,7 +17,7 @@ const ChartsSection = ({
                          handleAtualizarGrafico,
                          perfil
                        }) => {
-  if (perfil !== 'admin') return null;
+  if (perfil !== PERFIS.ADMINISTRADOR.slug) return null;
 
   return (
     <div className="grid">

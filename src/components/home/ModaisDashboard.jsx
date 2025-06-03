@@ -3,6 +3,7 @@ import { Dialog } from 'primereact/dialog';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import PedidosMesCard from './PedidosMesCard';
+import {PERFIS} from "../../constants/perfis";
 
 const ModaisDashboard = ({
                            modalKpi,
@@ -18,7 +19,7 @@ const ModaisDashboard = ({
 
   return (
     <>
-      {perfil === 'Administrador' && (
+      {perfil === PERFIS.ADMINISTRADOR.slug && (
         <>
           <Dialog
             header="Produtos com Estoque Baixo"

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Card } from 'primereact/card';
+import {PERFIS} from "../../constants/perfis";
 
 const QuickLinks = ({ hasPermission, navigate, perfil }) => {
   const atalhosComuns = [
@@ -13,7 +14,7 @@ const QuickLinks = ({ hasPermission, navigate, perfil }) => {
     { label: 'Relatórios', route: '/relatorios', permissao: 'relatorios.visualizar', icon: 'pi pi-chart-bar' }
   ];
 
-  const atalhos = perfil === 'Administrador' ? [...atalhosComuns, ...atalhosAdmin] : atalhosComuns;
+  const atalhos = perfil === PERFIS.ADMINISTRADOR.slug ? [...atalhosComuns, ...atalhosAdmin] : atalhosComuns;
 
   return (
     <div className="grid mb-4">

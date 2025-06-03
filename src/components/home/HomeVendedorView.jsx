@@ -12,6 +12,7 @@ import QuickLinks from './QuickLinks';
 import UltimosPedidosCard from './UltimosPedidosCard';
 import ConsignacoesAlert from './ConsignacoesAlert';
 import ModaisDashboard from './ModaisDashboard';
+import {PERFIS} from "../../constants/perfis";
 
 const HomeVendedorView = () => {
   const { user } = useAuth();
@@ -42,7 +43,7 @@ const HomeVendedorView = () => {
         loading={loadingKpis}
       />
 
-      <QuickLinks perfil="Vendedor" hasPermission={has} navigate={navigate} />
+      <QuickLinks perfil={PERFIS.VENDEDOR.slug} hasPermission={has} navigate={navigate} />
 
       <div className="grid">
         <div className="col-12 md:col-6">
@@ -54,7 +55,7 @@ const HomeVendedorView = () => {
       </div>
 
       <ModaisDashboard
-        perfil="Vendedor"
+        perfil={PERFIS.VENDEDOR.slug}
         pedidosMes={pedidosMes}
         clientesMes={clientesMes}
       />

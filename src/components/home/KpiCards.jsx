@@ -2,6 +2,7 @@ import React from 'react';
 import { Card } from 'primereact/card';
 import { Skeleton } from 'primereact/skeleton';
 import { motion } from 'framer-motion';
+import {PERFIS} from "../../constants/perfis";
 
 /**
  * Componente de KPIs dinâmicos baseado no perfil do usuário.
@@ -11,7 +12,7 @@ import { motion } from 'framer-motion';
  * @param {Function} setExibirModalEstoque - Controla exibição do modal de estoque.
  * @param {boolean} loading - Indica se os dados estão carregando.
  */
-const KpiCards = ({ kpis, perfil = 'Vendedor', setModalKpi, setExibirModalEstoque, loading }) => {
+const KpiCards = ({ kpis, perfil = PERFIS.VENDEDOR.slug, setModalKpi, setExibirModalEstoque, loading }) => {
   if (loading) {
     return (
       <div className="grid mb-4">
@@ -24,7 +25,7 @@ const KpiCards = ({ kpis, perfil = 'Vendedor', setModalKpi, setExibirModalEstoqu
     );
   }
 
-  const isAdmin = perfil === 'Administrador';
+  const isAdmin = perfil === PERFIS.ADMINISTRADOR.slug;
 
   const cards = [
     {

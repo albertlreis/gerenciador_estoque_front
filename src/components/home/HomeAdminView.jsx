@@ -14,6 +14,7 @@ import QuickLinks from './QuickLinks';
 import UltimosPedidosCard from './UltimosPedidosCard';
 import ConsignacoesAlert from './ConsignacoesAlert';
 import ModaisDashboard from './ModaisDashboard';
+import {PERFIS} from "../../constants/perfis";
 
 const HomeAdminView = () => {
   const { user } = useAuth();
@@ -43,17 +44,17 @@ const HomeAdminView = () => {
       </div>
 
       <KpiCards
-        perfil="Administrador"
+        perfil={PERFIS.ADMINISTRADOR.slug}
         kpis={kpis}
         loading={loadingKpis}
         setModalKpi={setModalKpi}
         setExibirModalEstoque={setExibirModalEstoque}
       />
 
-      <QuickLinks perfil="Administrador" hasPermission={has} navigate={navigate} />
+      <QuickLinks perfil={PERFIS.ADMINISTRADOR.slug} hasPermission={has} navigate={navigate} />
 
       <ChartsSection
-        perfil="Administrador"
+        perfil={PERFIS.ADMINISTRADOR.slug}
         graficoPedidos={graficoPedidos}
         graficoValores={graficoValores}
         graficoStatus={graficoStatus}
@@ -76,7 +77,7 @@ const HomeAdminView = () => {
       </div>
 
       <ModaisDashboard
-        perfil="Administrador"
+        perfil={PERFIS.ADMINISTRADOR.slug}
         modalKpi={modalKpi}
         setModalKpi={setModalKpi}
         pedidosMes={pedidosMes}
