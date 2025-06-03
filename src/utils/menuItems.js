@@ -1,111 +1,140 @@
-const menuItems = (navigate, hasPermission) => {
+/**
+ * Gera os itens de menu com base nas permissões do usuário.
+ * @param {Function} navigate - Função do React Router.
+ * @param {Function} has - Função has(permission) para validação.
+ * @returns {Array} Itens de menu para o PanelMenu.
+ */
+const menuItems = (navigate, has) => {
   return [
-    hasPermission(['usuarios.visualizar', 'perfis.visualizar', 'permissoes.visualizar']) && {
-      label: 'Acesso',
-      key: 'acesso',
+    {
+      label: 'Dashboard',
+      key: 'dashboard',
+      icon: 'pi pi-fw pi-home',
+      command: () => navigate('/dashboard')
+    },
+
+    has('pedidos.visualizar') && {
+      label: 'Vendas',
+      key: 'vendas',
+      icon: 'pi pi-fw pi-shopping-cart',
+      items: [
+        {
+          label: 'Pedidos',
+          key: 'vendas-pedidos',
+          icon: 'pi pi-fw pi-list',
+          command: () => navigate('/pedidos')
+        },
+        {
+          label: 'Consignações',
+          key: 'vendas-consignacoes',
+          icon: 'pi pi-undo',
+          command: () => navigate('/consignacoes')
+        }
+      ]
+    },
+
+    has('clientes.visualizar') && {
+      label: 'Relacionamentos',
+      key: 'relacionamentos',
+      icon: 'pi pi-fw pi-users',
+      items: [
+        {
+          label: 'Clientes',
+          key: 'relacionamentos-clientes',
+          icon: 'pi pi-fw pi-user',
+          command: () => navigate('/clientes')
+        }
+      ]
+    },
+
+    has([
+      'produtos.visualizar',
+      'produtos.catalogo',
+      'produtos.outlet',
+      'produtos.configurar_outlet',
+      'produtos.importar'
+    ]) && {
+      label: 'Produtos',
+      key: 'produtos',
+      icon: 'pi pi-fw pi-tags',
+      items: [
+        has('produtos.visualizar') && {
+          label: 'Gerenciar Produtos',
+          key: 'produtos-gerenciar',
+          icon: 'pi pi-fw pi-pencil',
+          command: () => navigate('/produtos')
+        },
+        has('produtos.catalogo') && {
+          label: 'Catálogo',
+          key: 'produtos-catalogo',
+          icon: 'pi pi-fw pi-list',
+          command: () => navigate('/catalogo')
+        },
+        has('produtos.outlet') && {
+          label: 'Outlet',
+          key: 'produtos-outlet',
+          icon: 'pi pi-fw pi-star',
+          command: () => navigate('/produtos-outlet')
+        },
+        has('produtos.configurar_outlet') && {
+          label: 'Configurar Outlet',
+          key: 'produtos-configurar-outlet',
+          icon: 'pi pi-fw pi-cog',
+          command: () => navigate('/configuracao-outlet')
+        },
+        has('produtos.importar') && {
+          label: 'Importar Produtos',
+          key: 'produtos-importar',
+          icon: 'pi pi-fw pi-upload',
+          command: () => navigate('/produtos/importar')
+        }
+      ].filter(Boolean)
+    },
+
+    has('depositos.visualizar') && {
+      label: 'Estoque',
+      key: 'estoque',
+      icon: 'pi pi-fw pi-box',
+      items: [
+        {
+          label: 'Depósitos',
+          key: 'estoque-depositos',
+          icon: 'pi pi-fw pi-sitemap',
+          command: () => navigate('/depositos')
+        }
+      ]
+    },
+
+    has(['usuarios.visualizar', 'perfis.visualizar', 'permissoes.visualizar']) && {
+      label: 'Administração',
+      key: 'administracao',
       icon: 'pi pi-fw pi-briefcase',
       items: [
-        hasPermission('usuarios.visualizar') && {
+        has('usuarios.visualizar') && {
           label: 'Usuários',
-          key: 'acesso-usuarios',
+          key: 'admin-usuarios',
           icon: 'pi pi-fw pi-users',
           command: () => navigate('/usuarios')
         },
-        hasPermission('perfis.visualizar') && {
+        has('perfis.visualizar') && {
           label: 'Perfis',
-          key: 'acesso-perfis',
+          key: 'admin-perfis',
           icon: 'pi pi-fw pi-id-card',
           command: () => navigate('/perfis')
         },
-        hasPermission('permissoes.visualizar') && {
+        has('permissoes.visualizar') && {
           label: 'Permissões',
-          key: 'acesso-permissoes',
+          key: 'admin-permissoes',
           icon: 'pi pi-fw pi-lock',
           command: () => navigate('/permissoes')
         }
       ].filter(Boolean)
     },
 
-    hasPermission('clientes.visualizar') && {
-      label: 'Clientes',
-      key: 'clientes',
-      icon: 'pi pi-fw pi-user',
-      command: () => navigate('/clientes')
-    },
-
-    hasPermission('categorias.visualizar') && {
-      label: 'Categorias',
-      key: 'categorias',
-      icon: 'pi pi-fw pi-book',
-      command: () => navigate('/categorias')
-    },
-
-    hasPermission([
-      'produtos.visualizar',
-      'produtos.outlet',
-      'produtos.configurar_outlet',
-      'produtos.catalogo'
-    ]) && {
-      label: 'Produtos',
-      key: 'produtos',
-      icon: 'pi pi-fw pi-tags',
-      items: [
-        hasPermission('produtos.visualizar') && {
-          label: 'Gerenciar Produtos',
-          key: 'produtos-gerenciar',
-          icon: 'pi pi-fw pi-pencil',
-          command: () => navigate('/produtos')
-        },
-        hasPermission('produtos.catalogo') && {
-          label: 'Catálogo',
-          key: 'produtos-catalogo',
-          icon: 'pi pi-fw pi-list',
-          command: () => navigate('/catalogo')
-        },
-        hasPermission('produtos.outlet') && {
-          label: 'Produtos Outlet',
-          key: 'produtos-outlet',
-          icon: 'pi pi-fw pi-exclamation-circle',
-          command: () => navigate('/produtos-outlet')
-        },
-        hasPermission('produtos.configurar_outlet') && {
-          label: 'Configurar Outlet',
-          key: 'configurar-outlet',
-          icon: 'pi pi-fw pi-cog',
-          command: () => navigate('/configuracao-outlet')
-        },
-        hasPermission('produtos.importar') && {
-          label: 'Importar Produtos',
-          key: 'produtos-importar',
-          icon: 'pi pi-fw pi-pencil',
-          command: () => navigate('/produtos/importar')
-        }
-      ].filter(Boolean)
-    },
-
-    hasPermission('pedidos.visualizar') && {
-      label: 'Pedidos',
-      key: 'pedidos',
-      icon: 'pi pi-fw pi-shopping-cart',
-      command: () => navigate('/pedidos')
-    },
-
-    {
-      label: 'Consignações',
-      icon: 'pi pi-undo',
-      command: () => navigate('/consignacoes')
-    },
-
-    hasPermission('depositos.visualizar') && {
-      label: 'Depósitos',
-      key: 'depositos',
-      icon: 'pi pi-fw pi-box',
-      command: () => navigate('/depositos')
-    },
-
     {
       label: 'Configurações',
-      icon: 'pi pi-cog',
+      key: 'configuracoes',
+      icon: 'pi pi-fw pi-cog',
       command: () => navigate('/configuracoes')
     }
 
