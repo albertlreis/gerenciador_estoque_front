@@ -12,7 +12,7 @@ const menuItems = (navigate, has) => {
       label: 'Dashboard',
       key: 'dashboard',
       icon: 'pi pi-fw pi-home',
-      command: () => navigate('/dashboard')
+      command: () => navigate('/')
     },
 
     has(PERMISSOES.PEDIDOS.VISUALIZAR) && {

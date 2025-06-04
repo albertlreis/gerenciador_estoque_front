@@ -45,9 +45,11 @@ const FiltroLateral = ({ filtros, onChange, disabled = false }) => {
   }, []);
 
   const handleCategoriaChange = (id) => {
-    const novaCategoria = filtros.categoria.includes(id)
-      ? filtros.categoria.filter(c => c !== id)
-      : [...filtros.categoria, id];
+    const categoriasAtuais = Array.isArray(filtros.categoria) ? filtros.categoria : [];
+    const novaCategoria = categoriasAtuais.includes(id)
+      ? categoriasAtuais.filter(c => c !== id)
+      : [...categoriasAtuais, id];
+
     onChange({ categoria: novaCategoria });
   };
 
@@ -109,7 +111,7 @@ const FiltroLateral = ({ filtros, onChange, disabled = false }) => {
                 inputId={`cat-${cat.id}`}
                 value={cat.id}
                 onChange={() => handleCategoriaChange(cat.id)}
-                checked={filtros.categoria.includes(cat.id)}
+                checked={Array.isArray(filtros.categoria) && filtros.categoria.includes(cat.id)}
                 disabled={disabled}
               />
               <label htmlFor={`cat-${cat.id}`} className="ml-2">{cat.nome}</label>
