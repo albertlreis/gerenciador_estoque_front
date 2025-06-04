@@ -376,160 +376,125 @@ const ImportacaoPedidoPDF = () => {
           )}
 
           <Card title="Produtos" className="mt-4 p-4">
-            <DataTable
-              value={itens}
-              editMode="row"
-              onRowEditComplete={onRowEditComplete}
-              dataKey="descricao"
-              responsiveLayout="scroll"
-              scrollable
-              scrollHeight="400px"
-              tableStyle={{ minWidth: '1000px' }}
-              className="p-datatable-sm"
-              rowClassName={(rowData) => (!rowData.id_categoria ? 'p-invalid' : '')}
-            >
-              <Column
-                header="Variação"
-                body={(row) =>
-                  row.id_variacao
-                    ? `#${row.id_variacao} - ${row.variacao_nome || 'Encontrada'}`
-                    : <span className="text-red-500">Não encontrada</span>
-                }
-                style={{ minWidth: '200px' }}
-              />
+            {itens.map((item, index) => (
+              <Card
+                key={index}
+                className={`mb-3 border-left-4 ${
+                  !item.id_categoria || !item.id_variacao ? 'border-red-300' : 'border-green-300'
+                }`}
+              >
+                <div className="flex flex-column md:flex-row justify-between gap-4 p-3">
+                  {/* Coluna esquerda: conteúdo principal */}
+                  <div className="flex-1">
+                    <div className="text-base font-semibold mb-1">{item.descricao}</div>
 
-              <Column
-                field="id_categoria"
-                header="Categoria"
-                editor={(options) => (
-                  <Dropdown
-                    value={options.rowData.id_categoria || null}
-                    options={categorias}
-                    optionLabel="nome"
-                    optionValue="id"
-                    placeholder="Selecione"
-                    className="p-inputtext-sm w-full"
-                    onChange={(e) => onChangeItem(options.rowIndex, 'id_categoria', e.value)}
-                  />
-                )}
-                body={(row) => {
-                  const cat = categorias.find(c => c.id === row.id_categoria);
-                  return cat ? cat.nome : <span className="text-red-500">Não definida</span>;
-                }}
-                style={{ minWidth: '180px' }}
-              />
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium mb-1">Categoria</label>
+                        <Dropdown
+                          value={item.id_categoria || null}
+                          options={categorias}
+                          optionLabel="nome"
+                          optionValue="id"
+                          placeholder="Selecione"
+                          className="w-full p-inputtext-sm"
+                          onChange={(e) => onChangeItem(index, 'id_categoria', e.value)}
+                        />
+                      </div>
 
-              <Column
-                field="descricao"
-                header="Descrição Completa"
-                editor={(options) => editorText(options, 'descricao')}
-                style={{ minWidth: '250px' }}
-              />
+                      <div>
+                        <label className="block text-xs font-medium mb-1">Quantidade</label>
+                        <InputNumber
+                          value={item.quantidade}
+                          onValueChange={(e) => onChangeItem(index, 'quantidade', e.value)}
+                          min={1}
+                          className="w-full p-inputtext-sm"
+                        />
+                      </div>
 
-              {/* Atributos dinâmicos */}
-              {(() => {
-                const atributoLabels = {
-                  cores: { cor: 'Cor', cor_do_ferro: 'Cor do Ferro', cor_inox: 'Cor Inox' },
-                  tecidos: { tecido: 'Tecido', tec: 'Tec' },
-                  acabamentos: { pesp: 'Pesponto', marmore: 'Mármore' },
-                  observacoes: { observacao: 'Observação', observacao_extra: 'Observação Extra' },
-                };
+                      <div>
+                        <label className="block text-xs font-medium mb-1">Valor Unitário</label>
+                        <InputNumber
+                          value={item.valor}
+                          onValueChange={(e) => onChangeItem(index, 'valor', e.value)}
+                          mode="currency"
+                          currency="BRL"
+                          locale="pt-BR"
+                          className="w-full p-inputtext-sm"
+                        />
+                      </div>
 
-                return Object.entries(itens[0]?.atributos || {}).flatMap(([grupo, campos]) =>
-                  Object.keys(campos || {}).map((campo) => (
-                    <Column
-                      key={`${grupo}_${campo}`}
-                      header={atributoLabels?.[grupo]?.[campo] ?? `${grupo} - ${campo}`}
-                      editor={(options) => {
-                        const updated = [...itens];
-                        if (!updated[options.rowIndex].atributos[grupo]) {
-                          updated[options.rowIndex].atributos[grupo] = {};
-                        }
-                        return (
-                          <InputText
-                            value={options.rowData.atributos[grupo]?.[campo] || ''}
-                            onChange={(e) => {
-                              updated[options.rowIndex].atributos[grupo][campo] = e.target.value;
+                      {['largura', 'profundidade', 'altura'].map((campo) => (
+                        <div key={campo}>
+                          <label className="block text-xs font-medium mb-1">
+                            {campo.charAt(0).toUpperCase() + campo.slice(1)}
+                          </label>
+                          <InputNumber
+                            value={item.fixos?.[campo] || null}
+                            onValueChange={(e) => {
+                              const updated = [...itens];
+                              updated[index].fixos = {
+                                ...updated[index].fixos,
+                                [campo]: e.value,
+                              };
                               setItens(updated);
                             }}
-                            className="p-inputtext-sm"
+                            className="w-full p-inputtext-sm"
                           />
-                        );
-                      }}
-                      body={(row) => row.atributos?.[grupo]?.[campo] || '-'}
-                      style={{ minWidth: '140px' }}
-                    />
-                  ))
-                );
-              })()}
+                        </div>
+                      ))}
+                    </div>
 
-              {/* Campos fixos (medidas) */}
-              {['largura', 'profundidade', 'altura'].map((chave) => (
-                <Column
-                  key={chave}
-                  header={chave.charAt(0).toUpperCase() + chave.slice(1)}
-                  editor={(options) => {
-                    const updated = [...itens];
-                    if (!updated[options.rowIndex].fixos) updated[options.rowIndex].fixos = {};
-                    return (
-                      <InputNumber
-                        value={options.rowData.fixos?.[chave] || null}
-                        onValueChange={(e) => {
-                          updated[options.rowIndex].fixos[chave] = e.value;
-                          setItens(updated);
-                        }}
-                        mode="decimal"
-                        minFractionDigits={0}
-                        className="p-inputtext-sm"
-                      />
-                    );
-                  }}
-                  body={(row) => row.fixos?.[chave] ?? '-'}
-                  style={{ minWidth: '100px' }}
-                />
-              ))}
+                    {/* Atributos */}
+                    {['cores', 'tecidos', 'acabamentos', 'observacoes'].map((grupo) =>
+                      item.atributos?.[grupo]
+                        ? Object.entries(item.atributos[grupo]).map(([campo, valor]) => (
+                          <div key={`${grupo}-${campo}`} className="mt-3">
+                            <label className="block text-xs font-medium mb-1">
+                              {campo.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
+                            </label>
+                            <InputText
+                              value={valor}
+                              onChange={(e) => {
+                                const updated = [...itens];
+                                updated[index].atributos[grupo][campo] = e.target.value;
+                                setItens(updated);
+                              }}
+                              className="w-full p-inputtext-sm"
+                            />
+                          </div>
+                        ))
+                        : null
+                    )}
+                  </div>
 
-              <Column
-                field="quantidade"
-                header="Qtd"
-                editor={(options) => editorNumber(options, 'quantidade')}
-                style={{ width: '100px', textAlign: 'center' }}
-              />
+                  {/* Coluna direita: status e totais */}
+                  <div className="flex flex-column gap-2 text-right min-w-48 md:w-64 justify-between">
+                    <div>
+                      <span className="block text-sm font-medium">
+                        Total:{' '}
+                        {(item.quantidade * item.valor).toLocaleString('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL',
+                        })}
+                      </span>
 
-              <Column
-                field="valor"
-                header="Valor Unit."
-                editor={(options) => (
-                  <InputNumber
-                    value={options.rowData.valor}
-                    onValueChange={(e) => onChangeItem(options.rowIndex, 'valor', e.value)}
-                    mode="currency"
-                    currency="BRL"
-                    className="p-inputtext-sm"
-                  />
-                )}
-                style={{ minWidth: '140px', textAlign: 'right' }}
-              />
+                      <span className="block text-xs mt-2">
+                        {item.id_variacao ? (
+                          <span className="text-green-600">Variação encontrada</span>
+                        ) : (
+                          <span className="text-red-500 font-semibold">Sem variação</span>
+                        )}
+                      </span>
 
-              <Column
-                header="Total"
-                body={(row) => {
-                  const total = (row.quantidade ?? 0) * (row.valor ?? 0);
-                  return total.toLocaleString('pt-BR', {
-                    style: 'currency',
-                    currency: 'BRL',
-                  });
-                }}
-                style={{ minWidth: '140px', textAlign: 'right' }}
-              />
-
-              <Column
-                rowEditor
-                headerStyle={{ width: '70px' }}
-                bodyStyle={{ textAlign: 'center' }}
-              />
-            </DataTable>
-
+                      {!item.id_categoria && (
+                        <span className="block text-xs text-red-600 font-medium mt-1">Categoria obrigatória</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ))}
           </Card>
 
           <div className="flex justify-content-end mt-4">

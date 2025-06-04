@@ -374,3 +374,19 @@ textarea.p-inputtextarea {
 .p-invalid {
   background-color: #fff6f6 !important;
 }
+
+.border-left-4 {
+  border-left: 4px solid transparent;
+  border-radius: 4px;
+}
+
+.border-red-300 {
+  border-left-color: #f87171;
+  background-color: #fef2f2;
+}
+
+.border-green-300 {
+  border-left-color: #4ade80;
+  background-color: #f0fdf4;
+}
+
