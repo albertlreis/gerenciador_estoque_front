@@ -31,6 +31,12 @@ const menuItems = (navigate, has) => {
           key: 'vendas-consignacoes',
           icon: 'pi pi-undo',
           command: () => navigate('/consignacoes')
+        },
+        has(PERMISSOES.PEDIDOS.IMPORTAR) && {
+          label: 'Importar Pedido',
+          key: 'vendas-importar-pedido',
+          icon: 'pi pi-fw pi-upload',
+          command: () => navigate('/pedidos/importar')
         }
       ].filter(Boolean)
     },
@@ -51,9 +57,6 @@ const menuItems = (navigate, has) => {
 
     has([
       PERMISSOES.PRODUTOS.VISUALIZAR,
-      PERMISSOES.PRODUTOS.CATALOGO,
-      PERMISSOES.PRODUTOS.OUTLET,
-      PERMISSOES.PRODUTOS.CONFIGURAR_OUTLET,
       PERMISSOES.PRODUTOS.IMPORTAR
     ]) && {
       label: 'Produtos',
@@ -65,24 +68,6 @@ const menuItems = (navigate, has) => {
           key: 'produtos-gerenciar',
           icon: 'pi pi-fw pi-pencil',
           command: () => navigate('/produtos')
-        },
-        has(PERMISSOES.PRODUTOS.CATALOGO) && {
-          label: 'Catálogo',
-          key: 'produtos-catalogo',
-          icon: 'pi pi-fw pi-list',
-          command: () => navigate('/catalogo')
-        },
-        has(PERMISSOES.PRODUTOS.OUTLET) && {
-          label: 'Outlet',
-          key: 'produtos-outlet',
-          icon: 'pi pi-fw pi-star',
-          command: () => navigate('/produtos-outlet')
-        },
-        has(PERMISSOES.PRODUTOS.CONFIGURAR_OUTLET) && {
-          label: 'Configurar Outlet',
-          key: 'produtos-configurar-outlet',
-          icon: 'pi pi-fw pi-cog',
-          command: () => navigate('/configuracao-outlet')
         },
         has(PERMISSOES.PRODUTOS.IMPORTAR) && {
           label: 'Importar Produtos',

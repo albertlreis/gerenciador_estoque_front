@@ -17,6 +17,12 @@ const QuickLinks = ({ hasPermission, navigate, perfil }) => {
       permissao: PERMISSOES.PRODUTOS.CATALOGO,
       icon: 'pi pi-box',
     },
+    {
+      label: 'Importar Pedido',
+      route: '/pedidos/importar',
+      permissao: PERMISSOES.PEDIDOS.IMPORTAR,
+      icon: 'pi pi-upload',
+    }
   ];
 
   const atalhosAdmin = [
@@ -37,7 +43,7 @@ const QuickLinks = ({ hasPermission, navigate, perfil }) => {
       route: '/relatorios',
       permissao: PERMISSOES.RELATORIOS.VISUALIZAR,
       icon: 'pi pi-chart-bar',
-    },
+    }
   ];
 
   const atalhos =

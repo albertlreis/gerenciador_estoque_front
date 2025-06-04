@@ -71,6 +71,7 @@ export const PERMISSOES = {
     EDITAR: 'pedidos.editar',
     EXCLUIR: 'pedidos.excluir',
     EXPORTAR_PDF: 'pedidos.exportar_pdf',
+    IMPORTAR: 'pedidos.importar_pdf',
     ENVIAR_WHATSAPP: 'pedidos.enviar_whatsapp',
   },
 
