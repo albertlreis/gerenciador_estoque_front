@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Checkbox } from 'primereact/checkbox';
 import { InputSwitch } from 'primereact/inputswitch';
+import { RadioButton } from 'primereact/radiobutton';
 import OverlayLoading from './OverlayLoading';
 import apiEstoque from '../services/apiEstoque';
 
@@ -86,12 +87,12 @@ const FiltroLateral = ({ filtros, onChange, disabled = false }) => {
             { id: 'estoque_sem', label: 'Sem estoque', value: 'sem_estoque' }
           ].map(opcao => (
             <div key={opcao.id} className="field-radiobutton">
-              <input
-                type="radio"
-                id={opcao.id}
+              <RadioButton
+                inputId={opcao.id}
                 name="estoque_status"
+                value={opcao.value}
+                onChange={(e) => onChange({ estoque_status: e.value })}
                 checked={filtros.estoque_status === opcao.value}
-                onChange={() => onChange({ estoque_status: opcao.value })}
                 disabled={disabled}
               />
               <label htmlFor={opcao.id} className="ml-2">{opcao.label}</label>

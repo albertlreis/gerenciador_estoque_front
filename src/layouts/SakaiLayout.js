@@ -9,14 +9,14 @@ import menuItems from '../utils/menuItems';
 /**
  * Layout principal da aplicação com menu lateral e topbar.
  */
-const SakaiLayout = ({ children }) => {
+const SakaiLayout = ({ children, defaultSidebarCollapsed = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
   const { has } = usePermissions();
 
   const [expandedKeys, setExpandedKeys] = useState({});
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(defaultSidebarCollapsed);
   const userHasToggled = useRef(false);
 
   useEffect(() => {

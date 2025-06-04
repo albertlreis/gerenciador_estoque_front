@@ -1,19 +1,19 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Divider } from 'primereact/divider';
-import { Button } from 'primereact/button';
-import { Toast } from 'primereact/toast';
-import { Badge } from 'primereact/badge';
-import { Menubar } from 'primereact/menubar';
-import { useNavigate } from 'react-router-dom';
-import { Dropdown } from 'primereact/dropdown';
-import { Dialog } from 'primereact/dialog';
+import React, {useEffect, useRef, useState} from 'react';
+import {Divider} from 'primereact/divider';
+import {Button} from 'primereact/button';
+import {Toast} from 'primereact/toast';
+import {Badge} from 'primereact/badge';
+import {useNavigate} from 'react-router-dom';
+import {Dropdown} from 'primereact/dropdown';
+import {Dialog} from 'primereact/dialog';
 
+import SakaiLayout from '../layouts/SakaiLayout';
 import FiltroLateral from '../components/FiltroLateral';
 import CatalogoGrid from '../components/CatalogoGrid';
 import OverlayLoading from '../components/OverlayLoading';
 import CarrinhoSidebar from '../components/CarrinhoSidebar';
 
-import { useCarrinho } from '../context/CarrinhoContext';
+import {useCarrinho} from '../context/CarrinhoContext';
 import api from '../services/apiEstoque';
 
 const filtrosIniciais = {
@@ -73,7 +73,7 @@ const CatalogoProdutos = () => {
       });
 
       const response = await api.get('/produtos', {
-        params: { ...filtrosParaEnvio, page: pagina, per_page: 20 }
+        params: {...filtrosParaEnvio, page: pagina, per_page: 20}
       });
 
       const novos = response.data.data || [];
@@ -103,7 +103,7 @@ const CatalogoProdutos = () => {
       if (entry.isIntersecting) {
         setPagina(prev => prev + 1);
       }
-    }, { threshold: 1 });
+    }, {threshold: 1});
 
     const target = sentinelaRef.current;
     observer.observe(target);
@@ -131,14 +131,8 @@ const CatalogoProdutos = () => {
     setFiltros(filtrosIniciais);
   };
 
-  const menuItems = [
-    { label: 'Início', icon: 'pi pi-home', command: () => navigate('/') },
-    { label: 'Clientes', icon: 'pi pi-fw pi-user', command: () => navigate('/clientes') },
-    { label: 'Pedidos', icon: 'pi pi-fw pi-shopping-cart', command: () => navigate('/pedidos') },
-  ];
-
   const abrirDialogCarrinho = async () => {
-    const { data } = await api.get('/clientes');
+    const {data} = await api.get('/clientes');
     setClientes(data);
     setDialogNovoCarrinho(true);
   };
@@ -151,12 +145,11 @@ const CatalogoProdutos = () => {
   };
 
   return (
-    <>
-      <Toast ref={toast} />
-      <Menubar model={menuItems} className="mb-4 shadow-2" />
+    <SakaiLayout defaultSidebarCollapsed={true}>
+      <Toast ref={toast}/>
       <div className="grid p-4">
         <div className="col-12 md:col-3">
-          <FiltroLateral filtros={filtros} onChange={setFiltros} disabled={loading} />
+          <FiltroLateral filtros={filtros} onChange={setFiltros} disabled={loading}/>
         </div>
         <div className="col-12 md:col-9">
           <div className="flex justify-content-between align-items-center mb-3">
@@ -171,7 +164,7 @@ const CatalogoProdutos = () => {
                 onChange={(e) => carregarCarrinho(e.value)}
                 className="w-18rem"
               />
-              <Button label="Novo Carrinho" icon="pi pi-plus" className="p-button-sm" onClick={abrirDialogCarrinho} />
+              <Button label="Novo Carrinho" icon="pi pi-plus" className="p-button-sm" onClick={abrirDialogCarrinho}/>
               <Button
                 label="Finalizar"
                 icon="pi pi-check"
@@ -180,23 +173,25 @@ const CatalogoProdutos = () => {
                 onClick={() => navigate(`/finalizar-pedido/${carrinhoAtual.id}`)}
               />
               <div className="relative cursor-pointer" onClick={() => setCarrinhoVisible(true)}>
-                <i className={`pi pi-shopping-cart text-2xl ${animateCart ? 'p-cart-pulse' : ''}`} onAnimationEnd={() => setAnimateCart(false)} />
+                <i className={`pi pi-shopping-cart text-2xl ${animateCart ? 'p-cart-pulse' : ''}`}
+                   onAnimationEnd={() => setAnimateCart(false)}/>
                 {quantidadeTotal > 0 && (
-                  <Badge value={quantidadeTotal} severity="info" className="p-overlay-badge" />
+                  <Badge value={quantidadeTotal} severity="info" className="p-overlay-badge"/>
                 )}
               </div>
             </div>
           </div>
 
-          <Divider />
+          <Divider/>
 
           <div className="flex justify-content-end mb-3">
-            <Button label="Limpar Filtros" icon="pi pi-filter-slash" className="p-button-sm p-button-secondary" onClick={resetarFiltros} disabled={loading} />
+            <Button label="Limpar Filtros" icon="pi pi-filter-slash" className="p-button-sm p-button-secondary"
+                    onClick={resetarFiltros} disabled={loading}/>
           </div>
 
           <OverlayLoading visible={loading && pagina === 1} message="Carregando produtos do catálogo...">
-            <CatalogoGrid produtos={produtos} onAdicionarAoCarrinho={handleAdicionarAoCarrinho} />
-            <div ref={sentinelaRef} style={{ height: '1px', marginTop: '80px' }} />
+            <CatalogoGrid produtos={produtos} onAdicionarAoCarrinho={handleAdicionarAoCarrinho}/>
+            <div ref={sentinelaRef} style={{height: '1px', marginTop: '80px'}}/>
             {loading && pagina > 1 && (
               <p className="text-center mt-3 mb-4">Carregando mais produtos...</p>
             )}
@@ -204,7 +199,7 @@ const CatalogoProdutos = () => {
         </div>
       </div>
 
-      <CarrinhoSidebar visible={carrinhoVisible} onHide={() => setCarrinhoVisible(false)} />
+      <CarrinhoSidebar visible={carrinhoVisible} onHide={() => setCarrinhoVisible(false)}/>
 
       <Dialog header="Novo Carrinho" visible={dialogNovoCarrinho} onHide={() => setDialogNovoCarrinho(false)} modal>
         <div className="mb-3">
@@ -220,7 +215,8 @@ const CatalogoProdutos = () => {
           />
         </div>
         <div className="flex justify-content-end">
-          <Button label="Criar Carrinho" icon="pi pi-check" className="p-button-sm" onClick={confirmarNovoCarrinho} disabled={!clienteSelecionado} />
+          <Button label="Criar Carrinho" icon="pi pi-check" className="p-button-sm" onClick={confirmarNovoCarrinho}
+                  disabled={!clienteSelecionado}/>
         </div>
       </Dialog>
 
@@ -229,7 +225,7 @@ const CatalogoProdutos = () => {
         visible={dialogVariacaoVisible}
         onHide={() => setDialogVariacaoVisible(false)}
         modal
-        style={{ width: '80vw' }}
+        style={{width: '80vw'}}
       >
         <div className="grid">
           {/* Imagem lateral do produto */}
@@ -237,7 +233,7 @@ const CatalogoProdutos = () => {
             <img
               src={produtoSelecionado?.imagem_principal || '/placeholder.jpg'}
               alt={produtoSelecionado?.nome}
-              style={{ maxWidth: '100%', borderRadius: '8px' }}
+              style={{maxWidth: '100%', borderRadius: '8px'}}
             />
           </div>
 
@@ -272,7 +268,7 @@ const CatalogoProdutos = () => {
                   >
                     <div className="flex justify-content-between align-items-start mb-2">
                       <div className="text-sm font-semibold text-gray-800">{produtoSelecionado?.nome}</div>
-                      {isSelecionada && <i className="pi pi-check-circle text-green-600 text-xl" />}
+                      {isSelecionada && <i className="pi pi-check-circle text-green-600 text-xl"/>}
                     </div>
 
                     <div className="text-xs text-gray-600 mb-1">Referência: {variacao.referencia}</div>
@@ -288,7 +284,7 @@ const CatalogoProdutos = () => {
 
                     <div className="flex justify-content-between align-items-center">
                 <span className="text-green-700 font-bold text-sm">
-                  R$ {Number(variacao.preco).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  R$ {Number(variacao.preco).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
                 </span>
                       {estoqueQtd <= 0 ? (
                         <span className="text-red-600 text-xs">Esgotado</span>
@@ -331,7 +327,7 @@ const CatalogoProdutos = () => {
           </div>
         </div>
       </Dialog>
-    </>
+    </SakaiLayout>
   );
 };
 
