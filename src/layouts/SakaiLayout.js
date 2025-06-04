@@ -5,7 +5,6 @@ import { useAuth } from '../context/AuthContext';
 import usePermissions from '../hooks/usePermissions';
 import Topbar from './Topbar';
 import menuItems from '../utils/menuItems';
-import './SakaiLayout.css';
 
 /**
  * Layout principal da aplicação com menu lateral e topbar.

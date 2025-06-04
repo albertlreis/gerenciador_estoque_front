@@ -1,7 +1,6 @@
 import React from 'react';
 import { Button } from 'primereact/button';
 import { useNavigate } from 'react-router-dom';
-import './Topbar.css';
 
 /**
  * Componente superior fixo com logo, nome do usuário e botão de logout.
