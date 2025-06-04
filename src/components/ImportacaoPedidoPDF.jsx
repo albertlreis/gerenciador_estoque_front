@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 import { FileUpload } from 'primereact/fileupload';
 import { Toast } from 'primereact/toast';
 import { ProgressSpinner } from 'primereact/progressspinner';
@@ -9,6 +9,7 @@ import { Button } from 'primereact/button';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Card } from 'primereact/card';
+import { Dropdown } from 'primereact/dropdown';
 import apiEstoque from '../services/apiEstoque';
 
 const ImportacaoPedidoPDF = () => {
@@ -16,8 +17,15 @@ const ImportacaoPedidoPDF = () => {
   const [cliente, setCliente] = useState({});
   const [pedido, setPedido] = useState({});
   const [itens, setItens] = useState([]);
+  const [categorias, setCategorias] = useState([]);
   const [loading, setLoading] = useState(false);
   const toast = useRef();
+
+  useEffect(() => {
+    apiEstoque.get('/categorias')
+      .then(res => setCategorias(res.data))
+      .catch(() => setCategorias([]));
+  }, []);
 
   const onUpload = async ({ files }) => {
     const formData = new FormData();
@@ -76,7 +84,26 @@ const ImportacaoPedidoPDF = () => {
     />
   );
 
+  const onRowEditComplete = (e) => {
+    const { newData, index } = e;
+    const updated = [...itens];
+    updated[index] = newData;
+    setItens(updated);
+  };
+
   const confirmarImportacao = async () => {
+    const semCategoria = itens.filter(item => !item.id_categoria);
+
+    if (semCategoria.length > 0) {
+      toast.current?.show({
+        severity: 'warn',
+        summary: 'Categoria obrigatória',
+        detail: `Todos os produtos devem ter uma categoria. Preencha os campos destacados.`,
+        life: 4000
+      });
+      return;
+    }
+
     try {
       await apiEstoque.post('/pedidos/importar-pdf/confirmar', {
         cliente,
@@ -84,13 +111,18 @@ const ImportacaoPedidoPDF = () => {
         itens: itens.map(item => ({
           ...item,
           descricao: item.descricao,
+          id_variacao: item.id_variacao ?? null,
+          produto_id: item.produto_id ?? null,
+          variacao_nome: item.variacao_nome ?? null,
+          id_categoria: item.id_categoria ?? null,
         })),
       });
 
       toast.current?.show({
         severity: 'success',
-        summary: 'Pedido salvo',
-        detail: 'Importação confirmada com sucesso.',
+        summary: 'Pedido Confirmado',
+        detail: 'Os dados foram salvos com sucesso!',
+        life: 3000
       });
 
       setDados(null);
@@ -111,64 +143,217 @@ const ImportacaoPedidoPDF = () => {
       <Toast ref={toast} />
 
       {loading && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(255,255,255,0.5)', zIndex: 1000,
-          display: 'flex', alignItems: 'center', justifyContent: 'center'
-        }}>
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(255,255,255,0.8)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
           <ProgressSpinner style={{ width: '60px', height: '60px' }} />
         </div>
       )}
 
-      <FileUpload
-        name="arquivo"
-        accept=".pdf"
-        mode="basic"
-        customUpload
-        uploadHandler={onUpload}
-        auto
-        chooseLabel="Selecionar PDF"
-        disabled={loading}
-      />
+      <Card className="mb-4" title="Enviar Arquivo PDF">
+        <div className="flex flex-column align-items-center gap-3 p-4">
+          <p className="text-center text-muted max-w-60rem">
+          Selecione um arquivo PDF com os dados do pedido. O sistema tentará extrair informações como cliente, produtos, parcelas e observações.
+          </p>
+          <FileUpload
+            name="arquivo"
+            accept=".pdf"
+            mode="advanced"
+            customUpload
+            uploadHandler={onUpload}
+            auto
+            disabled={loading}
+            multiple={false}
+            maxFileSize={6000000}
+            chooseOptions={{
+              icon: 'pi pi-file-pdf',
+              label: 'Selecionar PDF',
+              className: 'p-button-primary',
+              'aria-label': 'Selecionar arquivo PDF para importação'
+            }}
+            uploadLabel="Enviar"
+            cancelLabel="Cancelar"
+          />
+          <small className="text-muted text-center">
+            Dica: envie arquivos gerados por sistemas compatíveis, com layout estruturado.<br/>
+            Tamanho máximo: 5MB. Apenas arquivos PDF.
+          </small>
+        </div>
+      </Card>
 
       {dados && (
         <>
-          <Card title="Dados do Cliente" className="mt-4">
-            <div className="p-grid p-fluid">
-              {[
-                ['nome', 'Nome'], ['documento', 'Documento'], ['email', 'E-mail'], ['telefone', 'Telefone'],
-                ['endereco', 'Endereço'], ['bairro', 'Bairro'], ['cidade', 'Cidade'], ['cep', 'CEP'],
-                ['endereco_entrega', 'Endereço de Entrega']
-              ].map(([field, label]) => (
-                <div className={`p-col-12 ${field === 'endereco' || field === 'endereco_entrega' ? '' : 'p-md-6'}`} key={field}>
-                  <label>{label}</label>
-                  <InputText value={cliente[field] || ''} onChange={(e) => onChangeCliente(field, e.target.value)} />
-                </div>
-              ))}
-              <div className="p-col-12">
-                <label>Prazo de Entrega</label>
-                <InputTextarea value={cliente.prazo_entrega || ''} onChange={(e) => onChangeCliente('prazo_entrega', e.target.value)} rows={2} />
+          <Card title="Dados do Cliente" className="mt-4 p-4">
+            <div className="formgrid grid p-fluid">
+              <div className="field col-12 md:col-6">
+                <label htmlFor="nome" className="block text-sm font-semibold mb-1">Nome</label>
+                <InputText
+                  id="nome"
+                  value={cliente.nome || ''}
+                  onChange={(e) => onChangeCliente('nome', e.target.value)}
+                  className="p-inputtext-sm"
+                  placeholder="Digite o nome completo"
+                />
+              </div>
+
+              <div className="field col-12 md:col-6">
+                <label htmlFor="documento" className="block text-sm font-semibold mb-1">Documento</label>
+                <InputText
+                  id="documento"
+                  value={cliente.documento || ''}
+                  onChange={(e) => onChangeCliente('documento', e.target.value)}
+                  className="p-inputtext-sm"
+                  placeholder="CPF ou CNPJ"
+                />
+              </div>
+
+              <div className="field col-12 md:col-6">
+                <label htmlFor="email" className="block text-sm font-semibold mb-1">E-mail</label>
+                <InputText
+                  id="email"
+                  value={cliente.email || ''}
+                  onChange={(e) => onChangeCliente('email', e.target.value)}
+                  className="p-inputtext-sm"
+                  placeholder="exemplo@email.com"
+                />
+              </div>
+
+              <div className="field col-12 md:col-6">
+                <label htmlFor="telefone" className="block text-sm font-semibold mb-1">Telefone</label>
+                <InputText
+                  id="telefone"
+                  value={cliente.telefone || ''}
+                  onChange={(e) => onChangeCliente('telefone', e.target.value)}
+                  className="p-inputtext-sm"
+                  placeholder="(99) 99999-9999"
+                />
+              </div>
+
+              <div className="field col-12">
+                <label htmlFor="endereco" className="block text-sm font-semibold mb-1">Endereço</label>
+                <InputText
+                  id="endereco"
+                  value={cliente.endereco || ''}
+                  onChange={(e) => onChangeCliente('endereco', e.target.value)}
+                  className="p-inputtext-sm"
+                  placeholder="Rua, número, complemento"
+                />
+              </div>
+
+              <div className="field col-12 md:col-3">
+                <label htmlFor="bairro" className="block text-sm font-semibold mb-1">Bairro</label>
+                <InputText
+                  id="bairro"
+                  value={cliente.bairro || ''}
+                  onChange={(e) => onChangeCliente('bairro', e.target.value)}
+                  className="p-inputtext-sm"
+                />
+              </div>
+
+              <div className="field col-12 md:col-3">
+                <label htmlFor="cidade" className="block text-sm font-semibold mb-1">Cidade</label>
+                <InputText
+                  id="cidade"
+                  value={cliente.cidade || ''}
+                  onChange={(e) => onChangeCliente('cidade', e.target.value)}
+                  className="p-inputtext-sm"
+                />
+              </div>
+
+              <div className="field col-12 md:col-3">
+                <label htmlFor="cep" className="block text-sm font-semibold mb-1">CEP</label>
+                <InputText
+                  id="cep"
+                  value={cliente.cep || ''}
+                  onChange={(e) => onChangeCliente('cep', e.target.value)}
+                  className="p-inputtext-sm"
+                />
+              </div>
+
+              <div className="field col-12">
+                <label htmlFor="endereco_entrega" className="block text-sm font-semibold mb-1">Endereço de
+                  Entrega</label>
+                <InputText
+                  id="endereco_entrega"
+                  value={cliente.endereco_entrega || ''}
+                  onChange={(e) => onChangeCliente('endereco_entrega', e.target.value)}
+                  className="p-inputtext-sm"
+                  placeholder="Caso diferente do endereço principal"
+                />
+              </div>
+
+              <div className="field col-12">
+                <label htmlFor="prazo_entrega" className="block text-sm font-semibold mb-1">Prazo de Entrega</label>
+                <InputTextarea
+                  id="prazo_entrega"
+                  value={cliente.prazo_entrega || ''}
+                  onChange={(e) => onChangeCliente('prazo_entrega', e.target.value)}
+                  rows={3}
+                  className="p-inputtextarea-sm"
+                  placeholder="Ex: 15 dias úteis após confirmação"
+                />
               </div>
             </div>
           </Card>
 
-          <Card title="Dados do Pedido" className="mt-4">
-            <div className="p-grid p-fluid">
-              <div className="p-col-12 p-md-4">
-                <label>Número</label>
-                <InputText value={pedido.numero || ''} onChange={(e) => onChangePedido('numero', e.target.value)} />
+          <Card title="Dados do Pedido" className="mt-4 p-4">
+            <div className="formgrid grid p-fluid">
+              <div className="field col-12 md:col-4">
+                <label htmlFor="numero" className="block text-sm font-semibold mb-1">Número</label>
+                <InputText
+                  id="numero"
+                  value={pedido.numero || ''}
+                  onChange={(e) => onChangePedido('numero', e.target.value)}
+                  className="p-inputtext-sm"
+                  placeholder="Número do pedido"
+                />
               </div>
-              <div className="p-col-12 p-md-4">
-                <label>Vendedor</label>
-                <InputText value={pedido.vendedor || ''} onChange={(e) => onChangePedido('vendedor', e.target.value)} />
+
+              <div className="field col-12 md:col-4">
+                <label htmlFor="vendedor" className="block text-sm font-semibold mb-1">Vendedor</label>
+                <InputText
+                  id="vendedor"
+                  value={pedido.vendedor || ''}
+                  onChange={(e) => onChangePedido('vendedor', e.target.value)}
+                  className="p-inputtext-sm"
+                  placeholder="Nome do vendedor"
+                />
               </div>
-              <div className="p-col-12 p-md-4">
-                <label>Valor Total</label>
-                <InputNumber value={pedido.total || 0} mode="currency" currency="BRL" locale="pt-BR" disabled />
+
+              <div className="field col-12 md:col-4">
+                <label htmlFor="total" className="block text-sm font-semibold mb-1">Valor Total</label>
+                <InputNumber
+                  id="total"
+                  value={pedido.total || 0}
+                  mode="currency"
+                  currency="BRL"
+                  locale="pt-BR"
+                  disabled
+                  className="p-inputtext-sm w-full"
+                />
               </div>
-              <div className="p-col-12">
-                <label>Observações</label>
-                <InputTextarea value={pedido.observacoes || ''} onChange={(e) => onChangePedido('observacoes', e.target.value)} rows={3} />
+
+              <div className="field col-12">
+                <label htmlFor="observacoes" className="block text-sm font-semibold mb-1">Observações</label>
+                <InputTextarea
+                  id="observacoes"
+                  value={pedido.observacoes || ''}
+                  onChange={(e) => onChangePedido('observacoes', e.target.value)}
+                  rows={3}
+                  className="p-inputtextarea-sm"
+                  placeholder="Observações adicionais sobre o pedido"
+                />
               </div>
             </div>
           </Card>
@@ -176,25 +361,72 @@ const ImportacaoPedidoPDF = () => {
           {pedido.parcelas?.length > 0 && (
             <Card title="Parcelas" className="mt-4">
               <DataTable value={pedido.parcelas}>
-                <Column field="descricao" header="Descrição" />
-                <Column field="vencimento" header="Vencimento" />
-                <Column field="forma" header="Forma de Pagamento" />
+                <Column field="descricao" header="Descrição"/>
+                <Column field="vencimento" header="Vencimento"/>
+                <Column field="forma" header="Forma de Pagamento"/>
                 <Column
                   field="valor"
                   header="Valor"
                   body={(row) =>
-                    Number(row.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                    Number(row.valor || 0).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})
                   }
                 />
               </DataTable>
             </Card>
           )}
 
-          <Card title="Produtos" className="mt-4">
-            <DataTable value={itens} editMode="row" dataKey="descricao" responsiveLayout="scroll" scrollable scrollHeight="400px">
-              <Column field="descricao" header="Descrição Completa" style={{ minWidth: '250px' }} />
+          <Card title="Produtos" className="mt-4 p-4">
+            <DataTable
+              value={itens}
+              editMode="row"
+              onRowEditComplete={onRowEditComplete}
+              dataKey="descricao"
+              responsiveLayout="scroll"
+              scrollable
+              scrollHeight="400px"
+              tableStyle={{ minWidth: '1000px' }}
+              className="p-datatable-sm"
+              rowClassName={(rowData) => (!rowData.id_categoria ? 'p-invalid' : '')}
+            >
+              <Column
+                header="Variação"
+                body={(row) =>
+                  row.id_variacao
+                    ? `#${row.id_variacao} - ${row.variacao_nome || 'Encontrada'}`
+                    : <span className="text-red-500">Não encontrada</span>
+                }
+                style={{ minWidth: '200px' }}
+              />
 
-              {/** Dicionário de rótulos para cabeçalhos legíveis */}
+              <Column
+                field="id_categoria"
+                header="Categoria"
+                editor={(options) => (
+                  <Dropdown
+                    value={options.rowData.id_categoria || null}
+                    options={categorias}
+                    optionLabel="nome"
+                    optionValue="id"
+                    placeholder="Selecione"
+                    className="p-inputtext-sm w-full"
+                    onChange={(e) => onChangeItem(options.rowIndex, 'id_categoria', e.value)}
+                  />
+                )}
+                body={(row) => {
+                  const cat = categorias.find(c => c.id === row.id_categoria);
+                  return cat ? cat.nome : <span className="text-red-500">Não definida</span>;
+                }}
+                style={{ minWidth: '180px' }}
+              />
+
+              <Column
+                field="descricao"
+                header="Descrição Completa"
+                editor={(options) => editorText(options, 'descricao')}
+                style={{ minWidth: '250px' }}
+              />
+
+              {/* Atributos dinâmicos */}
               {(() => {
                 const atributoLabels = {
                   cores: { cor: 'Cor', cor_do_ferro: 'Cor do Ferro', cor_inox: 'Cor Inox' },
@@ -220,21 +452,22 @@ const ImportacaoPedidoPDF = () => {
                               updated[options.rowIndex].atributos[grupo][campo] = e.target.value;
                               setItens(updated);
                             }}
+                            className="p-inputtext-sm"
                           />
                         );
                       }}
                       body={(row) => row.atributos?.[grupo]?.[campo] || '-'}
+                      style={{ minWidth: '140px' }}
                     />
                   ))
                 );
               })()}
 
-              {/** Campos fixos (medidas) com body e editor */}
+              {/* Campos fixos (medidas) */}
               {['largura', 'profundidade', 'altura'].map((chave) => (
                 <Column
                   key={chave}
                   header={chave.charAt(0).toUpperCase() + chave.slice(1)}
-                  body={(row) => row.fixos?.[chave] ?? '-'}
                   editor={(options) => {
                     const updated = [...itens];
                     if (!updated[options.rowIndex].fixos) updated[options.rowIndex].fixos = {};
@@ -247,41 +480,66 @@ const ImportacaoPedidoPDF = () => {
                         }}
                         mode="decimal"
                         minFractionDigits={0}
+                        className="p-inputtext-sm"
                       />
                     );
                   }}
+                  body={(row) => row.fixos?.[chave] ?? '-'}
+                  style={{ minWidth: '100px' }}
                 />
               ))}
 
-              <Column field="quantidade" header="Qtd" editor={(options) => (
-                <InputNumber
-                  value={options.rowData.quantidade}
-                  onValueChange={(e) => onChangeItem(options.rowIndex, 'quantidade', e.value)}
-                  mode="decimal"
-                  minFractionDigits={0}
-                />
-              )} />
+              <Column
+                field="quantidade"
+                header="Qtd"
+                editor={(options) => editorNumber(options, 'quantidade')}
+                style={{ width: '100px', textAlign: 'center' }}
+              />
 
-              <Column field="valor" header="Valor Unit." editor={(options) => (
-                <InputNumber
-                  value={options.rowData.valor}
-                  onValueChange={(e) => onChangeItem(options.rowIndex, 'valor', e.value)}
-                  mode="currency"
-                  currency="BRL"
-                />
-              )} />
+              <Column
+                field="valor"
+                header="Valor Unit."
+                editor={(options) => (
+                  <InputNumber
+                    value={options.rowData.valor}
+                    onValueChange={(e) => onChangeItem(options.rowIndex, 'valor', e.value)}
+                    mode="currency"
+                    currency="BRL"
+                    className="p-inputtext-sm"
+                  />
+                )}
+                style={{ minWidth: '140px', textAlign: 'right' }}
+              />
 
               <Column
                 header="Total"
-                body={(row) => (row.quantidade * row.valor).toLocaleString('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL',
-                })}
+                body={(row) => {
+                  const total = (row.quantidade ?? 0) * (row.valor ?? 0);
+                  return total.toLocaleString('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL',
+                  });
+                }}
+                style={{ minWidth: '140px', textAlign: 'right' }}
+              />
+
+              <Column
+                rowEditor
+                headerStyle={{ width: '70px' }}
+                bodyStyle={{ textAlign: 'center' }}
               />
             </DataTable>
+
           </Card>
 
-          <Button label="Salvar Pedido" icon="pi pi-check" className="mt-4" onClick={confirmarImportacao} />
+          <div className="flex justify-content-end mt-4">
+            <Button
+              label="Confirmar e Salvar Pedido"
+              icon="pi pi-check"
+              className="p-button-lg p-button-success px-4"
+              onClick={confirmarImportacao}
+            />
+          </div>
         </>
       )}
     </div>

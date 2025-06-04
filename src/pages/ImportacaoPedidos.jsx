@@ -9,15 +9,17 @@ const ImportacaoPedidos = () => {
 
   return (
     <SakaiLayout>
-      <Toast ref={toast} />
-      <ConfirmDialog />
-      <div className="importacao-pedidos" style={{ margin: '2rem' }}>
-        <h2>Importação de Pedidos via PDF</h2>
-        <p className="mb-4">
-          Faça upload de um arquivo PDF gerado por outro sistema. Os dados serão extraídos e você poderá revisar antes de confirmar.
+      <Toast ref={toast}/>
+      <ConfirmDialog/>
+      <div className="importacao-pedidos p-4 md:p-6">
+        <h1 className="text-2xl font-semibold mb-2">Importação de Pedidos via PDF</h1>
+        <p className="text-muted mb-4">
+          Faça upload de um arquivo PDF gerado por outro sistema. Os dados serão extraídos e você poderá revisar antes
+          de confirmar.
         </p>
-        <ImportacaoPedidoPDF />
+        <ImportacaoPedidoPDF/>
       </div>
+
     </SakaiLayout>
   );
 };
