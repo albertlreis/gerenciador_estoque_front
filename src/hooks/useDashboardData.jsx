@@ -37,13 +37,37 @@ const useDashboardData = () => {
   const [loadingConsignacoes, setLoadingConsignacoes] = useState(true);
 
   useEffect(() => {
-    fetchKpis();
-    fetchUltimosPedidos();
-    fetchEstatisticas();
-    fetchGraficoStatus();
-    fetchEstoqueBaixo();
-    fetchPedidosClientesMes();
-    carregarConsignacoesVencendo();
+    const carregarDashboard = async () => {
+      try {
+        setLoadingKpis(true);
+        setLoadingPedidos(true);
+        setLoadingEstatisticas(true);
+        setLoadingStatus(true);
+        setLoadingEstoqueBaixo(true);
+        setLoadingConsignacoes(true);
+
+        await Promise.all([
+          fetchKpis(),
+          fetchUltimosPedidos(),
+          fetchEstatisticas(),
+          fetchGraficoStatus(),
+          fetchEstoqueBaixo(),
+          fetchPedidosClientesMes(),
+          carregarConsignacoesVencendo(),
+        ]);
+      } catch (error) {
+        console.error('Erro ao carregar dados do dashboard:', error);
+      } finally {
+        setLoadingKpis(false);
+        setLoadingPedidos(false);
+        setLoadingEstatisticas(false);
+        setLoadingStatus(false);
+        setLoadingEstoqueBaixo(false);
+        setLoadingConsignacoes(false);
+      }
+    };
+
+    carregarDashboard();
   }, []);
 
   const carregarConsignacoesVencendo = async () => {
@@ -125,35 +149,30 @@ const useDashboardData = () => {
   };
 
   const fetchKpis = async () => {
-    try {
-      setLoadingKpis(true);
-      const res = await apiEstoque.get('/pedidos', { params: { page: 1, per_page: 100 } });
-      const pedidos = res.data.data || [];
-      const doMes = pedidos.filter(p => new Date(p.data).getMonth() === new Date().getMonth());
-      const valorTotal = doMes.reduce((s, p) => s + Number(p.valor_total || 0), 0);
-      const clientes = new Set(doMes.map(p => p.cliente?.id)).size;
+    const res = await apiEstoque.get('/pedidos', { params: { page: 1, per_page: 100 } });
+    const pedidos = res.data.data || [];
+    const doMes = pedidos.filter(p => new Date(p.data).getMonth() === new Date().getMonth());
+    const valorTotal = doMes.reduce((s, p) => s + Number(p.valor_total || 0), 0);
+    const clientes = new Set(doMes.map(p => p.cliente?.id)).size;
 
-      const statusCount = doMes.reduce((acc, p) => {
-        const status = p.status;
-        if (status === 'confirmado') acc.confirmado++;
-        else if (status === 'cancelado') acc.cancelado++;
-        else if (status === 'rascunho') acc.rascunho++;
-        return acc;
-      }, { confirmado: 0, cancelado: 0, rascunho: 0 });
+    const statusCount = doMes.reduce((acc, p) => {
+      const status = p.status;
+      if (status === 'confirmado') acc.confirmado++;
+      else if (status === 'cancelado') acc.cancelado++;
+      else if (status === 'rascunho') acc.rascunho++;
+      return acc;
+    }, { confirmado: 0, cancelado: 0, rascunho: 0 });
 
-      setKpis(prev => ({
-        ...prev,
-        pedidosMes: doMes.length,
-        valorMes: valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
-        clientesUnicos: clientes,
-        ticketMedio: doMes.length > 0 ? (valorTotal / doMes.length).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'R$ 0,00',
-        totalConfirmado: statusCount.confirmado,
-        totalCancelado: statusCount.cancelado,
-        totalRascunho: statusCount.rascunho,
-      }));
-    } finally {
-      setLoadingKpis(false);
-    }
+    setKpis(prev => ({
+      ...prev,
+      pedidosMes: doMes.length,
+      valorMes: valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
+      clientesUnicos: clientes,
+      ticketMedio: doMes.length > 0 ? (valorTotal / doMes.length).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'R$ 0,00',
+      totalConfirmado: statusCount.confirmado,
+      totalCancelado: statusCount.cancelado,
+      totalRascunho: statusCount.rascunho,
+    }));
   };
 
   const fetchGraficoStatus = async () => {

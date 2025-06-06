@@ -21,9 +21,9 @@ const ConsignacoesAlert = ({consignacoesVencendo = [], loading = false}) => {
                 <Clock className="mr-2 text-yellow-600 mt-1" size={16}/>
                 <div>
                   <span
-                    className="font-semibold">Pedido #{item.pedido_id}</span> — {item.produto_variacao?.nome || 'Produto'}
+                    className="font-semibold">Pedido #{item.pedido.id}</span> — {item.produto_nome}
                   <br/>
-                  <small className="text-700">Prazo: {new Date(item.prazo_resposta).toLocaleDateString('pt-BR')}</small>
+                  <small className="text-700">Prazo: {item.prazo_resposta} ({item.dias_para_vencer} dia(s))</small>
                 </div>
               </li>
             ))}
