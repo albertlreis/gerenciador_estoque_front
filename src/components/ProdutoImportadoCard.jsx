@@ -44,9 +44,25 @@ const ProdutoImportadoCard = ({ item, index, categorias, onChangeItem }) => {
             <div className="formgrid grid">
               <div className="field col-12 md:col-3">
                 <label className="block text-xs font-medium mb-1">Categoria</label>
-                <Dropdown value={item.id_categoria || null} options={categorias} optionLabel="nome" optionValue="id"
-                          placeholder="Selecione" className="w-full p-inputtext-sm" aria-label="Categoria"
-                          onChange={(e) => onChangeItem(index, 'id_categoria', e.value)} />
+                <Dropdown
+                  value={item.id_categoria !== undefined && item.id_categoria !== null ? Number(item.id_categoria) : null}
+                  options={categorias}
+                  optionLabel="nome"
+                  optionValue="id"
+                  placeholder="Selecione"
+                  className="w-full p-inputtext-sm"
+                  aria-label="Categoria"
+                  filter
+                  filterBy="nome"
+                  onChange={(e) => {
+                    console.log(
+                      'Categoria selecionada:',
+                      e.value,
+                      categorias.find((c) => c.id === Number(e.value))
+                    );
+                    onChangeItem(index, 'id_categoria', e.value);
+                  }}
+                />
               </div>
               <div className="field col-12 md:col-3">
                 <label className="block text-xs font-medium mb-1">Referência</label>

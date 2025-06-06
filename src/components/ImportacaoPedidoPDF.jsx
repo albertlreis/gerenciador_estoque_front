@@ -9,7 +9,6 @@ import { Button } from 'primereact/button';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Card } from 'primereact/card';
-import { Dropdown } from 'primereact/dropdown';
 import apiEstoque from '../services/apiEstoque';
 import ProdutoImportadoCard from "./ProdutoImportadoCard";
 
@@ -55,6 +54,11 @@ const ImportacaoPedidoPDF = () => {
     }
   };
 
+  const categoriasNumericas = categorias.map((cat) => ({
+    ...cat,
+    id: Number(cat.id)
+  }));
+
   const onChangeCliente = (field, value) => {
     setCliente(prev => ({ ...prev, [field]: value }));
   };
@@ -64,9 +68,12 @@ const ImportacaoPedidoPDF = () => {
   };
 
   const onChangeItem = (index, field, value) => {
-    const updated = [...itens];
-    updated[index][field] = value;
-    setItens(updated);
+    setItens((prev) => {
+      const novos = [...prev];
+      const itemAtualizado = { ...novos[index], [field]: value };
+      novos[index] = itemAtualizado;
+      return novos;
+    });
   };
 
   const editorNumber = (options, field) => (
@@ -377,25 +384,15 @@ const ImportacaoPedidoPDF = () => {
           )}
 
           <Card title="Produtos" className="mt-4 p-4">
-            {['PEDIDO', 'PRONTA ENTREGA'].map((tipo) => {
-              const itensTipo = itens.filter((item) => item.tipo === tipo);
-              if (itensTipo.length === 0) return null;
-
-              return (
-                <div key={tipo} className="mb-5">
-                  <h3 className="text-xl font-bold mb-3 text-primary">{tipo}</h3>
-                  {itensTipo.map((item, index) => (
-                    <ProdutoImportadoCard
-                      key={index}
-                      item={item}
-                      index={index}
-                      categorias={categorias}
-                      onChangeItem={onChangeItem}
-                    />
-                  ))}
-                </div>
-              );
-            })}
+            {itens.map((item, index) => (
+              <ProdutoImportadoCard
+                key={index}
+                item={item}
+                index={index}
+                categorias={categoriasNumericas}
+                onChangeItem={onChangeItem}
+              />
+            ))}
           </Card>
 
           <div className="flex justify-content-end mt-4">
