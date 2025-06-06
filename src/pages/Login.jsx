@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiMail, FiLock } from 'react-icons/fi';
-import { InputText } from 'primereact/inputtext';
 import apiAuth from '../services/apiAuth';
 import { isTokenValid } from '../helper';
 import { useAuth } from '../context/AuthContext';
