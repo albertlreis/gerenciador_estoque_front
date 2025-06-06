@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { isTokenValid } from '../helper/isTokenValid';
+import apiEstoque from '../services/apiEstoque';
 
 const AuthContext = createContext();
 
@@ -16,7 +17,10 @@ export const AuthProvider = ({ children }) => {
     const stored = localStorage.getItem('user');
     if (stored && isTokenValid()) {
       try {
-        setUser(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        setUser(parsed);
+
+        apiEstoque.defaults.headers.common['X-Permissoes'] = JSON.stringify(parsed.permissoes || []);
       } catch {
         localStorage.removeItem('user');
         setUser(null);
@@ -28,6 +32,7 @@ export const AuthProvider = ({ children }) => {
   const login = (userData) => {
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
+    apiEstoque.defaults.headers.common['X-Permissoes'] = JSON.stringify(userData.permissoes || []);
   };
 
   const logout = () => {

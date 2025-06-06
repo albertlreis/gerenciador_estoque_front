@@ -8,7 +8,7 @@ const apiEstoque = axios.create({
   },
 });
 
-// Interceptor para incluir token
+// Interceptor de requisição
 apiEstoque.interceptors.request.use(
   (config) => {
     const userStr = localStorage.getItem('user');
@@ -16,20 +16,28 @@ apiEstoque.interceptors.request.use(
       try {
         if (userStr.trim().startsWith('{')) {
           const parsedUser = JSON.parse(userStr);
+
+          // Token
           if (parsedUser.token) {
             config.headers['Authorization'] = `Bearer ${parsedUser.token}`;
+          }
+
+          // Permissões
+          if (parsedUser.permissoes) {
+            config.headers['X-Permissoes'] = JSON.stringify(parsedUser.permissoes);
           }
         }
       } catch (err) {
         console.error('Erro ao parsear usuário do localStorage', err);
       }
     }
+
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Interceptor de resposta para lidar com 401
+// Interceptor de resposta
 apiEstoque.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -39,13 +47,12 @@ apiEstoque.interceptors.response.use(
 
       if (!isLoginPage && hasUser) {
         localStorage.removeItem('user');
-        // Em vez de redirecionar aqui diretamente, delegue à lógica do roteador
         window.location.href = '/login';
       }
     }
+
     return Promise.reject(error);
   }
 );
-
 
 export default apiEstoque;

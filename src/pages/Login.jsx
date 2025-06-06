@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiMail, FiLock } from 'react-icons/fi';
 import apiAuth from '../services/apiAuth';
+import apiEstoque from '../services/apiEstoque';
 import { isTokenValid } from '../helper';
 import { useAuth } from '../context/AuthContext';
 import '../Login.css';
@@ -30,6 +31,10 @@ const Login = () => {
 
       const expiresAt = new Date().getTime() + expires_in * 1000;
       login({ token: access_token, expiresAt, ...user });
+
+      // Cabeçalho de permissões na API de estoque
+      apiEstoque.defaults.headers.common['X-Permissoes'] = JSON.stringify(user.permissoes || []);
+
       navigate('/');
     } catch (err) {
       setErro('E-mail ou senha inválidos');
