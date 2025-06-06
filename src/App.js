@@ -16,7 +16,7 @@ import Categorias from './pages/Categorias';
 import Clientes from './pages/Clientes';
 import ConfiguracaoOutlet from './pages/ConfiguracaoOutlet';
 import Depositos from './pages/Depositos';
-import EstoqueMovimentacoes from './pages/EstoqueMovimentacoes';
+import MovimentacoesEstoque from './pages/MovimentacoesEstoque';
 import FinalizarPedido from './pages/FinalizarPedido';
 import ImportacaoPage from './pages/ImportacaoProdutos';
 import Perfis from './pages/Perfis';
@@ -67,10 +67,8 @@ const App = () => {
       <Route path="/configuracao-outlet"
              element={renderProtectedRoute(<ConfiguracaoOutlet/>, 'produtos.configurar_outlet')}/>
       <Route path="/depositos" element={renderProtectedRoute(<Depositos/>, 'depositos.visualizar')}/>
-      <Route path="/depositos/:depositoId/movimentacoes"
-             element={renderProtectedRoute(<EstoqueMovimentacoes/>, 'estoque.movimentacao')}/>
-      <Route path="/estoque/movimentacao"
-             element={renderProtectedRoute(<EstoqueMovimentacoes/>, 'estoque.movimentacao')}/>
+      <Route path="/movimentacoes-estoque"
+             element={renderProtectedRoute(<MovimentacoesEstoque/>, 'estoque.movimentacao')}/>
       <Route path="/finalizar-pedido/:id" element={renderProtectedRoute(<FinalizarPedido/>, 'carrinho.finalizar')}/>
       <Route path="/pedidos" element={renderProtectedRoute(<Pedidos/>, 'pedidos.visualizar')}/>
       <Route path="/perfis" element={renderProtectedRoute(<Perfis/>, 'perfis.visualizar')}/>

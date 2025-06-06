@@ -88,6 +88,12 @@ const menuItems = (navigate, has) => {
           key: 'estoque-depositos',
           icon: 'pi pi-fw pi-sitemap',
           command: () => navigate('/depositos')
+        },
+        {
+          label: 'Movimentações de Estoque',
+          key: 'estoque-movimentacoes',
+          icon: 'pi pi-fw pi-exchange',
+          command: () => navigate('/movimentacoes-estoque')
         }
       ]
     },
