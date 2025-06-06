@@ -5,6 +5,7 @@ import { Toast } from 'primereact/toast';
 import { OverlayPanel } from 'primereact/overlaypanel';
 import { Button } from 'primereact/button';
 import { Tag } from 'primereact/tag';
+import { addLocale } from 'primereact/api';
 
 import SakaiLayout from '../layouts/SakaiLayout';
 import PedidosFiltro from '../components/PedidosFiltro';
@@ -14,15 +15,33 @@ import PedidoStatusDialog from '../components/PedidoStatusDialog';
 import { usePedidos } from '../hooks/usePedidos';
 import { formatarReal } from '../utils/formatters';
 
-const statusTemplate = (rowData) => {
-  const statusMap = {
-    pendente: 'warning',
-    andamento: 'info',
-    concluido: 'success',
-    cancelado: 'danger',
-  };
-  return <Tag severity={statusMap[rowData.status]} value={rowData.status} />;
+const statusMapDetalhado = {
+  pedido_criado:     { label: 'Criado', color: 'secondary', icon: 'pi pi-plus' },
+  pedido_enviado_fabrica: { label: 'Enviado à Fábrica', color: 'info', icon: 'pi pi-send' },
+  nota_emitida:      { label: 'Nota Emitida', color: 'success', icon: 'pi pi-file' },
+  previsao_envio_cliente: { label: 'Previsão de Envio', color: 'warning', icon: 'pi pi-clock' },
+  embarque_fabrica:  { label: 'Embarcado', color: 'info', icon: 'pi pi-truck' },
+  nota_recebida_compra: { label: 'Nota Recebida', color: 'success', icon: 'pi pi-file-check' },
+  entrega_estoque:   { label: 'Entrega Estoque', color: 'success', icon: 'pi pi-box' },
+  envio_cliente:     { label: 'Enviado ao Cliente', color: 'warning', icon: 'pi pi-send' },
+  entrega_cliente:   { label: 'Entregue', color: 'success', icon: 'pi pi-check' },
+  consignado:        { label: 'Consignado', color: 'info', icon: 'pi pi-briefcase' },
+  devolucao_consignacao: { label: 'Devolvido', color: 'danger', icon: 'pi pi-undo' },
+  finalizado:        { label: 'Finalizado', color: 'success', icon: 'pi pi-check-circle' },
 };
+
+addLocale('pt-BR', {
+  firstDayOfWeek: 0,
+  dayNames: ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'],
+  dayNamesShort: ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sab'],
+  dayNamesMin: ['D','S','T','Q','Q','S','S'],
+  monthNames: ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'],
+  monthNamesShort: ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'],
+  today: 'Hoje',
+  clear: 'Limpar',
+  chooseDate: 'Escolher data',
+  dateFormat: 'dd/mm/yy',
+});
 
 export default function PedidosListagem() {
   const toast = useRef(null);
@@ -38,6 +57,19 @@ export default function PedidosListagem() {
     const novaPagina = Math.floor(e.first / 10) + 1;
     setPaginaAtual(novaPagina);
     fetchPedidos(novaPagina);
+  };
+
+  const statusTemplate = (rowData) => {
+    const status = statusMapDetalhado[rowData.status];
+    if (!status) return <Tag value={rowData.status} />;
+    return (
+      <Tag
+        value={status.label}
+        icon={status.icon}
+        severity={status.color}
+        className="text-sm"
+      />
+    );
   };
 
   return (
