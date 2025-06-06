@@ -2,18 +2,18 @@ import React, { useRef, useState, useEffect } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Toast } from 'primereact/toast';
-import { OverlayPanel } from 'primereact/overlaypanel';
 import { Button } from 'primereact/button';
 import { Tag } from 'primereact/tag';
 import { addLocale } from 'primereact/api';
 
 import SakaiLayout from '../layouts/SakaiLayout';
 import PedidosFiltro from '../components/PedidosFiltro';
-import ProdutosDetalhes from '../components/ProdutosDetalhes';
 import PedidosExportar from '../components/PedidosExportar';
 import PedidoStatusDialog from '../components/PedidoStatusDialog';
+import PedidoDetalhado from '../components/PedidoDetalhado';
 import { usePedidos } from '../hooks/usePedidos';
 import { formatarReal } from '../utils/formatters';
+import api from '../services/apiEstoque';
 
 const statusMapDetalhado = {
   pedido_criado:     { label: 'Criado', color: 'secondary', icon: 'pi pi-plus' },
@@ -45,10 +45,13 @@ addLocale('pt-BR', {
 
 export default function PedidosListagem() {
   const toast = useRef(null);
-  const overlayRef = useRef(null);
   const [filtros, setFiltros] = useState({ texto: '', status: null, tipo: 'todos', periodo: null });
   const [pedidoSelecionado, setPedidoSelecionado] = useState(null);
   const [exibirDialogStatus, setExibirDialogStatus] = useState(false);
+  const [pedidoDetalhado, setPedidoDetalhado] = useState(null);
+  const [detalhesVisivel, setDetalhesVisivel] = useState(false);
+  const [loadingDetalhes, setLoadingDetalhes] = useState(false);
+
   const { pedidos, total, paginaAtual, loading, fetchPedidos, setPaginaAtual } = usePedidos(filtros);
 
   useEffect(() => { fetchPedidos(1); }, []);
@@ -72,12 +75,28 @@ export default function PedidosListagem() {
     );
   };
 
+  const carregarDetalhesPedido = async (pedido) => {
+    setLoadingDetalhes(true);
+    setDetalhesVisivel(true);
+    try {
+      const { data } = await api.get(`/pedidos/${pedido.id}/completo`);
+      setPedidoDetalhado(data);
+    } catch (err) {
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Erro ao carregar detalhes',
+        detail: err.response?.data?.message || err.message
+      });
+      setPedidoDetalhado(null);
+      setDetalhesVisivel(false);
+    } finally {
+      setLoadingDetalhes(false);
+    }
+  };
+
   return (
     <SakaiLayout>
       <Toast ref={toast} />
-      <OverlayPanel ref={overlayRef} showCloseIcon dismissable>
-        <ProdutosDetalhes pedido={pedidoSelecionado} />
-      </OverlayPanel>
 
       <PedidoStatusDialog
         visible={exibirDialogStatus}
@@ -85,6 +104,16 @@ export default function PedidosListagem() {
         pedido={pedidoSelecionado}
         toast={toast}
         onSalvo={() => fetchPedidos(paginaAtual)}
+      />
+
+      <PedidoDetalhado
+        visible={detalhesVisivel}
+        onHide={() => {
+          setDetalhesVisivel(false);
+          setPedidoDetalhado(null);
+        }}
+        pedido={pedidoDetalhado}
+        loading={loadingDetalhes}
       />
 
       <div className="p-4">
@@ -133,10 +162,9 @@ export default function PedidosListagem() {
             body={(row) => (
               <Button
                 icon="pi pi-eye"
-                onClick={(e) => {
-                  setPedidoSelecionado(row);
-                  overlayRef.current.toggle(e);
-                }}
+                severity="info"
+                onClick={() => carregarDetalhesPedido(row)}
+                tooltip="Ver detalhes"
               />
             )}
           />

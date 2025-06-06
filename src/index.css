@@ -390,3 +390,7 @@ textarea.p-inputtextarea {
   background-color: #f0fdf4;
 }
 
+.timeline-container {
+  overflow-x: auto;
+  padding-bottom: 1rem;
+}
