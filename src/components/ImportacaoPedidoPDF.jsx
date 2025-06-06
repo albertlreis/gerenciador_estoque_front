@@ -11,6 +11,7 @@ import { Column } from 'primereact/column';
 import { Card } from 'primereact/card';
 import { Dropdown } from 'primereact/dropdown';
 import apiEstoque from '../services/apiEstoque';
+import ProdutoImportadoCard from "./ProdutoImportadoCard";
 
 const ImportacaoPedidoPDF = () => {
   const [dados, setDados] = useState(null);
@@ -376,125 +377,25 @@ const ImportacaoPedidoPDF = () => {
           )}
 
           <Card title="Produtos" className="mt-4 p-4">
-            {itens.map((item, index) => (
-              <Card
-                key={index}
-                className={`mb-3 border-left-4 ${
-                  !item.id_categoria || !item.id_variacao ? 'border-red-300' : 'border-green-300'
-                }`}
-              >
-                <div className="flex flex-column md:flex-row justify-between gap-4 p-3">
-                  {/* Coluna esquerda: conteúdo principal */}
-                  <div className="flex-1">
-                    <div className="text-base font-semibold mb-1">{item.descricao}</div>
+            {['PEDIDO', 'PRONTA ENTREGA'].map((tipo) => {
+              const itensTipo = itens.filter((item) => item.tipo === tipo);
+              if (itensTipo.length === 0) return null;
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      <div>
-                        <label className="block text-xs font-medium mb-1">Categoria</label>
-                        <Dropdown
-                          value={item.id_categoria || null}
-                          options={categorias}
-                          optionLabel="nome"
-                          optionValue="id"
-                          placeholder="Selecione"
-                          className="w-full p-inputtext-sm"
-                          onChange={(e) => onChangeItem(index, 'id_categoria', e.value)}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-medium mb-1">Quantidade</label>
-                        <InputNumber
-                          value={item.quantidade}
-                          onValueChange={(e) => onChangeItem(index, 'quantidade', e.value)}
-                          min={1}
-                          className="w-full p-inputtext-sm"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-medium mb-1">Valor Unitário</label>
-                        <InputNumber
-                          value={item.valor}
-                          onValueChange={(e) => onChangeItem(index, 'valor', e.value)}
-                          mode="currency"
-                          currency="BRL"
-                          locale="pt-BR"
-                          className="w-full p-inputtext-sm"
-                        />
-                      </div>
-
-                      {['largura', 'profundidade', 'altura'].map((campo) => (
-                        <div key={campo}>
-                          <label className="block text-xs font-medium mb-1">
-                            {campo.charAt(0).toUpperCase() + campo.slice(1)}
-                          </label>
-                          <InputNumber
-                            value={item.fixos?.[campo] || null}
-                            onValueChange={(e) => {
-                              const updated = [...itens];
-                              updated[index].fixos = {
-                                ...updated[index].fixos,
-                                [campo]: e.value,
-                              };
-                              setItens(updated);
-                            }}
-                            className="w-full p-inputtext-sm"
-                          />
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Atributos */}
-                    {['cores', 'tecidos', 'acabamentos', 'observacoes'].map((grupo) =>
-                      item.atributos?.[grupo]
-                        ? Object.entries(item.atributos[grupo]).map(([campo, valor]) => (
-                          <div key={`${grupo}-${campo}`} className="mt-3">
-                            <label className="block text-xs font-medium mb-1">
-                              {campo.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
-                            </label>
-                            <InputText
-                              value={valor}
-                              onChange={(e) => {
-                                const updated = [...itens];
-                                updated[index].atributos[grupo][campo] = e.target.value;
-                                setItens(updated);
-                              }}
-                              className="w-full p-inputtext-sm"
-                            />
-                          </div>
-                        ))
-                        : null
-                    )}
-                  </div>
-
-                  {/* Coluna direita: status e totais */}
-                  <div className="flex flex-column gap-2 text-right min-w-48 md:w-64 justify-between">
-                    <div>
-                      <span className="block text-sm font-medium">
-                        Total:{' '}
-                        {(item.quantidade * item.valor).toLocaleString('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL',
-                        })}
-                      </span>
-
-                      <span className="block text-xs mt-2">
-                        {item.id_variacao ? (
-                          <span className="text-green-600">Variação encontrada</span>
-                        ) : (
-                          <span className="text-red-500 font-semibold">Sem variação</span>
-                        )}
-                      </span>
-
-                      {!item.id_categoria && (
-                        <span className="block text-xs text-red-600 font-medium mt-1">Categoria obrigatória</span>
-                      )}
-                    </div>
-                  </div>
+              return (
+                <div key={tipo} className="mb-5">
+                  <h3 className="text-xl font-bold mb-3 text-primary">{tipo}</h3>
+                  {itensTipo.map((item, index) => (
+                    <ProdutoImportadoCard
+                      key={index}
+                      item={item}
+                      index={index}
+                      categorias={categorias}
+                      onChangeItem={onChangeItem}
+                    />
+                  ))}
                 </div>
-              </Card>
-            ))}
+              );
+            })}
           </Card>
 
           <div className="flex justify-content-end mt-4">
