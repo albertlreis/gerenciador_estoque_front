@@ -122,66 +122,68 @@ const MovimentacoesEstoque = () => {
         </div>
 
         {/* Filtros */}
-        <div className="grid mb-4 gap-3">
-          <div className="col-12 md:col-3">
-            <Dropdown
-              value={filtros.tipo}
-              options={tipos}
-              onChange={(e) => setFiltros({ ...filtros, tipo: e.value })}
-              placeholder="Filtrar por tipo"
-              showClear
-              className="w-full"
-            />
-          </div>
-          <div className="col-12 md:col-3">
-            <Dropdown
-              value={filtros.deposito}
-              options={depositos}
-              onChange={(e) => setFiltros({ ...filtros, deposito: e.value })}
-              placeholder="Filtrar por depósito"
-              showClear
-              className="w-full"
-            />
-          </div>
-          <div className="col-12 md:col-3">
-            <InputText
-              value={filtros.produto}
-              onChange={(e) => setFiltros({ ...filtros, produto: e.target.value })}
-              placeholder="Buscar produto"
-              className="w-full"
-            />
-          </div>
-          <div className="col-12 md:col-3">
-            <Calendar
-              value={filtros.periodo}
-              onChange={(e) => setFiltros({ ...filtros, periodo: e.value })}
-              selectionMode="range"
-              placeholder="Filtrar por período"
-              showIcon
-              readOnlyInput
-              className="w-full"
-            />
-          </div>
-          <div className="col-12 flex justify-end gap-2">
-            <Button
-              label="Filtrar"
-              icon="pi pi-search"
-              onClick={() => {
-                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(filtros));
-                fetchDados();
-              }}
-            />
-            <Button
-              label="Limpar"
-              icon="pi pi-times"
-              className="p-button-secondary"
-              onClick={() => {
-                const reset = { tipo: null, deposito: null, produto: '', periodo: null };
-                setFiltros(reset);
-                localStorage.removeItem(LOCAL_STORAGE_KEY);
-                fetchDados();
-              }}
-            />
+        <div className="surface-card border-round shadow-1 p-4 mb-4">
+          <div className="grid formgrid">
+            <div className="col-12 md:col-3">
+              <Dropdown
+                value={filtros.tipo}
+                options={tipos}
+                onChange={(e) => setFiltros({...filtros, tipo: e.value})}
+                placeholder="Filtrar por tipo"
+                showClear
+                className="w-full"
+              />
+            </div>
+            <div className="col-12 md:col-3">
+              <Dropdown
+                value={filtros.deposito}
+                options={depositos}
+                onChange={(e) => setFiltros({...filtros, deposito: e.value})}
+                placeholder="Filtrar por depósito"
+                showClear
+                className="w-full"
+              />
+            </div>
+            <div className="col-12 md:col-3">
+              <InputText
+                value={filtros.produto}
+                onChange={(e) => setFiltros({...filtros, produto: e.target.value})}
+                placeholder="Buscar produto"
+                className="w-full"
+              />
+            </div>
+            <div className="col-12 md:col-3">
+              <Calendar
+                value={filtros.periodo}
+                onChange={(e) => setFiltros({...filtros, periodo: e.value})}
+                selectionMode="range"
+                placeholder="Filtrar por período"
+                showIcon
+                readOnlyInput
+                className="w-full"
+              />
+            </div>
+            <div className="col-12 flex justify-end gap-2 mt-3">
+              <Button
+                label="Filtrar"
+                icon="pi pi-search"
+                onClick={() => {
+                  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(filtros));
+                  fetchDados();
+                }}
+              />
+              <Button
+                label="Limpar"
+                icon="pi pi-times"
+                className="p-button-secondary"
+                onClick={() => {
+                  const reset = {tipo: null, deposito: null, produto: '', periodo: null};
+                  setFiltros(reset);
+                  localStorage.removeItem(LOCAL_STORAGE_KEY);
+                  fetchDados();
+                }}
+              />
+            </div>
           </div>
         </div>
 
@@ -189,16 +191,19 @@ const MovimentacoesEstoque = () => {
         <div className="grid mb-4">
           <div className="col-12 md:col-4">
             <Card title="Produtos" className="text-center">
+              <i className="pi pi-box text-3xl text-primary mb-2 block"/>
               <h3>{resumo.totalProdutos}</h3>
             </Card>
           </div>
           <div className="col-12 md:col-4">
             <Card title="Peças em Estoque" className="text-center">
+              <i className="pi pi-inbox text-3xl text-success mb-2 block"/>
               <h3>{resumo.totalPecas}</h3>
             </Card>
           </div>
           <div className="col-12 md:col-4">
             <Card title="Depósitos Ativos" className="text-center">
+              <i className="pi pi-building text-3xl text-warning mb-2 block"/>
               <h3>{resumo.totalDepositos}</h3>
             </Card>
           </div>
@@ -223,8 +228,8 @@ const MovimentacoesEstoque = () => {
               rowGroup
               body={(rowData) => rowData.produto_nome}
             />
-            <Column field="deposito_nome" header="Depósito" />
-            <Column field="quantidade" header="Quantidade" body={quantidadeTemplate} />
+            <Column field="deposito_nome" header="Depósito"/>
+            <Column field="quantidade" header="Quantidade" body={quantidadeTemplate}/>
             <Column
               header="Ações"
               body={(rowData) => (
@@ -250,17 +255,38 @@ const MovimentacoesEstoque = () => {
             responsiveLayout="scroll"
             emptyMessage="Nenhuma movimentação encontrada"
           >
-            <Column field="data_movimentacao" header="Data" />
-            <Column field="produto_nome" header="Produto" />
+            <Column field="data_movimentacao" header="Data"/>
+            <Column field="produto_nome" header="Produto"/>
             <Column
-              header="Depósitos"
-              body={(rowData) =>
-                `${rowData.deposito_origem_nome || '—'} → ${rowData.deposito_destino_nome || '—'}`
-              }
+              header="Movimentação"
+              body={(rowData) => {
+                const origem = rowData.deposito_origem_nome || '—';
+                const destino = rowData.deposito_destino_nome || '—';
+
+                if (rowData.tipo === 'entrada') {
+                  return <span><i className="pi pi-arrow-down text-success mr-1" /> {destino}</span>;
+                }
+
+                if (rowData.tipo === 'saida') {
+                  return <span><i className="pi pi-arrow-up text-danger mr-1" /> {origem}</span>;
+                }
+
+                if (rowData.tipo === 'transferencia') {
+                  return (
+                    <span>
+                      <i className="pi pi-refresh text-primary mr-1" />
+                                  {origem} → {destino}
+                    </span>
+                  );
+                }
+
+                return `${origem} → ${destino}`;
+              }}
             />
-            <Column field="tipo" header="Tipo" body={(row) => tipoTemplate(row.tipo)} />
-            <Column field="quantidade" header="Quantidade" />
-            <Column field="usuario_nome" header="Usuário" />
+
+            <Column field="tipo" header="Tipo" body={(row) => tipoTemplate(row.tipo)}/>
+            <Column field="quantidade" header="Quantidade"/>
+            <Column field="usuario_nome" header="Usuário"/>
           </DataTable>
         </div>
 
