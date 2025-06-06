@@ -17,6 +17,9 @@ const MovimentacoesEstoque = () => {
 
   const toast = useRef(null);
   const [searchParams] = useSearchParams();
+  const [paginaEstoque, setPaginaEstoque] = useState(1);
+  const [totalEstoque, setTotalEstoque] = useState(0);
+  const [firstEstoque, setFirstEstoque] = useState(0);
 
   const [movimentacoes, setMovimentacoes] = useState([]);
   const [estoqueAtual, setEstoqueAtual] = useState([]);
@@ -55,6 +58,13 @@ const MovimentacoesEstoque = () => {
     fetchDepositos();
   }, []);
 
+  useEffect(() => {
+    const savedFilters = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (savedFilters) {
+      fetchDados();
+    }
+  }, [paginaEstoque]);
+
   const fetchDados = async () => {
     setLoading(true);
     try {
@@ -67,17 +77,21 @@ const MovimentacoesEstoque = () => {
           filtros.periodo?.length === 2 && filtros.periodo[1]
             ? [formatDate(filtros.periodo[0]), formatDate(filtros.periodo[1])]
             : null,
+        page: paginaEstoque,
+        per_page: 10,
       };
 
       const [movsRes, estoqueRes, resumoRes] = await Promise.all([
         apiEstoque.get('/estoque/movimentacoes', { params: filtroParams }),
         apiEstoque.get('/estoque/atual', { params: filtroParams }),
-        apiEstoque.get('/estoque/resumo', { params: filtroParams })
+        apiEstoque.get('/estoque/resumo', { params: filtroParams }),
       ]);
 
       setMovimentacoes(movsRes.data);
-      setEstoqueAtual(estoqueRes.data);
+      setEstoqueAtual(estoqueRes.data.data);
+      setTotalEstoque(estoqueRes.data.total);
       setResumo(resumoRes.data);
+
     } catch (err) {
       toast.current.show({
         severity: 'error',
@@ -169,6 +183,9 @@ const MovimentacoesEstoque = () => {
                 icon="pi pi-search"
                 onClick={() => {
                   localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(filtros));
+                  setPaginaEstoque(1);
+                  setFirstEstoque(0);
+                  setPaginaEstoque(1);
                   fetchDados();
                 }}
               />
@@ -177,10 +194,13 @@ const MovimentacoesEstoque = () => {
                 icon="pi pi-times"
                 className="p-button-secondary"
                 onClick={() => {
-                  const reset = {tipo: null, deposito: null, produto: '', periodo: null};
+                  setMovimentacoes([]);
+                  setEstoqueAtual([]);
+                  setResumo({ totalProdutos: 0, totalPecas: 0, totalDepositos: 0 });
+                  setPaginaEstoque(1);
+                  const reset = { tipo: null, deposito: null, produto: '', periodo: null };
                   setFiltros(reset);
                   localStorage.removeItem(LOCAL_STORAGE_KEY);
-                  fetchDados();
                 }}
               />
             </div>
@@ -191,19 +211,19 @@ const MovimentacoesEstoque = () => {
         <div className="grid mb-4">
           <div className="col-12 md:col-4">
             <Card title="Produtos" className="text-center">
-              <i className="pi pi-box text-3xl text-primary mb-2 block"/>
+              <i className="pi pi-box text-4xl text-primary mb-2 block"/>
               <h3>{resumo.totalProdutos}</h3>
             </Card>
           </div>
           <div className="col-12 md:col-4">
             <Card title="Peças em Estoque" className="text-center">
-              <i className="pi pi-inbox text-3xl text-success mb-2 block"/>
+              <i className="pi pi-inbox text-4xl text-success mb-2 block"/>
               <h3>{resumo.totalPecas}</h3>
             </Card>
           </div>
           <div className="col-12 md:col-4">
             <Card title="Depósitos Ativos" className="text-center">
-              <i className="pi pi-building text-3xl text-warning mb-2 block"/>
+              <i className="pi pi-building text-4xl text-warning mb-2 block"/>
               <h3>{resumo.totalDepositos}</h3>
             </Card>
           </div>
@@ -215,21 +235,23 @@ const MovimentacoesEstoque = () => {
           <DataTable
             value={estoqueAtual}
             loading={loading}
-            rowGroupMode="subheader"
-            groupField="produto_nome"
+            paginator
+            first={firstEstoque}
+            rows={10}
+            totalRecords={totalEstoque}
+            onPage={(e) => {
+              setPaginaEstoque(e.page + 1);
+              setFirstEstoque(e.first);
+            }}
+            lazy
             responsiveLayout="scroll"
             emptyMessage="Nenhum item em estoque"
             sortField="produto_nome"
             sortOrder={1}
           >
-            <Column
-              field="produto_nome"
-              header="Produto"
-              rowGroup
-              body={(rowData) => rowData.produto_nome}
-            />
-            <Column field="deposito_nome" header="Depósito"/>
-            <Column field="quantidade" header="Quantidade" body={quantidadeTemplate}/>
+            <Column field="produto_nome" header="Produto" />
+            <Column field="deposito_nome" header="Depósito" />
+            <Column field="quantidade" header="Quantidade" body={quantidadeTemplate} />
             <Column
               header="Ações"
               body={(rowData) => (
@@ -242,6 +264,7 @@ const MovimentacoesEstoque = () => {
               )}
             />
           </DataTable>
+
         </div>
 
         {/* Movimentações recentes */}
@@ -286,7 +309,6 @@ const MovimentacoesEstoque = () => {
 
             <Column field="tipo" header="Tipo" body={(row) => tipoTemplate(row.tipo)}/>
             <Column field="quantidade" header="Quantidade"/>
-            <Column field="usuario_nome" header="Usuário"/>
           </DataTable>
         </div>
 
