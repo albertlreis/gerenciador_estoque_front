@@ -26,6 +26,8 @@ const ConsignacoesAlert = ({ consignacoesVencendo = [], loading = false }) => {
         ) : (
           <ul className="list-none m-0 p-0">
             {consignacoesVencendo.slice(0, 3).map((item) => {
+              if (!item || !item.pedido) return null;
+
               const prazo = getPrazoLabel(item.dias_para_vencer);
               return (
                 <li
