@@ -25,18 +25,19 @@ const ConsignacoesAlert = ({ consignacoesVencendo = [], loading = false }) => {
           <p className="text-center text-700">Nenhuma consignação com prazo próximo.</p>
         ) : (
           <ul className="list-none m-0 p-0">
-            {consignacoesVencendo.slice(0, 3).map((item) => {
-              if (!item || !item.pedido) return null;
+            {consignacoesVencendo.slice(0, 3).map((item, index) => {
+              if (!item) return null;
 
               const prazo = getPrazoLabel(item.dias_para_vencer);
+
               return (
                 <li
-                  key={item.id}
+                  key={item.id || `sem-id-${index}`}
                   className="flex align-items-start border-bottom-1 border-yellow-300 py-2"
                 >
                   {prazo.icon}
                   <div>
-                    <span className="font-semibold">Pedido #{item.pedido.id}</span> — {item.produto_nome}
+                    <span className="font-semibold">Pedido #{item.pedido_id}</span> — {item.produto_nome}
                     <br />
                     <small className="text-700">
                       Prazo: {item.prazo_resposta} — {prazo.texto}
