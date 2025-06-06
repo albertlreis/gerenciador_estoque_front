@@ -13,6 +13,8 @@ import apiEstoque from '../services/apiEstoque';
 import SakaiLayout from '../layouts/SakaiLayout';
 
 const MovimentacoesEstoque = () => {
+  const LOCAL_STORAGE_KEY = 'filtros_movimentacoes_estoque';
+
   const toast = useRef(null);
   const [searchParams] = useSearchParams();
 
@@ -40,21 +42,14 @@ const MovimentacoesEstoque = () => {
 
   useEffect(() => {
     const depositoId = searchParams.get('deposito');
-    if (depositoId) {
+    const savedFilters = localStorage.getItem(LOCAL_STORAGE_KEY);
+
+    if (savedFilters) {
+      setFiltros(JSON.parse(savedFilters));
+    } else if (depositoId) {
       setFiltros((prev) => ({ ...prev, deposito: parseInt(depositoId) }));
     }
   }, [searchParams]);
-
-  useEffect(() => {
-    if (
-      filtros.deposito !== null ||
-      filtros.tipo ||
-      filtros.produto ||
-      filtros.periodo
-    ) {
-      fetchDados();
-    }
-  }, [filtros]);
 
   useEffect(() => {
     fetchDepositos();
@@ -168,7 +163,14 @@ const MovimentacoesEstoque = () => {
             />
           </div>
           <div className="col-12 flex justify-end gap-2">
-            <Button label="Filtrar" icon="pi pi-search" onClick={fetchDados} />
+            <Button
+              label="Filtrar"
+              icon="pi pi-search"
+              onClick={() => {
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(filtros));
+                fetchDados();
+              }}
+            />
             <Button
               label="Limpar"
               icon="pi pi-times"
@@ -176,6 +178,7 @@ const MovimentacoesEstoque = () => {
               onClick={() => {
                 const reset = { tipo: null, deposito: null, produto: '', periodo: null };
                 setFiltros(reset);
+                localStorage.removeItem(LOCAL_STORAGE_KEY);
                 fetchDados();
               }}
             />
@@ -218,7 +221,6 @@ const MovimentacoesEstoque = () => {
               field="produto_nome"
               header="Produto"
               rowGroup
-              headerStyle={{ display: 'none' }}
               body={(rowData) => rowData.produto_nome}
             />
             <Column field="deposito_nome" header="Depósito" />
