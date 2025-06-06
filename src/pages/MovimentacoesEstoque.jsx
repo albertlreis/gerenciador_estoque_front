@@ -71,8 +71,8 @@ const MovimentacoesEstoque = () => {
 
       const [movsRes, estoqueRes, resumoRes] = await Promise.all([
         apiEstoque.get('/estoque/movimentacoes', { params: filtroParams }),
-        apiEstoque.get('/estoque/atual'),
-        apiEstoque.get('/estoque/resumo'),
+        apiEstoque.get('/estoque/atual', { params: filtroParams }),
+        apiEstoque.get('/estoque/resumo', { params: filtroParams })
       ]);
 
       setMovimentacoes(movsRes.data);
