@@ -1,13 +1,9 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Avatar } from 'primereact/avatar';
-import { Tag } from 'primereact/tag';
-import { useAuth } from '../../context/AuthContext';
-import { getGravatarUrl, getInitials } from '../../utils/gravatar';
-
 import useDashboardData from '../../hooks/useDashboardData';
 import usePermissions from '../../hooks/usePermissions';
 
+import DashboardHeader from './DashboardHeader';
 import KpiCards from './KpiCards';
 import ChartsSection from './ChartsSection';
 import QuickLinks from './QuickLinks';
@@ -17,7 +13,7 @@ import ModaisDashboard from './ModaisDashboard';
 import {PERFIS} from "../../constants/perfis";
 
 const HomeAdminView = () => {
-  const { user } = useAuth();
+  const headerRef = useRef(null);
   const navigate = useNavigate();
   const { has } = usePermissions();
 
@@ -27,21 +23,19 @@ const HomeAdminView = () => {
     modalKpi, exibirModalEstoque, periodo, tipoGrafico,
     setModalKpi, setExibirModalEstoque, setPeriodo, setTipoGrafico,
     handleAtualizarGrafico,
-    loadingKpis, loadingPedidos, loadingEstatisticas, loadingStatus,
-    consignacoesVencendo, loadingConsignacoes
+    loadingKpis, loadingPedidos, loadingEstatisticas,
+    consignacoesVencendo, loadingConsignacoes, fetchResumoDashboard
   } = useDashboardData();
 
   return (
     <div className="p-4">
-      <div className="flex justify-content-between align-items-center mb-4">
-        <div className="flex align-items-center gap-3">
-          <Avatar image={getGravatarUrl(user?.email)} label={getInitials(user?.nome)} />
-          <div>
-            <h2 className="m-0">Bem-vindo, {user?.nome}</h2>
-            <Tag value={user?.email} severity="info" />
-          </div>
-        </div>
-      </div>
+      <DashboardHeader
+        ref={headerRef}
+        onAtualizar={async () => {
+          await fetchResumoDashboard(true);
+          headerRef.current?.showToast();
+        }}
+      />
 
       <KpiCards
         perfil={PERFIS.ADMINISTRADOR.slug}
@@ -51,7 +45,7 @@ const HomeAdminView = () => {
         setExibirModalEstoque={setExibirModalEstoque}
       />
 
-      <QuickLinks perfil={PERFIS.ADMINISTRADOR.slug} hasPermission={has} navigate={navigate} />
+      <QuickLinks perfil={PERFIS.ADMINISTRADOR.slug} hasPermission={has} navigate={navigate}/>
 
       <ChartsSection
         perfil={PERFIS.ADMINISTRADOR.slug}
@@ -59,7 +53,7 @@ const HomeAdminView = () => {
         graficoValores={graficoValores}
         graficoStatus={graficoStatus}
         carregandoGrafico={loadingEstatisticas}
-        carregandoStatus={loadingStatus}
+        carregandoStatus={loadingEstatisticas}
         periodo={periodo}
         tipoGrafico={tipoGrafico}
         setPeriodo={setPeriodo}
@@ -69,10 +63,10 @@ const HomeAdminView = () => {
 
       <div className="grid">
         <div className="col-12 md:col-6">
-          <UltimosPedidosCard pedidos={ultimosPedidos} loading={loadingPedidos} navigate={navigate} />
+          <UltimosPedidosCard pedidos={ultimosPedidos} loading={loadingPedidos} navigate={navigate}/>
         </div>
         <div className="col-12 md:col-6">
-          <ConsignacoesAlert consignacoesVencendo={consignacoesVencendo} loading={loadingConsignacoes} />
+          <ConsignacoesAlert consignacoesVencendo={consignacoesVencendo} loading={loadingConsignacoes}/>
         </div>
       </div>
 
