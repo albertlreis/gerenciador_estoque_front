@@ -7,22 +7,8 @@ import { InputTextarea } from 'primereact/inputtextarea';
 import { Button } from 'primereact/button';
 import { ConfirmDialog } from 'primereact/confirmdialog';
 import { ProgressSpinner } from 'primereact/progressspinner';
+import { OPCOES_STATUS } from '../constants/statusPedido';
 import api from '../services/apiEstoque';
-
-const opcoesStatus = [
-  { label: 'Criado', value: 'pedido_criado' },
-  { label: 'Enviado à Fábrica', value: 'pedido_enviado_fabrica' },
-  { label: 'Nota Emitida', value: 'nota_emitida' },
-  { label: 'Previsão Embarque', value: 'previsao_embarque_fabrica' },
-  { label: 'Embarcado', value: 'embarque_fabrica' },
-  { label: 'Nota Recebida', value: 'nota_recebida_compra' },
-  { label: 'Entrega Estoque', value: 'entrega_estoque' },
-  { label: 'Envio Cliente', value: 'envio_cliente' },
-  { label: 'Entrega Cliente', value: 'entrega_cliente' },
-  { label: 'Consignado', value: 'consignado' },
-  { label: 'Devolução Consignação', value: 'devolucao_consignacao' },
-  { label: 'Finalizado', value: 'finalizado' },
-];
 
 const PedidoStatusDialog = ({ visible, onHide, pedido, onSalvo, toast }) => {
   const [status, setStatus] = useState(null);
@@ -126,7 +112,7 @@ const PedidoStatusDialog = ({ visible, onHide, pedido, onSalvo, toast }) => {
         <div className="flex flex-column gap-3">
           <Dropdown
             value={status}
-            options={opcoesStatus}
+            options={OPCOES_STATUS}
             onChange={(e) => setStatus(e.value)}
             placeholder="Selecione o novo status"
             className="w-full"

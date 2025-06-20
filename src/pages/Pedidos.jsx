@@ -13,22 +13,9 @@ import PedidoStatusDialog from '../components/PedidoStatusDialog';
 import PedidoDetalhado from '../components/PedidoDetalhado';
 import { usePedidos } from '../hooks/usePedidos';
 import { formatarReal } from '../utils/formatters';
+import { STATUS_MAP } from '../constants/statusPedido';
 import api from '../services/apiEstoque';
 
-const statusMapDetalhado = {
-  pedido_criado:     { label: 'Criado', color: 'secondary', icon: 'pi pi-plus' },
-  pedido_enviado_fabrica: { label: 'Enviado à Fábrica', color: 'info', icon: 'pi pi-send' },
-  nota_emitida:      { label: 'Nota Emitida', color: 'success', icon: 'pi pi-file' },
-  previsao_envio_cliente: { label: 'Previsão de Envio', color: 'warning', icon: 'pi pi-clock' },
-  embarque_fabrica:  { label: 'Embarcado', color: 'info', icon: 'pi pi-truck' },
-  nota_recebida_compra: { label: 'Nota Recebida', color: 'success', icon: 'pi pi-file-check' },
-  entrega_estoque:   { label: 'Entrega Estoque', color: 'success', icon: 'pi pi-box' },
-  envio_cliente:     { label: 'Enviado ao Cliente', color: 'warning', icon: 'pi pi-send' },
-  entrega_cliente:   { label: 'Entregue', color: 'success', icon: 'pi pi-check' },
-  consignado:        { label: 'Consignado', color: 'info', icon: 'pi pi-briefcase' },
-  devolucao_consignacao: { label: 'Devolvido', color: 'danger', icon: 'pi pi-undo' },
-  finalizado:        { label: 'Finalizado', color: 'success', icon: 'pi pi-check-circle' },
-};
 
 addLocale('pt-BR', {
   firstDayOfWeek: 0,
@@ -63,7 +50,7 @@ export default function PedidosListagem() {
   };
 
   const statusTemplate = (rowData) => {
-    const status = statusMapDetalhado[rowData.status];
+    const status = STATUS_MAP[rowData.status];
     if (!status) return <Tag value={rowData.status} />;
     return (
       <Tag
