@@ -53,6 +53,8 @@ const CatalogoProdutos = () => {
     quantidadeTotal
   } = useCarrinho();
 
+  console.log("carrinhoAtual::: ", carrinhoAtual)
+
   const fetchProdutos = async (append = false) => {
     setLoading(true);
     try {
@@ -120,8 +122,6 @@ const CatalogoProdutos = () => {
       return;
     }
 
-    console.log(produto)
-
     setProdutoSelecionado(produto);
     setVariacaoSelecionada(null);
     setDialogVariacaoVisible(true);
@@ -157,9 +157,10 @@ const CatalogoProdutos = () => {
             <div className="flex gap-3 align-items-center">
               <Dropdown
                 value={carrinhoAtual?.id || null}
-                options={carrinhos}
-                optionLabel={(c) => `Cliente: ${c.cliente?.nome || '---'}`}
-                optionValue="id"
+                options={(Array.isArray(carrinhos) ? carrinhos : []).map((c) => ({
+                  label: `Cliente: ${c.cliente?.nome || '---'} (${c.id})`,
+                  value: c.id
+                }))}
                 placeholder="Selecionar carrinho"
                 onChange={(e) => carregarCarrinho(e.value)}
                 className="w-18rem"
@@ -313,15 +314,21 @@ const CatalogoProdutos = () => {
                 icon="pi pi-cart-plus"
                 disabled={!variacaoSelecionada}
                 onClick={() => {
+                  const preco = Number(variacaoSelecionada.preco);
+                  const quantidade = 1;
+
                   adicionarItem({
                     id_variacao: variacaoSelecionada.id,
-                    quantidade: 1,
-                    preco_unitario: Number(variacaoSelecionada.preco),
+                    quantidade,
+                    preco_unitario: preco,
+                    subtotal: preco * quantidade,
                   });
+
                   setDialogVariacaoVisible(false);
                   setAnimateCart(true);
                   setCarrinhoVisible(true);
                 }}
+
               />
             </div>
           </div>

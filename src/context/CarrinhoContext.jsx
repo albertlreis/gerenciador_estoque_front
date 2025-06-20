@@ -11,87 +11,118 @@ export const CarrinhoProvider = ({ children }) => {
 
   const listarCarrinhos = async () => {
     try {
-      const { data } = await api.get('/carrinhos');
-      setCarrinhos(data);
+      const response = await api.get('/carrinhos');
+      const lista = response.data?.data || [];
+      setCarrinhos(Array.isArray(lista) ? lista : []);
     } catch (e) {
-      return null;
+      console.error('Erro ao listar carrinhos', e);
+      setCarrinhos([]);
     }
   };
 
   const carregarCarrinho = async (id) => {
     try {
-      const { data } = await api.get(`/carrinhos/${id}`);
-      setCarrinhoAtual(data);
-      setItens(data.itens);
+      const response = await api.get(`/carrinhos/${id}`);
+      const carrinho = response.data?.data || {};
+      setCarrinhoAtual(carrinho);
+      setItens(Array.isArray(carrinho.itens) ? carrinho.itens : []);
     } catch (e) {
-      return null;
+      console.error('Erro ao carregar carrinho', e);
+      setCarrinhoAtual(null);
+      setItens([]);
     }
   };
 
   const criarCarrinho = async (id_cliente) => {
     try {
-      const { data } = await api.post('/carrinhos', { id_cliente });
-      await carregarCarrinho(data.id);
+      const response = await api.post('/carrinhos', { id_cliente });
+      const novoCarrinho = response.data?.data || response.data;
+      await carregarCarrinho(novoCarrinho.id);
       await listarCarrinhos();
     } catch (e) {
+      console.error('Erro ao criar carrinho', e);
       return null;
     }
   };
 
   const atualizarCarrinho = async (id, dados) => {
     try {
-      const { data } = await api.put(`/carrinhos/${id}`, dados);
-      setCarrinhoAtual(data);
+      const response = await api.put(`/carrinhos/${id}`, dados);
+      const carrinhoAtualizado = response.data?.data || response.data;
+      setCarrinhoAtual(carrinhoAtualizado);
     } catch (e) {
+      console.error('Erro ao atualizar carrinho', e);
       return null;
     }
   };
 
-  const adicionarItem = async ({ id_variacao, quantidade, preco_unitario }) => {
+  const adicionarItem = async ({ id_variacao, quantidade, preco_unitario, subtotal }) => {
     if (!carrinhoAtual?.id) return;
 
-    await api.post('/carrinho-itens', {
-      id_carrinho: carrinhoAtual.id,
-      id_variacao,
-      quantidade,
-      preco_unitario
-    });
-    await carregarCarrinho(carrinhoAtual.id);
+    try {
+      await api.post('/carrinho-itens', {
+        id_carrinho: carrinhoAtual.id,
+        id_variacao,
+        quantidade,
+        preco_unitario,
+        subtotal: subtotal ?? preco_unitario * quantidade,
+      });
+      await carregarCarrinho(carrinhoAtual.id);
+    } catch (e) {
+      console.error('Erro ao adicionar item', e);
+    }
   };
 
   const removerItem = async (id) => {
-    await api.delete(`/carrinho-itens/${id}`);
-    await carregarCarrinho(carrinhoAtual.id);
+    try {
+      await api.delete(`/carrinho-itens/${id}`);
+      await carregarCarrinho(carrinhoAtual.id);
+    } catch (e) {
+      console.error('Erro ao remover item', e);
+    }
   };
 
   const limparCarrinho = async () => {
     if (!carrinhoAtual?.id) return;
-    await api.delete(`/carrinho-itens/limpar/${carrinhoAtual.id}`);
-    await carregarCarrinho(carrinhoAtual.id);
+    try {
+      await api.delete(`/carrinho-itens/limpar/${carrinhoAtual.id}`);
+      await carregarCarrinho(carrinhoAtual.id);
+    } catch (e) {
+      console.error('Erro ao limpar carrinho', e);
+    }
   };
 
   const finalizarPedido = async ({ id_parceiro, observacoes }) => {
-    const { data } = await api.post('/pedidos', {
-      id_carrinho: carrinhoAtual.id,
-      id_cliente: carrinhoAtual.id_cliente,
-      id_parceiro,
-      observacoes
-    });
-    setCarrinhoAtual(null);
-    setItens([]);
-    await listarCarrinhos();
-    return data;
+    try {
+      const response = await api.post('/pedidos', {
+        id_carrinho: carrinhoAtual.id,
+        id_cliente: carrinhoAtual.id_cliente,
+        id_parceiro,
+        observacoes
+      });
+      setCarrinhoAtual(null);
+      setItens([]);
+      await listarCarrinhos();
+      return response.data?.data || response.data;
+    } catch (e) {
+      console.error('Erro ao finalizar pedido', e);
+      return null;
+    }
   };
 
   const cancelarCarrinho = async () => {
     if (!carrinhoAtual?.id) return;
-    await api.post(`/carrinhos/${carrinhoAtual.id}/cancelar`);
-    setCarrinhoAtual(null);
-    setItens([]);
-    await listarCarrinhos();
+    try {
+      await api.post(`/carrinhos/${carrinhoAtual.id}/cancelar`);
+      setCarrinhoAtual(null);
+      setItens([]);
+      await listarCarrinhos();
+    } catch (e) {
+      console.error('Erro ao cancelar carrinho', e);
+    }
   };
 
-  const quantidadeTotal = itens.reduce((sum, item) => sum + Number(item.quantidade || 0), 0);
+  const quantidadeTotal = (itens || []).reduce((sum, item) => sum + Number(item.quantidade || 0), 0);
 
   useEffect(() => {
     listarCarrinhos();

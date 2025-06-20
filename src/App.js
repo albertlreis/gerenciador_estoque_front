@@ -29,12 +29,16 @@ import MonitoramentoCache from './pages/MonitoramentoCache';
 import PrivateRoute from './routes/PrivateRoute';
 import PermissaoRoute from './routes/PermissaoRoute';
 import {PERMISSOES} from './constants/permissoes';
+import ComCarrinho from "./routes/ComCarrinho";
+import useCheckVersion from "./hooks/useCheckVersion";
 
 const renderProtectedRoute = (element, permissoes) => (
   <PrivateRoute element={<PermissaoRoute element={element} permissoes={permissoes}/>}/>
 );
 
 const App = () => {
+  useCheckVersion();
+
   return (
     <Routes>
       <Route path="/login" element={<Login/>}/>
@@ -58,8 +62,15 @@ const App = () => {
       <Route path="/depositos" element={renderProtectedRoute(<Depositos/>, PERMISSOES.DEPOSITOS.VISUALIZAR)}/>
       <Route path="/movimentacoes-estoque"
              element={renderProtectedRoute(<MovimentacoesEstoque/>, PERMISSOES.ESTOQUE.MOVIMENTACAO)}/>
-      <Route path="/finalizar-pedido/:id"
-             element={renderProtectedRoute(<FinalizarPedido/>, PERMISSOES.CARRINHOS.FINALIZAR)}/>
+      <Route
+        path="/finalizar-pedido/:id"
+        element={renderProtectedRoute(
+          <ComCarrinho>
+            <FinalizarPedido/>
+          </ComCarrinho>,
+          PERMISSOES.CARRINHOS.FINALIZAR
+        )}
+      />
       <Route path="/pedidos" element={renderProtectedRoute(<Pedidos/>, PERMISSOES.PEDIDOS.VISUALIZAR)}/>
       <Route path="/pedidos/importar"
              element={renderProtectedRoute(<ImportacaoPedidos/>, PERMISSOES.PEDIDOS.IMPORTAR)}/>
@@ -70,7 +81,15 @@ const App = () => {
       <Route path="/produtos" element={renderProtectedRoute(<Produtos/>, PERMISSOES.PRODUTOS.VISUALIZAR)}/>
       <Route path="/produtos/importar" element={renderProtectedRoute(<ImportacaoPage/>, PERMISSOES.PRODUTOS.IMPORTAR)}/>
       <Route path="/produtos-outlet" element={renderProtectedRoute(<ProdutosOutlet/>, PERMISSOES.PRODUTOS.OUTLET)}/>
-      <Route path="/catalogo" element={renderProtectedRoute(<CatalogoProdutos/>, PERMISSOES.PRODUTOS.CATALOGO)}/>
+      <Route
+        path="/catalogo"
+        element={renderProtectedRoute(
+          <ComCarrinho>
+            <CatalogoProdutos/>
+          </ComCarrinho>,
+          PERMISSOES.PRODUTOS.CATALOGO
+        )}
+      />
       <Route path="/usuarios" element={renderProtectedRoute(<Usuarios/>, PERMISSOES.USUARIOS.VISUALIZAR)}/>
       <Route path="/consignacoes" element={renderProtectedRoute(<Consignacoes/>, PERMISSOES.CONSIGNACOES.VISUALIZAR)}/>
       <Route path="/configuracoes"

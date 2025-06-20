@@ -7,7 +7,7 @@ import { useCarrinho } from '../context/CarrinhoContext';
 import api from '../services/apiEstoque';
 
 const CarrinhoSidebar = ({ visible, onHide }) => {
-  const { itens, removerItem, limparCarrinho, carregarCarrinho } = useCarrinho();
+  const { itens, removerItem, limparCarrinho, carregarCarrinho, adicionarItem  } = useCarrinho();
   const [limpando, setLimpando] = useState(false);
 
   const total = itens.reduce((sum, item) => sum + Number(item.subtotal || 0), 0);
@@ -30,13 +30,12 @@ const CarrinhoSidebar = ({ visible, onHide }) => {
     }
 
     try {
-      await api.post('/carrinho-itens', {
-        id_carrinho: item.id_carrinho,
+      await adicionarItem({
         id_variacao: item.id_variacao,
         quantidade: novaQtd,
         preco_unitario: Number(item.preco_unitario),
+        subtotal: novaQtd * Number(item.preco_unitario)
       });
-      await carregarCarrinho(item.id_carrinho);
     } catch (err) {
       console.error('Erro ao atualizar quantidade', err);
     }

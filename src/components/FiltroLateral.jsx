@@ -106,7 +106,7 @@ const FiltroLateral = ({ filtros, onChange, disabled = false }) => {
         <div className="mb-4 border-bottom-1 surface-border pb-3">
           <h5 className="text-sm mb-2">Categoria</h5>
           {categorias.map(cat => (
-            <div key={cat.id} className="field-checkbox" style={{ paddingLeft: `${cat.nivel * 16}px` }}>
+            <div key={`${cat.id}-${cat.nivel}`} className="field-checkbox" style={{ paddingLeft: `${cat.nivel * 16}px` }}>
               <Checkbox
                 inputId={`cat-${cat.id}`}
                 value={cat.id}
@@ -123,18 +123,19 @@ const FiltroLateral = ({ filtros, onChange, disabled = false }) => {
         {atributos.map(attr => (
           <div key={attr.nome} className="mb-4 border-bottom-1 surface-border pb-3">
             <h5 className="text-sm mb-2">{formatarTexto(attr.nome)}</h5>
-            {attr.valores.map(v => (
-              <div key={v} className="field-checkbox">
-                <Checkbox
-                  inputId={`att-${attr.nome}-${v}`}
-                  value={v}
-                  onChange={() => handleAtributoChange(attr.nome, v)}
-                  checked={filtros.atributos?.[attr.nome]?.includes(v)}
-                  disabled={disabled}
-                />
-                <label htmlFor={`att-${attr.nome}-${v}`} className="ml-2">{formatarTexto(v)}</label>
-              </div>
-            ))}
+            {Array.isArray(attr.valores) &&
+              attr.valores.map((v) => (
+                <div key={`${attr.nome}-${v}`} className="field-checkbox">
+                  <Checkbox
+                    inputId={`att-${attr.nome}-${v}`}
+                    value={v}
+                    onChange={() => handleAtributoChange(attr.nome, v)}
+                    checked={filtros.atributos?.[attr.nome]?.includes(v)}
+                    disabled={disabled}
+                  />
+                  <label htmlFor={`att-${attr.nome}-${v}`} className="ml-2">{formatarTexto(v)}</label>
+                </div>
+              ))}
           </div>
         ))}
       </div>
