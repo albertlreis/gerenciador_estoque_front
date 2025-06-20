@@ -101,7 +101,7 @@ const useDashboardData = () => {
       totalConfirmado: dadosKpi.totalConfirmado,
       totalCancelado: dadosKpi.totalCancelado,
       totalRascunho: dadosKpi.totalRascunho,
-      estoqueBaixo: kpis.estoqueBaixo, // mantém sincronizado com estoqueBaixo real
+      estoqueBaixo: kpis.estoqueBaixo,
     });
 
     setUltimosPedidos(ultimosPedidos);

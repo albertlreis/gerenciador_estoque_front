@@ -129,11 +129,20 @@ const menuItems = (navigate, has) => {
     },
 
     {
+      label: 'Monitoramento',
+      key: 'monitoramento',
+      icon: 'pi pi-fw pi-chart-bar',
+      command: () => navigate('/monitoramento/cache'),
+      visible: has(PERMISSOES.MONITORAMENTO?.VISUALIZAR)
+    },
+
+    has(PERMISSOES.CONFIGURACOES?.VISUALIZAR) && {
       label: 'Configurações',
       key: 'configuracoes',
       icon: 'pi pi-fw pi-cog',
       command: () => navigate('/configuracoes')
     }
+
   ].filter(Boolean);
 };
 

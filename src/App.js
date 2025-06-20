@@ -1,7 +1,6 @@
 import React from 'react';
 import {Routes, Route} from 'react-router-dom';
 
-// Páginas públicas
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ImportacaoPedidos from './pages/ImportacaoPedidos';
@@ -9,8 +8,6 @@ import Consignacoes from './pages/Consignacoes';
 import Configuracoes from './pages/Configuracoes';
 import AccessDeniedPage from './pages/AccessDeniedPage';
 import NotFoundPage from './pages/NotFoundPage';
-
-// Páginas privadas
 import HomePage from './pages/HomePage';
 import Categorias from './pages/Categorias';
 import Clientes from './pages/Clientes';
@@ -27,10 +24,9 @@ import Produtos from './pages/Produtos';
 import ProdutosOutlet from './pages/ProdutosOutlet';
 import Usuarios from './pages/Usuarios';
 import CatalogoProdutos from './pages/CatalogoProdutos';
-
-// Rotas protegidas
 import PrivateRoute from './routes/PrivateRoute';
 import PermissaoRoute from './routes/PermissaoRoute';
+import MonitoramentoCache from "./pages/MonitoramentoCache";
 
 /**
  * Wrapper para rotas com autenticação e permissão.
@@ -45,9 +41,6 @@ const App = () => {
       {/* Rotas públicas */}
       <Route path="/login" element={<Login/>}/>
       <Route path="/register" element={<Register/>}/>
-      <Route path="/pedidos/importar" element={<ImportacaoPedidos/>}/>
-      <Route path="/consignacoes" element={<Consignacoes/>}/>
-      <Route path="/configuracoes" element={<Configuracoes/>}/>
       <Route path="/acesso-negado" element={<AccessDeniedPage/>}/>
       <Route path="*" element={<NotFoundPage/>}/>
 
@@ -71,6 +64,7 @@ const App = () => {
              element={renderProtectedRoute(<MovimentacoesEstoque/>, 'estoque.movimentacao')}/>
       <Route path="/finalizar-pedido/:id" element={renderProtectedRoute(<FinalizarPedido/>, 'carrinho.finalizar')}/>
       <Route path="/pedidos" element={renderProtectedRoute(<Pedidos/>, 'pedidos.visualizar')}/>
+        <Route path="/pedidos/importar" element={renderProtectedRoute(<ImportacaoPedidos/>, 'pedidos.importar')}/>
       <Route path="/perfis" element={renderProtectedRoute(<Perfis/>, 'perfis.visualizar')}/>
       <Route path="/permissoes" element={renderProtectedRoute(<Permissoes/>, 'permissoes.visualizar')}/>
       <Route path="/produto-variacoes" element={renderProtectedRoute(<ProdutoVariacoes/>, 'produtos.variacoes')}/>
@@ -79,6 +73,10 @@ const App = () => {
       <Route path="/produtos-outlet" element={renderProtectedRoute(<ProdutosOutlet/>, 'produtos.outlet')}/>
       <Route path="/catalogo" element={renderProtectedRoute(<CatalogoProdutos/>, 'produtos.catalogo')}/>
       <Route path="/usuarios" element={renderProtectedRoute(<Usuarios/>, 'usuarios.visualizar')}/>
+      <Route path="/consignacoes" element={renderProtectedRoute(<Consignacoes/>, 'consignacoes.visualizar')}/>
+      <Route path="/configuracoes" element={renderProtectedRoute(<Configuracoes/>, 'configuracoes.visualizar')}/>
+      <Route path="/monitoramento/cache"
+             element={renderProtectedRoute(<MonitoramentoCache/>, 'monitoramento.visualizar')}/>
     </Routes>
   );
 };

@@ -1,5 +1,3 @@
-// src/constants/permissoes.js
-
 export const PERMISSOES = {
   // Dashboard
   DASHBOARD_ADMIN: 'dashboard.admin',
@@ -109,5 +107,10 @@ export const PERMISSOES = {
   CONSIGNACOES: {
     VISUALIZAR: 'consignacoes.visualizar',
     GERENCIAR: 'consignacoes.gerenciar',
+  },
+
+  // Monitoramento
+  MONITORAMENTO: {
+    VISUALIZAR: 'monitoramento.visualizar'
   },
 };
