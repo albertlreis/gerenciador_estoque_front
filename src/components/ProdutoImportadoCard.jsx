@@ -5,8 +5,7 @@ import { InputText } from 'primereact/inputtext';
 import { InputNumber } from 'primereact/inputnumber';
 import { InputTextarea } from 'primereact/inputtextarea';
 
-const ProdutoImportadoCard = ({ item, index, categorias, onChangeItem }) => {
-  // Cálculo de valores
+const ProdutoImportadoCard = ({ item, index, categorias, depositos, onChangeItem }) => {
   const quantidade = Number(item.quantidade) || 0;
   const totalItem = Number(item.valor) || 0;
   const valorUnitario = quantidade > 0 ? totalItem / quantidade : 0;
@@ -92,6 +91,21 @@ const ProdutoImportadoCard = ({ item, index, categorias, onChangeItem }) => {
                   aria-label="Tipo do Produto"
                 />
               </div>
+
+              <div className="field col-12 md:col-4">
+                <label className="block text-xs font-medium mb-1">Depósito</label>
+                <Dropdown
+                  value={item.id_deposito || null}
+                  options={depositos}
+                  optionLabel="nome"
+                  optionValue="id"
+                  placeholder="Selecione"
+                  className="w-full p-inputtext-sm"
+                  onChange={(e) => onChangeItem(index, 'id_deposito', e.value)}
+                  filter
+                />
+              </div>
+
               <div className="field col-6 md:col-2">
                 <label className="block text-xs font-medium mb-1">Quantidade</label>
                 <InputNumber value={item.quantidade} onValueChange={(e) => onChangeItem(index, 'quantidade', e.value)}

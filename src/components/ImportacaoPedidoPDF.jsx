@@ -5,12 +5,15 @@ import {ProgressSpinner} from 'primereact/progressspinner';
 import {InputText} from 'primereact/inputtext';
 import {InputTextarea} from 'primereact/inputtextarea';
 import {InputNumber} from 'primereact/inputnumber';
+import { Dropdown } from 'primereact/dropdown';
 import {Button} from 'primereact/button';
 import {DataTable} from 'primereact/datatable';
 import {Column} from 'primereact/column';
 import {Card} from 'primereact/card';
 import apiEstoque from '../services/apiEstoque';
+import apiAuth from "../services/apiAuth";
 import ProdutoImportadoCard from "./ProdutoImportadoCard";
+
 
 const ImportacaoPedidoPDF = () => {
   const [dados, setDados] = useState(null);
@@ -18,6 +21,9 @@ const ImportacaoPedidoPDF = () => {
   const [pedido, setPedido] = useState({});
   const [itens, setItens] = useState([]);
   const [categorias, setCategorias] = useState([]);
+  const [depositos, setDepositos] = useState([]);
+  const [parceiros, setParceiros] = useState([]);
+  const [vendedores, setVendedores] = useState([]);
   const [loading, setLoading] = useState(false);
   const toast = useRef();
   const fileUploadRef = useRef();
@@ -36,7 +42,23 @@ const ImportacaoPedidoPDF = () => {
     setPedido(prev => ({ ...prev, total: parseFloat(total.toFixed(2)) }));
   }, [itens]);
 
+  useEffect(() => {
+    apiEstoque.get('/depositos')
+      .then(res => setDepositos(res.data))
+      .catch(() => setDepositos([]));
+  }, []);
 
+  useEffect(() => {
+    apiEstoque.get('/parceiros')
+      .then(res => setParceiros(res.data))
+      .catch(() => setParceiros([]));
+  }, []);
+
+  useEffect(() => {
+    apiAuth.get('/usuarios/vendedores')
+      .then(res => setVendedores(res.data))
+      .catch(() => setVendedores([]));
+  }, []);
 
   const onUpload = async ({ files }) => {
     const formData = new FormData();
@@ -331,14 +353,34 @@ const ImportacaoPedidoPDF = () => {
 
               <div className="field col-12 md:col-4">
                 <label htmlFor="vendedor" className="block text-sm font-semibold mb-1">Vendedor</label>
-                <InputText
-                  id="vendedor"
-                  value={pedido.vendedor || ''}
-                  onChange={(e) => onChangePedido('vendedor', e.target.value)}
-                  className="p-inputtext-sm"
-                  placeholder="Nome do vendedor"
+                <Dropdown
+                  id="id_vendedor"
+                  value={pedido.id_vendedor || null}
+                  options={vendedores}
+                  optionLabel="nome"
+                  optionValue="id"
+                  placeholder="Selecione"
+                  onChange={(e) => onChangePedido('id_vendedor', e.value)}
+                  className="p-inputtext-sm w-full"
+                  filter
                 />
               </div>
+
+              <div className="field col-12 md:col-4">
+                <label htmlFor="id_parceiro" className="block text-sm font-semibold mb-1">Parceiro</label>
+                <Dropdown
+                  id="id_parceiro"
+                  value={pedido.id_parceiro || null}
+                  options={parceiros}
+                  optionLabel="nome"
+                  optionValue="id"
+                  placeholder="Selecione"
+                  onChange={(e) => onChangePedido('id_parceiro', e.value)}
+                  className="p-inputtext-sm w-full"
+                  filter
+                />
+              </div>
+
 
               <div className="field col-12 md:col-4">
                 <label htmlFor="total" className="block text-sm font-semibold mb-1">Valor Total</label>
@@ -391,6 +433,9 @@ const ImportacaoPedidoPDF = () => {
                 item={item}
                 index={index}
                 categorias={categoriasNumericas}
+                depositos={depositos}
+                parceiros={parceiros}
+                vendedores={vendedores}
                 onChangeItem={onChangeItem}
               />
             ))}
