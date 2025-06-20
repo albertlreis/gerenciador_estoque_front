@@ -37,10 +37,14 @@ const PedidoStatusDialog = ({ visible, onHide, pedido, onSalvo, toast }) => {
     setLoadingHistorico(true);
     try {
       const { data } = await api.get(`/pedidos/${pedido.id}/historico-status`);
-      setHistorico(data.map((item, index, arr) => ({
-        ...item,
-        isUltimo: index === arr.length - 1
-      })));
+      setHistorico(data.map((item, index, arr) => {
+        const isUltimo = index === arr.length - 1;
+        return {
+          ...item,
+          isUltimo,
+          podeRemover: isUltimo
+        };
+      }));
     } catch (err) {
       toast.current?.show({
         severity: 'error',
@@ -161,7 +165,7 @@ const PedidoStatusDialog = ({ visible, onHide, pedido, onSalvo, toast }) => {
                     {item.podeRemover && (
                       <Button
                         icon="pi pi-trash"
-                        className="p-button-rounded p-button-danger p-button-sm"
+                        className="p-button-rounded p-button-danger p-button-sm ml-3"
                         onClick={() => confirmarExclusaoStatus(item.id)}
                         tooltip="Remover status"
                         disabled={loading}
