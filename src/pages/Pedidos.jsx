@@ -124,12 +124,25 @@ export default function PedidosListagem() {
           scrollable
           responsiveLayout="scroll"
         >
-          <Column field="id" header="Nº Pedido" style={{ minWidth: '120px' }} />
+          <Column
+            header="Nº Pedido"
+            body={(row) => row.numero_externo || row.id}
+            style={{ minWidth: '120px' }}
+          />
           <Column header="Data" body={(row) => row.data ? new Date(row.data).toLocaleDateString('pt-BR') : '-'} />
           <Column header="Cliente" body={(row) => row.cliente?.nome ?? '-'} />
           <Column header="Parceiro" body={(row) => row.parceiro?.nome ?? '-'} />
+          <Column header="Vendedor" body={(row) => row.vendedor?.nome ?? '-'} />
           <Column header="Total" body={(row) => formatarReal(row.valor_total)} />
           <Column field="status" header="Status" body={statusTemplate} />
+          <Column
+            header="Última Atualização"
+            body={(row) =>
+              row.data_ultimo_status
+                ? new Date(row.data_ultimo_status).toLocaleDateString('pt-BR')
+                : '-'
+            }
+          />
           <Column
             header="Ações"
             body={(row) => (

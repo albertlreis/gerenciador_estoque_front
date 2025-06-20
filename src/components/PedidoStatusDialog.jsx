@@ -159,7 +159,11 @@ const PedidoStatusDialog = ({ visible, onHide, pedido, onSalvo, toast }) => {
                     )}
                   </div>
                   {item.observacoes && <p className="text-sm text-gray-600">{item.observacoes}</p>}
-                  {item.usuario && <span className="text-xs text-gray-500">Por: {item.usuario}</span>}
+                  {item.usuario && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      <i className="pi pi-user mr-1" /> Por: {item.usuario}
+                    </p>
+                  )}
                 </div>
               )}
               marker={(item) => (
