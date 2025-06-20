@@ -57,12 +57,19 @@ const menuItems = (navigate, has) => {
 
     has([
       PERMISSOES.PRODUTOS.VISUALIZAR,
-      PERMISSOES.PRODUTOS.IMPORTAR
+      PERMISSOES.PRODUTOS.IMPORTAR,
+      PERMISSOES.PRODUTOS.CATALOGO
     ]) && {
       label: 'Produtos',
       key: 'produtos',
       icon: 'pi pi-fw pi-tags',
       items: [
+        has(PERMISSOES.PRODUTOS.CATALOGO) && {
+          label: 'Catálogo',
+          key: 'catalogo',
+          icon: 'pi pi-undo',
+          command: () => navigate('/catalogo')
+        },
         has(PERMISSOES.PRODUTOS.VISUALIZAR) && {
           label: 'Gerenciar Produtos',
           key: 'produtos-gerenciar',

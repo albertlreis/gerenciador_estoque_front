@@ -10,6 +10,7 @@ import { ProgressBar } from 'primereact/progressbar';
 import { Tag } from 'primereact/tag';
 import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 import apiEstoque from '../services/apiEstoque';
+import OutletFormDialog from './OutletFormDialog';
 
 const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
   const backendUrl = process.env.REACT_APP_BASE_URL_ESTOQUE;
@@ -33,6 +34,8 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
   const [variacoes, setVariacoes] = useState(initialData.variacoes || [
     { nome: '', preco: '', custo: '', referencia: '', codigo_barras: '', atributos: [] }
   ]);
+  const [showOutletDialog, setShowOutletDialog] = useState(false);
+  const [variacaoSelecionada, setVariacaoSelecionada] = useState(null);
 
   const toastRef = useRef(null);
   const fileUploadRef = useRef(null);
@@ -60,6 +63,16 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
       if (catObj) setIdCategoria(catObj);
     }
   }, [categorias, idCategoria]);
+
+  const abrirDialogOutlet = (variacao) => {
+    setVariacaoSelecionada(variacao);
+    setShowOutletDialog(true);
+  };
+
+  const atualizarVariacoes = () => {
+    // Recarregamento via prop ou fetch (idealmente via refetch)
+    toastRef.current.show({ severity: 'info', summary: 'Atualize os dados para refletir o outlet.' });
+  };
 
   const addVariacao = () => {
     setVariacoes([...variacoes, { nome: '', preco: '', custo: '', referencia: '', codigo_barras: '', atributos: [] }]);
@@ -225,6 +238,23 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
                       setVariacoes(novas);
                     }} tooltip="Remover Variação" />
                   </div>
+
+                  {v?.outlet?.quantidade_restante > 0 ? (
+                    <div className="field col-12 mt-2">
+                      <Tag value="OUTLET ATIVO" severity="warning" />
+                    </div>
+                  ) : (
+                    <div className="field col-12 mt-2">
+                      <Button
+                        label="Marcar como Outlet"
+                        icon="pi pi-percentage"
+                        className="p-button-sm p-button-warning"
+                        type="button"
+                        onClick={() => abrirDialogOutlet(v)}
+                      />
+                    </div>
+                  )}
+
                 </div>
 
                 <h5 className="mt-3">Atributos</h5>
@@ -302,6 +332,14 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
           </div>
         </div>
       </form>
+
+      <OutletFormDialog
+        visible={showOutletDialog}
+        onHide={() => setShowOutletDialog(false)}
+        variacao={variacaoSelecionada}
+        onSuccess={atualizarVariacoes}
+      />
+
     </>
   );
 };
