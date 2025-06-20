@@ -11,9 +11,12 @@ import 'primeflex/themes/primeone-light.css';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CarrinhoProvider } from './context/CarrinhoContext';
 import { BrowserRouter } from 'react-router-dom';
+import useCheckVersion from './hooks/useCheckVersion';
 
 const AppWithCarrinho = () => {
   const { isAuthenticated } = useAuth();
+  useCheckVersion();
+  
   return isAuthenticated ? (
     <CarrinhoProvider>
       <App />
