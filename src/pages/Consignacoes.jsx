@@ -134,17 +134,25 @@ const Consignacoes = () => {
           lazy
           emptyMessage="Nenhuma consignação encontrada"
         >
-          <Column field="pedido_id" header="Pedido" sortable />
+          <Column
+            header="Nº Pedido"
+            body={(row) => row.numero_externo || row.pedido_id}
+            style={{ minWidth: '120px' }}
+          />
           <Column field="cliente_nome" header="Cliente" />
-          <Column field="produto_nome" header="Produto" />
-          <Column field="quantidade" header="Qtd" />
+          <Column field="vendedor_nome" header="Vendedor" />
           <Column field="data_envio" header="Envio" />
           <Column field="prazo_resposta" header="Prazo" />
           <Column field="status" header="Status" body={statusTemplate} />
           <Column
             header="Ações"
             body={(rowData) => (
-              <Button label="Ver" icon="pi pi-eye" className="p-button-text" onClick={() => setModalId(rowData.id)} />
+              <Button
+                icon="pi pi-eye"
+                severity="info"
+                onClick={() => setModalId(rowData.id)}
+                tooltip="Ver detalhes"
+              />
             )}
           />
         </DataTable>

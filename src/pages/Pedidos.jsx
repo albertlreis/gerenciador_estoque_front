@@ -144,7 +144,7 @@ export default function PedidosListagem() {
             }
           />
           <Column
-            header="Ações"
+            header=""
             body={(row) => (
               <Button
                 icon="pi pi-refresh"
@@ -158,7 +158,7 @@ export default function PedidosListagem() {
             )}
           />
           <Column
-            header="Produtos"
+            header=""
             body={(row) => (
               <Button
                 icon="pi pi-eye"
