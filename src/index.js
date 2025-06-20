@@ -16,7 +16,7 @@ import useCheckVersion from './hooks/useCheckVersion';
 const AppWithCarrinho = () => {
   const { isAuthenticated } = useAuth();
   useCheckVersion();
-  
+
   return isAuthenticated ? (
     <CarrinhoProvider>
       <App />

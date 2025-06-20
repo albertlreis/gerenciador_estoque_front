@@ -2,7 +2,7 @@ import React from 'react';
 import { Card } from 'primereact/card';
 import { Button } from 'primereact/button';
 import { useNavigate } from 'react-router-dom';
-import { Clock, AlertCircle, CalendarClock } from 'lucide-react';
+import { Clock, AlertCircle, CalendarClock, User2, PackageCheck } from 'lucide-react';
 
 const ConsignacoesAlert = ({ consignacoesVencendo = [], loading = false }) => {
   const navigate = useNavigate();
@@ -14,6 +14,14 @@ const ConsignacoesAlert = ({ consignacoesVencendo = [], loading = false }) => {
       texto: `Vence em ${dias} dia${dias > 1 ? 's' : ''}`,
       icon: <CalendarClock className="text-yellow-700 mr-2 mt-1" size={18} />
     };
+  };
+
+  const formatarPrazo = (prazo) => {
+    if (!prazo) return { dias: 0, ...getPrazoLabel(0) };
+    const hoje = new Date();
+    const prazoData = new Date(prazo.split('/').reverse().join('-')); // d/m/Y → Y-m-d
+    const diff = Math.ceil((prazoData - hoje) / (1000 * 60 * 60 * 24));
+    return { dias: diff, ...getPrazoLabel(diff) };
   };
 
   return (
@@ -28,7 +36,7 @@ const ConsignacoesAlert = ({ consignacoesVencendo = [], loading = false }) => {
             {consignacoesVencendo.slice(0, 3).map((item, index) => {
               if (!item) return null;
 
-              const prazo = getPrazoLabel(item.dias_para_vencer);
+              const prazo = formatarPrazo(item.prazo_resposta);
 
               return (
                 <li
@@ -37,7 +45,13 @@ const ConsignacoesAlert = ({ consignacoesVencendo = [], loading = false }) => {
                 >
                   {prazo.icon}
                   <div>
-                    <span className="font-semibold">Pedido #{item.pedido_id}</span> — {item.produto_nome}
+                    <span className="font-semibold">Pedido #{item.pedido_id}</span>{' '}
+                    {item.numero_externo ? `(${item.numero_externo})` : null}
+                    <br />
+                    <small className="text-700">
+                      <User2 size={12} className="inline mr-1" /> {item.cliente_nome} —{' '}
+                      <PackageCheck size={12} className="inline mr-1" /> {item.status_calculado}
+                    </small>
                     <br />
                     <small className="text-700">
                       Prazo: {item.prazo_resposta} — {prazo.texto}

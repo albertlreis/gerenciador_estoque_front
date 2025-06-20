@@ -147,8 +147,16 @@ const useDashboardData = () => {
 
   const carregarConsignacoesVencendo = async () => {
     try {
-      const { data } = await apiEstoque.get('/consignacoes/vencendo');
-      setConsignacoesVencendo(data);
+      const { data } = await apiEstoque.get('/consignacoes', {
+        params: {
+          vencimento_proximo: true,
+          status: 'pendente',
+          per_page: 3,
+          page: 1
+        }
+      });
+
+      setConsignacoesVencendo(data.data);
     } catch (err) {
       console.error('Erro ao buscar consignações vencendo', err);
       setConsignacoesVencendo([]);
