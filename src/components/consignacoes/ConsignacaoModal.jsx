@@ -29,12 +29,13 @@ const statusTag = (status) => (
 );
 
 const ConsignacaoModal = ({ id, visible, onHide, onAtualizar }) => {
-  const [consignacao, setConsignacao] = useState(null);
+  const [consignacoes, setConsignacoes] = useState([]);
+  const [pedido, setPedido] = useState(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const toastRef = useRef(null);
 
-  const [modalParcial, setModalParcial] = useState(false);
+  const [consignacaoParaDevolver, setConsignacaoParaDevolver] = useState(null);
   const [qtdDevolver, setQtdDevolver] = useState(null);
   const [obsDevolver, setObsDevolver] = useState('');
 
@@ -45,44 +46,24 @@ const ConsignacaoModal = ({ id, visible, onHide, onAtualizar }) => {
   const carregar = async () => {
     setLoading(true);
     try {
-      const { data } = await api.get(`/consignacoes/${id}`);
-      const hoje = new Date();
-      const [dia, mes, ano] = data.prazo_resposta.split('/');
-      const prazo = new Date(`${ano}-${mes}-${dia}`);
-      if (data.status === 'pendente' && prazo < hoje) {
-        data.status = 'vencido';
-      }
-      setConsignacao(data);
+      const { data } = await api.get(`/consignacoes/pedido/${id}`);
+      setConsignacoes(data.consignacoes || []);
+      setPedido(data.pedido || null);
     } finally {
       setLoading(false);
     }
   };
 
-  const atualizarStatus = async (status) => {
-    setSaving(true);
-    try {
-      await api.patch(`/consignacoes/${id}`, { status });
-      toastRef.current.show({ severity: 'success', summary: 'Sucesso', detail: `Status alterado para "${statusLabel[status]}"` });
-      await carregar();
-      onAtualizar?.();
-      onHide();
-    } catch (e) {
-      toastRef.current.show({ severity: 'error', summary: 'Erro', detail: 'Falha ao atualizar status' });
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const registrarDevolucaoParcial = async () => {
-    if (!qtdDevolver || qtdDevolver <= 0) return;
+    if (!qtdDevolver || qtdDevolver <= 0 || !consignacaoParaDevolver) return;
     setSaving(true);
     try {
-      await api.post(`/consignacoes/${id}/devolucao`, {
+      await api.post(`/consignacoes/${consignacaoParaDevolver.id}/devolucao`, {
         quantidade: qtdDevolver,
         observacoes: obsDevolver
       });
       toastRef.current.show({ severity: 'success', summary: 'Sucesso', detail: 'Devolução registrada com sucesso' });
-      setModalParcial(false);
+      setConsignacaoParaDevolver(null);
       setQtdDevolver(null);
       setObsDevolver('');
       await carregar();
@@ -94,41 +75,11 @@ const ConsignacaoModal = ({ id, visible, onHide, onAtualizar }) => {
     }
   };
 
-  const confirmarAcao = (novoStatus) => {
-    confirmDialog({
-      message: `Tem certeza que deseja marcar esta consignação como "${statusLabel[novoStatus]}"?`,
-      header: 'Confirmação',
-      icon: 'pi pi-question-circle',
-      acceptLabel: 'Sim',
-      rejectLabel: 'Cancelar',
-      accept: () => atualizarStatus(novoStatus),
-    });
+  const abrirModalDevolucao = (consignacao) => {
+    setConsignacaoParaDevolver(consignacao);
+    setQtdDevolver(null);
+    setObsDevolver('');
   };
-
-  const footer = (
-    <div className="flex flex-wrap justify-content-end gap-2">
-      <Button
-        label="Registrar Devolução"
-        icon="pi pi-undo"
-        severity="info"
-        disabled={saving || !['pendente', 'vencido'].includes(consignacao?.status)}
-        onClick={() => setModalParcial(true)}
-      />
-      <Button
-        label="Confirmar Compra"
-        icon="pi pi-check"
-        severity="success"
-        disabled={saving || !['pendente', 'vencido'].includes(consignacao?.status)}
-        onClick={() => confirmarAcao('comprado')}
-      />
-      <Button
-        label="Fechar"
-        icon="pi pi-times"
-        className="p-button-text"
-        onClick={onHide}
-      />
-    </div>
-  );
 
   return (
     <>
@@ -136,14 +87,13 @@ const ConsignacaoModal = ({ id, visible, onHide, onAtualizar }) => {
       <ConfirmDialog />
 
       <Dialog
-        header={`Detalhes da Consignação #${id}`}
+        header={`Detalhes do Pedido #${pedido?.id}`}
         visible={visible}
         onHide={onHide}
-        style={{ width: '45vw', maxWidth: '600px' }}
+        style={{ width: '90vw', maxWidth: '900px' }}
         modal
-        footer={footer}
       >
-        {loading || !consignacao ? (
+        {loading || !pedido ? (
           <div className="flex justify-content-center p-5">
             <ProgressSpinner />
           </div>
@@ -151,96 +101,94 @@ const ConsignacaoModal = ({ id, visible, onHide, onAtualizar }) => {
           <div className="p-fluid">
             <div className="mb-3">
               <small className="text-600">Cliente</small>
-              <p className="text-lg font-medium">{consignacao.cliente_nome}</p>
+              <p className="text-lg font-medium">{pedido.cliente}</p>
             </div>
 
-            <div className="mb-3">
-              <small className="text-600">Produto</small>
-              <div className="text-md font-semibold mb-2">{consignacao.produto_nome}</div>
+            {consignacoes.map((c) => (
+              <div key={c.id} className="border-top-1 border-300 mt-3 pt-3">
+                <div className="text-md font-semibold mb-2">{c.produto_nome}</div>
 
-              {Array.isArray(consignacao.atributos) && consignacao.atributos.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {consignacao.atributos.map((attr, idx) => (
-                    <span key={idx} className="px-2 py-1 bg-blue-100 text-sm border-round">
-                      {attr.nome}: {attr.valor}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="grid mt-3">
-              <div className="col-6">
-                <small className="text-600">Quantidade</small>
-                <p>{consignacao.quantidade}</p>
-              </div>
-              <div className="col-6">
-                <small className="text-600">Status</small>
-                <p>{statusTag(consignacao.status)}</p>
-              </div>
-
-              <div className="col-6">
-                <small className="text-600">Data de Envio</small>
-                <p>{consignacao.data_envio}</p>
-              </div>
-              <div className="col-6">
-                <small className="text-600">Prazo para Resposta</small>
-                <p>{consignacao.prazo_resposta}</p>
-              </div>
-
-              {consignacao.data_resposta && (
-                <div className="col-12">
-                  <small className="text-600">Respondido em</small>
-                  <p>{consignacao.data_resposta}</p>
-                </div>
-              )}
-            </div>
-
-            {consignacao.observacoes && (
-              <div className="mt-3">
-                <small className="text-600">Observações</small>
-                <p>{consignacao.observacoes}</p>
-              </div>
-            )}
-
-            {consignacao.devolucoes?.length > 0 && (
-              <div className="mt-4">
-                <small className="text-600 block mb-2">Histórico de Devoluções</small>
-
-                <div className="overflow-auto">
-                  <table className="w-full text-sm border-collapse">
-                    <thead>
-                    <tr className="text-600 border-bottom-1 border-300">
-                      <th className="py-2 text-left">Qtd.</th>
-                      <th className="py-2 text-left">Data</th>
-                      <th className="py-2 text-left">Observações</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {consignacao.devolucoes.map((d) => (
-                      <tr key={d.id} className="border-bottom-1 border-100">
-                        <td className="py-2">{d.quantidade}</td>
-                        <td className="py-2">{d.data_devolucao}</td>
-                        <td className="py-2 text-sm text-700">{d.observacoes || '—'}</td>
-                      </tr>
+                {Array.isArray(c.atributos) && c.atributos.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {c.atributos.map((attr, idx) => (
+                      <span key={idx} className="px-2 py-1 bg-blue-100 text-sm border-round">
+                        {attr.nome}: {attr.valor}
+                      </span>
                     ))}
-                    </tbody>
-                  </table>
+                  </div>
+                )}
+
+                <div className="grid">
+                  <div className="col-6"><strong>Quantidade:</strong> {c.quantidade}</div>
+                  <div className="col-6"><strong>Status:</strong> {statusTag(c.status)}</div>
+                  <div className="col-6"><strong>Envio:</strong> {c.data_envio}</div>
+                  <div className="col-6"><strong>Prazo:</strong> {c.prazo_resposta}</div>
+                  {c.data_resposta && (
+                    <div className="col-12"><strong>Respondido em:</strong> {c.data_resposta}</div>
+                  )}
+                </div>
+
+                {c.observacoes && (
+                  <div className="mt-2"><strong>Observações:</strong> {c.observacoes}</div>
+                )}
+
+                {c.devolucoes?.length > 0 && (
+                  <div className="mt-3">
+                    <small className="text-600 block mb-2">Histórico de Devoluções</small>
+                    <div className="overflow-auto">
+                      <table className="w-full text-sm border-collapse">
+                        <thead>
+                        <tr className="text-600 border-bottom-1 border-300">
+                          <th className="py-2 text-left">Qtd.</th>
+                          <th className="py-2 text-left">Data</th>
+                          <th className="py-2 text-left">Observações</th>
+                          <th className="py-2 text-left">Responsável</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {c.devolucoes.map((d) => (
+                          <tr key={d.id} className="border-bottom-1 border-100">
+                            <td className="py-2">{d.quantidade}</td>
+                            <td className="py-2">{d.data_devolucao}</td>
+                            <td className="py-2">{d.observacoes || '—'}</td>
+                            <td className="py-2">{d.usuario?.nome || '—'}</td>
+                          </tr>
+                        ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex justify-content-end gap-2 mt-3">
+                  <Button
+                    label="Registrar Devolução"
+                    icon="pi pi-undo"
+                    severity="info"
+                    disabled={saving || !['pendente', 'vencido'].includes(c.status)}
+                    onClick={() => abrirModalDevolucao(c)}
+                  />
+                  <Button
+                    label="Confirmar Compra"
+                    icon="pi pi-check"
+                    severity="success"
+                    disabled={saving || !['pendente', 'vencido'].includes(c.status)}
+                    onClick={() => toastRef.current.show({ summary: 'Ação futura', detail: 'Funcionalidade não implementada' })}
+                  />
                 </div>
               </div>
-            )}
-
+            ))}
           </div>
         )}
       </Dialog>
 
       <Dialog
         header="Registrar Devolução"
-        visible={modalParcial}
+        visible={!!consignacaoParaDevolver}
         style={{ width: '400px' }}
         modal
         onHide={() => {
-          setModalParcial(false);
+          setConsignacaoParaDevolver(null);
           setQtdDevolver(null);
           setObsDevolver('');
         }}
@@ -251,7 +199,7 @@ const ConsignacaoModal = ({ id, visible, onHide, onAtualizar }) => {
               icon="pi pi-times"
               className="p-button-text"
               onClick={() => {
-                setModalParcial(false);
+                setConsignacaoParaDevolver(null);
                 setQtdDevolver(null);
                 setObsDevolver('');
               }}
@@ -265,7 +213,7 @@ const ConsignacaoModal = ({ id, visible, onHide, onAtualizar }) => {
           </div>
         }
       >
-        {consignacao && (
+        {consignacaoParaDevolver && (
           <div className="p-fluid">
             <div className="mb-3">
               <label htmlFor="qtd-devolver" className="block text-600 mb-1">
@@ -274,12 +222,12 @@ const ConsignacaoModal = ({ id, visible, onHide, onAtualizar }) => {
               <InputNumber
                 id="qtd-devolver"
                 min={1}
-                max={consignacao.quantidade_disponivel || consignacao.quantidade}
+                max={consignacaoParaDevolver.quantidade_disponivel || consignacaoParaDevolver.quantidade}
                 value={qtdDevolver}
                 onValueChange={(e) => setQtdDevolver(e.value)}
-                inputClassName="w-full py-2" // Reduz altura
+                inputClassName="w-full py-2"
                 className="w-full"
-                placeholder={`Máximo: ${consignacao.quantidade_disponivel || consignacao.quantidade}`}
+                placeholder={`Máximo: ${consignacaoParaDevolver.quantidade_disponivel || consignacaoParaDevolver.quantidade}`}
               />
             </div>
 

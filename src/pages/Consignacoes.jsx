@@ -43,13 +43,10 @@ const Consignacoes = () => {
       const hoje = new Date();
 
       // Marca como vencido no front se necessário
-      const atualizadas = data.data.map(c => {
-        if (c.status === 'pendente' && c.prazo_resposta) {
-          const prazo = formatarData(c.prazo_resposta);
-          if (prazo < hoje) return { ...c, status: 'vencido' };
-        }
-        return c;
-      });
+      const atualizadas = data.data.map(c => ({
+        ...c,
+        status: c.status_calculado ?? c.status
+      }));
 
       setConsignacoes(atualizadas);
       setPaginacao(prev => ({ ...prev, totalRecords: data.total }));
@@ -79,6 +76,7 @@ const Consignacoes = () => {
 
     return <Tag value={label} severity={cor} />;
   };
+
 
   return (
     <SakaiLayout>
@@ -143,14 +141,18 @@ const Consignacoes = () => {
           <Column field="vendedor_nome" header="Vendedor" />
           <Column field="data_envio" header="Envio" />
           <Column field="prazo_resposta" header="Prazo" />
-          <Column field="status" header="Status" body={statusTemplate} />
+          <Column
+            field="status_calculado"
+            header="Status Pedido"
+            body={statusTemplate}
+          />
           <Column
             header="Ações"
             body={(rowData) => (
               <Button
                 icon="pi pi-eye"
                 severity="info"
-                onClick={() => setModalId(rowData.id)}
+                onClick={() => setModalId(rowData.pedido_id)}
                 tooltip="Ver detalhes"
               />
             )}
