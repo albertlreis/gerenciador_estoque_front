@@ -117,6 +117,26 @@ const Consignacoes = () => {
     fetchConsignacoes({ page: e.page, rows: e.rows }); // Passa nova página diretamente
   };
 
+  const gerarPdf = async (pedidoId) => {
+    try {
+      const response = await api.get(`/consignacoes/${pedidoId}/pdf`, {
+        responseType: 'blob'
+      });
+
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `roteiro_consignacao_${pedidoId}.pdf`;
+      link.click();
+
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.current?.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao gerar PDF' });
+    }
+  };
+
   return (
     <SakaiLayout>
       <Toast ref={toast}/>
@@ -260,14 +280,23 @@ const Consignacoes = () => {
           <Column
             header="Ações"
             body={(rowData) => (
-              <Button
-                icon="pi pi-eye"
-                severity="info"
-                onClick={() => setModalId(rowData.pedido_id)}
-                tooltip="Ver detalhes"
-              />
+              <div className="flex gap-2">
+                <Button
+                  icon="pi pi-eye"
+                  severity="info"
+                  onClick={() => setModalId(rowData.pedido_id)}
+                  tooltip="Ver detalhes"
+                />
+                <Button
+                  icon="pi pi-file-pdf"
+                  severity="danger"
+                  onClick={() => gerarPdf(rowData.pedido_id)}
+                  tooltip="Gerar PDF"
+                />
+              </div>
             )}
           />
+
         </DataTable>
 
         <ConsignacaoModal

@@ -38,11 +38,18 @@ const FinalizarPedido = () => {
   const [modoConsignacao, setModoConsignacao] = useState(false);
   const [prazoConsignacao, setPrazoConsignacao] = useState(null);
   const [itensEmFalta, setItensEmFalta] = useState([]);
+  const [depositos, setDepositos] = useState([]);
+
+  const fetchDepositos = async () => {
+    const { data } = await api.get('/depositos');
+    setDepositos(data);
+  };
 
   useEffect(() => {
     carregarCarrinho(id);
     fetchClientes();
     fetchParceiros();
+    fetchDepositos();
   }, [id]);
 
   useEffect(() => {
@@ -123,7 +130,11 @@ const FinalizarPedido = () => {
         id_parceiro: carrinhoAtual?.id_parceiro,
         observacoes,
         modo_consignacao: modoConsignacao,
-        prazo_consignacao: prazoConsignacao
+        prazo_consignacao: prazoConsignacao,
+        depositos_por_item: itens.map(item => ({
+          id_carrinho_item: item.id,
+          id_deposito: item.id_deposito || null
+        }))
       });
 
       toast.current.show({ severity: 'success', summary: 'Pedido finalizado!', detail: 'Pedido criado com sucesso.' });
@@ -312,6 +323,27 @@ const FinalizarPedido = () => {
                               {attr.nome}: {attr.valor}
                             </span>
                           ))}
+                        </div>
+                      )}
+
+                      {modoConsignacao && (
+                        <div className="mb-2">
+                          <label className="text-sm block font-medium mb-1">Depósito de saída</label>
+                          <Dropdown
+                            value={item.id_deposito}
+                            options={depositos}
+                            optionLabel="nome"
+                            optionValue="id"
+                            onChange={(e) => {
+                              const novoDeposito = e.value;
+                              api.post('/carrinho-itens/atualizar-deposito', {
+                                id_carrinho_item: item.id,
+                                id_deposito: novoDeposito
+                              });
+                            }}
+                            placeholder="Selecione o depósito"
+                            className="w-full"
+                          />
                         </div>
                       )}
 
