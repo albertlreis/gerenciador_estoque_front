@@ -3,6 +3,7 @@ import ProdutoCard from './ProdutoCard';
 import { Dialog } from 'primereact/dialog';
 import { Divider } from 'primereact/divider';
 import { Tag } from 'primereact/tag';
+import formatarPreco from '../utils/formatarPreco';
 
 /**
  * Componente responsável por exibir os produtos em grid com suporte ao botão de "Detalhes"
@@ -82,17 +83,17 @@ const CatalogoGrid = ({ produtos, onAdicionarAoCarrinho }) => {
                         {temDesconto ? (
                           <>
                             <span style={{ textDecoration: 'line-through', marginRight: '0.5rem', color: '#999' }}>
-                              R$ {preco.toFixed(2)}
+                              {formatarPreco(preco)}
                             </span>
                             <span style={{ fontWeight: 'bold', color: '#0f9d58', marginRight: '0.5rem' }}>
-                              R$ {promocional.toFixed(2)}
+                              {formatarPreco(promocional)}
                             </span>
                             <span style={{ color: '#d32f2f', fontWeight: 'bold' }}>
                               (-{percentual}%)
                             </span>
                           </>
                         ) : (
-                          <span>R$ {preco.toFixed(2)}</span>
+                          <span>{formatarPreco(preco)}</span>
                         )}
                       </p>
 

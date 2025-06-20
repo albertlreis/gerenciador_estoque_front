@@ -1,5 +1,6 @@
 import React from 'react';
 import { Tag } from 'primereact/tag';
+import formatarPreco from '../utils/formatarPreco';
 
 const ProdutoCard = ({ produto, onDetalhes, onAdicionar }) => {
   const variacao = produto.variacoes?.[0];
@@ -52,17 +53,17 @@ const ProdutoCard = ({ produto, onDetalhes, onAdicionar }) => {
               {temDesconto ? (
                 <>
                   <span style={{ textDecoration: 'line-through', color: '#999', marginRight: '0.5rem' }}>
-                    R$ {preco.toFixed(2)}
+                    {formatarPreco(preco)}
                   </span>
                   <span style={{ fontWeight: 'bold', color: '#0f9d58', marginRight: '0.5rem' }}>
-                    R$ {promocional.toFixed(2)}
+                    {formatarPreco(promocional)}
                   </span>
                   <span style={{ color: '#d32f2f', fontWeight: 'bold' }}>
                     (-{percentual}%)
                   </span>
                 </>
               ) : (
-                <span>R$ {preco.toFixed(2)}</span>
+                <span>{formatarPreco(preco)}</span>
               )}
             </div>
 

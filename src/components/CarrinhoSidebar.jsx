@@ -4,7 +4,7 @@ import { Button } from 'primereact/button';
 import { ConfirmDialog } from 'primereact/confirmdialog';
 import { confirmDialog } from 'primereact/confirmdialog';
 import { useCarrinho } from '../context/CarrinhoContext';
-import api from '../services/apiEstoque';
+import formatarPreco from '../utils/formatarPreco';
 
 const CarrinhoSidebar = ({ visible, onHide }) => {
   const { itens, removerItem, limparCarrinho, carregarCarrinho, adicionarItem  } = useCarrinho();
@@ -93,7 +93,7 @@ const CarrinhoSidebar = ({ visible, onHide }) => {
               <Button icon="pi pi-minus" text onClick={() => atualizarQuantidadeItem(item, item.quantidade - 1)} />
               <span className="font-medium">{item.quantidade}</span>
               <Button icon="pi pi-plus" text onClick={() => atualizarQuantidadeItem(item, item.quantidade + 1)} />
-              <span className="ml-2 text-sm">x R$ {Number(item.preco_unitario).toFixed(2)}</span>
+              <span className="ml-2 text-sm">x {formatarPreco(item.preco_unitario)}</span>
               <Button icon="pi pi-trash" className="p-button-text p-button-danger ml-auto" onClick={() => confirmarRemocaoItem(item.id)} />
             </div>
           </div>
@@ -101,7 +101,7 @@ const CarrinhoSidebar = ({ visible, onHide }) => {
       )}
 
       <hr />
-      <div className="text-right font-bold text-lg">Total: R$ {total.toFixed(2)}</div>
+      <div className="text-right font-bold text-lg">Total: {formatarPreco(total)}</div>
 
       <div className="mt-4 flex gap-2 justify-end">
         <Button
