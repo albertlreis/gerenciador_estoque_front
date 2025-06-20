@@ -6,6 +6,15 @@ import { InputNumber } from 'primereact/inputnumber';
 import { InputTextarea } from 'primereact/inputtextarea';
 
 const ProdutoImportadoCard = ({ item, index, categorias, onChangeItem }) => {
+  // Cálculo de valores
+  const quantidade = Number(item.quantidade) || 0;
+  const totalItem = Number(item.valor) || 0;
+  const valorUnitario = quantidade > 0 ? totalItem / quantidade : 0;
+  const total = totalItem.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  });
+
   const handleFixosChange = (campo, value) => {
     const atualizados = { ...item.fixos, [campo]: value };
     onChangeItem(index, 'fixos', atualizados);
@@ -21,11 +30,6 @@ const ProdutoImportadoCard = ({ item, index, categorias, onChangeItem }) => {
     };
     onChangeItem(index, 'atributos', atualizados);
   };
-
-  const total = ((item.quantidade ?? 0) * (item.valor ?? 0)).toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL'
-  });
 
   return (
     <Card
@@ -67,20 +71,20 @@ const ProdutoImportadoCard = ({ item, index, categorias, onChangeItem }) => {
               <div className="field col-12 md:col-3">
                 <label className="block text-xs font-medium mb-1">Referência</label>
                 <InputText value={item.ref || ''} onChange={(e) => onChangeItem(index, 'ref', e.target.value)}
-                           className="w-full p-inputtext-sm" aria-label="Referência" />
+                           className="w-full p-inputtext-sm" aria-label="Referência"/>
               </div>
               <div className="field col-12 md:col-6">
                 <label className="block text-xs font-medium mb-1">Nome</label>
                 <InputText value={item.nome || ''} onChange={(e) => onChangeItem(index, 'nome', e.target.value)}
-                           className="w-full p-inputtext-sm" aria-label="Nome do Produto" />
+                           className="w-full p-inputtext-sm" aria-label="Nome do Produto"/>
               </div>
               <div className="field col-12 md:col-4">
                 <label className="block text-xs font-medium mb-1">Tipo</label>
                 <Dropdown
                   value={item.tipo || ''}
                   options={[
-                    { label: 'PEDIDO', value: 'PEDIDO' },
-                    { label: 'PRONTA ENTREGA', value: 'PRONTA ENTREGA' }
+                    {label: 'PEDIDO', value: 'PEDIDO'},
+                    {label: 'PRONTA ENTREGA', value: 'PRONTA ENTREGA'}
                   ]}
                   onChange={(e) => onChangeItem(index, 'tipo', e.value)}
                   className="w-full p-inputtext-sm"
@@ -91,13 +95,23 @@ const ProdutoImportadoCard = ({ item, index, categorias, onChangeItem }) => {
               <div className="field col-6 md:col-2">
                 <label className="block text-xs font-medium mb-1">Quantidade</label>
                 <InputNumber value={item.quantidade} onValueChange={(e) => onChangeItem(index, 'quantidade', e.value)}
-                             min={1} className="w-full p-inputtext-sm" aria-label="Quantidade" />
+                             min={1} className="w-full p-inputtext-sm" aria-label="Quantidade"/>
               </div>
               <div className="field col-6 md:col-3">
                 <label className="block text-xs font-medium mb-1">Valor Unitário</label>
-                <InputNumber value={item.valor} onValueChange={(e) => onChangeItem(index, 'valor', e.value)}
-                             mode="currency" currency="BRL" locale="pt-BR" className="w-full p-inputtext-sm"
-                             aria-label="Valor Unitário" />
+                <InputNumber
+                  value={valorUnitario}
+                  onValueChange={(e) => {
+                    const novoUnitario = e.value || 0;
+                    const novoTotal = novoUnitario * (item.quantidade || 0);
+                    onChangeItem(index, 'valor', parseFloat(novoTotal.toFixed(2)));
+                  }}
+                  mode="currency"
+                  currency="BRL"
+                  locale="pt-BR"
+                  className="w-full p-inputtext-sm"
+                  aria-label="Valor Unitário"
+                />
               </div>
             </div>
           </fieldset>
@@ -170,9 +184,9 @@ const ProdutoImportadoCard = ({ item, index, categorias, onChangeItem }) => {
 
             <span className="block text-xs mt-2">
               {item.id_variacao ? (
-                <span className="text-green-600">Variação encontrada</span>
+                <span className="text-green-600">Produto vinculado</span>
               ) : (
-                <span className="text-red-500 font-semibold">Sem variação</span>
+                <span className="text-orange-600 font-semibold">Produto não cadastrado</span>
               )}
             </span>
 

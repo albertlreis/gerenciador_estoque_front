@@ -1,14 +1,14 @@
-import React, {useState, useRef, useEffect} from 'react';
-import { FileUpload } from 'primereact/fileupload';
-import { Toast } from 'primereact/toast';
-import { ProgressSpinner } from 'primereact/progressspinner';
-import { InputText } from 'primereact/inputtext';
-import { InputTextarea } from 'primereact/inputtextarea';
-import { InputNumber } from 'primereact/inputnumber';
-import { Button } from 'primereact/button';
-import { DataTable } from 'primereact/datatable';
-import { Column } from 'primereact/column';
-import { Card } from 'primereact/card';
+import React, {useEffect, useRef, useState} from 'react';
+import {FileUpload} from 'primereact/fileupload';
+import {Toast} from 'primereact/toast';
+import {ProgressSpinner} from 'primereact/progressspinner';
+import {InputText} from 'primereact/inputtext';
+import {InputTextarea} from 'primereact/inputtextarea';
+import {InputNumber} from 'primereact/inputnumber';
+import {Button} from 'primereact/button';
+import {DataTable} from 'primereact/datatable';
+import {Column} from 'primereact/column';
+import {Card} from 'primereact/card';
 import apiEstoque from '../services/apiEstoque';
 import ProdutoImportadoCard from "./ProdutoImportadoCard";
 
@@ -20,12 +20,23 @@ const ImportacaoPedidoPDF = () => {
   const [categorias, setCategorias] = useState([]);
   const [loading, setLoading] = useState(false);
   const toast = useRef();
+  const fileUploadRef = useRef();
 
   useEffect(() => {
     apiEstoque.get('/categorias')
       .then(res => setCategorias(res.data))
       .catch(() => setCategorias([]));
   }, []);
+
+  useEffect(() => {
+    const total = itens.reduce((soma, item) => {
+      const valorTotalItem = parseFloat(item.valor) || 0;
+      return soma + valorTotalItem;
+    }, 0);
+    setPedido(prev => ({ ...prev, total: parseFloat(total.toFixed(2)) }));
+  }, [itens]);
+
+
 
   const onUpload = async ({ files }) => {
     const formData = new FormData();
@@ -70,33 +81,9 @@ const ImportacaoPedidoPDF = () => {
   const onChangeItem = (index, field, value) => {
     setItens((prev) => {
       const novos = [...prev];
-      const itemAtualizado = { ...novos[index], [field]: value };
-      novos[index] = itemAtualizado;
+      novos[index] = {...novos[index], [field]: value};
       return novos;
     });
-  };
-
-  const editorNumber = (options, field) => (
-    <InputNumber
-      value={options.rowData[field]}
-      onValueChange={(e) => onChangeItem(options.rowIndex, field, e.value)}
-      mode="decimal"
-      minFractionDigits={2}
-    />
-  );
-
-  const editorText = (options, field) => (
-    <InputText
-      value={options.rowData[field]}
-      onChange={(e) => onChangeItem(options.rowIndex, field, e.target.value)}
-    />
-  );
-
-  const onRowEditComplete = (e) => {
-    const { newData, index } = e;
-    const updated = [...itens];
-    updated[index] = newData;
-    setItens(updated);
   };
 
   const confirmarImportacao = async () => {
@@ -137,11 +124,24 @@ const ImportacaoPedidoPDF = () => {
       setCliente({});
       setPedido({});
       setItens([]);
+      fileUploadRef.current?.clear();
     } catch (err) {
+      const errorMessage = err.response?.data?.message;
+      const fieldErrors = err.response?.data?.errors;
+
+      const erroNumeroExterno = fieldErrors?.['pedido.numero_externo']?.[0];
+
+      let detalhe = 'Erro ao salvar o pedido.';
+
+      if (erroNumeroExterno?.includes('has already been taken')) {
+        detalhe = 'Já existe um pedido com esse número. Verifique se ele já foi importado anteriormente.';
+      }
+
       toast.current?.show({
         severity: 'error',
         summary: 'Erro',
-        detail: err.response?.data?.message || 'Erro ao salvar o pedido.',
+        detail: detalhe,
+        life: 4000
       });
     }
   };
@@ -175,6 +175,7 @@ const ImportacaoPedidoPDF = () => {
           Selecione um arquivo PDF com os dados do pedido. O sistema tentará extrair informações como cliente, produtos, parcelas e observações.
           </p>
           <FileUpload
+            ref={fileUploadRef}
             name="arquivo"
             accept=".pdf"
             mode="advanced"
@@ -320,11 +321,11 @@ const ImportacaoPedidoPDF = () => {
               <div className="field col-12 md:col-4">
                 <label htmlFor="numero" className="block text-sm font-semibold mb-1">Número</label>
                 <InputText
-                  id="numero"
-                  value={pedido.numero || ''}
-                  onChange={(e) => onChangePedido('numero', e.target.value)}
+                  id="numero_externo"
+                  value={pedido.numero_externo || ''}
+                  onChange={(e) => onChangePedido('numero_externo', e.target.value)}
                   className="p-inputtext-sm"
-                  placeholder="Número do pedido"
+                  placeholder="Número externo do pedido"
                 />
               </div>
 
