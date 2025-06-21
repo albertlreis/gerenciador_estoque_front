@@ -21,6 +21,15 @@ export const useProdutoForm = (initialData = {}) => {
   const [totalSize, setTotalSize] = useState(0);
 
   useEffect(() => {
+    setNome(initialData.nome || '');
+    setDescricao(initialData.descricao || '');
+    setIdCategoria(initialData.categoria || initialData.id_categoria || null);
+    setIdFornecedor(initialData.id_fornecedor || null);
+    setVariacoes(initialData.variacoes || []);
+    setExistingImages(initialData.imagens || []);
+  }, [initialData]);
+
+  useEffect(() => {
     const fetchCategorias = async () => {
       try {
         const response = await apiEstoque.get('/categorias');

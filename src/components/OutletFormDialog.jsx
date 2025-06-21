@@ -5,82 +5,72 @@ import { InputNumber } from 'primereact/inputnumber';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 import apiEstoque from '../services/apiEstoque';
+import { motivosOutlet } from './produto/motivosOutlet';
 
-const motivosOutlet = [
-  { label: 'Avariado', value: 'avariado' },
-  { label: 'Baixa rotatividade', value: 'baixa_rotatividade' },
-  { label: 'Devolvido', value: 'devolvido' },
-  { label: 'Embalagem danificada', value: 'embalagem_danificada' },
-  { label: 'Erro de cadastro', value: 'erro_cadastro' },
-  { label: 'Exposição em loja', value: 'exposicao' },
-  { label: 'Promoção pontual', value: 'promocao_pontual' },
-  { label: 'Reposição excedente', value: 'excedente' },
-  { label: 'Saiu de linha', value: 'saiu_linha' },
-  { label: 'Tempo em estoque', value: 'tempo_estoque' },
-];
-
-const OutletFormDialog = ({ visible, onHide, variacao, onSuccess }) => {
-  const estoqueTotal = variacao?.estoque?.quantidade ?? 0;
-  const outletAtuais = variacao?.outlets ?? [];
-  const quantidadeJaAlocada = outletAtuais.reduce((soma, o) => soma + (o.quantidade || 0), 0);
-
+const OutletFormDialog = ({ visible, onHide, variacao, outlet = null, onSuccess }) => {
   const toast = useRef(null);
   const [motivo, setMotivo] = useState(null);
   const [quantidade, setQuantidade] = useState(null);
   const [percentualDesconto, setPercentualDesconto] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  const estoqueTotal = variacao?.estoque?.quantidade ?? 0;
+  const outletAtuais = variacao?.outlets ?? [];
+  const quantidadeJaAlocada = outletAtuais.reduce((soma, o) => soma + (o.quantidade || 0), 0);
+  const maxPermitido = estoqueTotal - quantidadeJaAlocada;
+
   useEffect(() => {
     if (visible) {
-      setMotivo(null);
-      setQuantidade(null);
-      setPercentualDesconto(null);
+      setMotivo(outlet?.motivo || null);
+      setQuantidade(outlet?.quantidade || null);
+      setPercentualDesconto(outlet?.percentual_desconto || null);
     }
-  }, [visible]);
+  }, [visible, outlet]);
+
+  const showToast = (severity, summary, detail, life = 3000) => {
+    toast.current?.show({ severity, summary, detail, life });
+  };
 
   const handleSubmit = async () => {
     if (!motivo || !quantidade || !percentualDesconto) {
-      toast.current.show({ severity: 'warn', summary: 'Campos obrigatórios', detail: 'Preencha todos os campos.', life: 3000 });
-      return;
-    }
-
-    const novaQuantidade = quantidade || 0;
-    const somaTotal = quantidadeJaAlocada + novaQuantidade;
-
-    console.log(somaTotal, estoqueTotal)
-
-    if (somaTotal > estoqueTotal) {
-      toast.current.show({
-        severity: 'warn',
-        summary: 'Estoque insuficiente',
-        detail: `A soma das quantidades de outlet (${quantidadeJaAlocada}) com a nova (${novaQuantidade}) ultrapassa o estoque (${estoqueTotal}).`,
-        life: 5000
-      });
-      return;
+      return showToast('warn', 'Campos obrigatórios', 'Preencha todos os campos.');
     }
 
     if (quantidade <= 0) {
-      toast.current.show({
-        severity: 'warn',
-        summary: 'Quantidade inválida',
-        detail: 'Informe uma quantidade maior que zero.',
-        life: 3000
-      });
-      return;
+      return showToast('warn', 'Quantidade inválida', 'Informe uma quantidade maior que zero.');
+    }
+
+    if (quantidadeJaAlocada + quantidade > estoqueTotal) {
+      return showToast(
+        'warn',
+        'Estoque insuficiente',
+        `A soma (${quantidadeJaAlocada + quantidade}) ultrapassa o estoque (${estoqueTotal}).`,
+        5000
+      );
     }
 
     setLoading(true);
     try {
-      await apiEstoque.post(`/variacoes/${variacao.id}/outlet`, {
-        motivo,
-        quantidade,
-        percentual_desconto: percentualDesconto
-      });
-      toast.current.show({ severity: 'success', summary: 'Outlet registrado', detail: 'A variação foi marcada como outlet.', life: 3000 });
+      if (outlet?.id) {
+        await apiEstoque.put(`/variacoes/${variacao.id}/outlet/${outlet.id}`, {
+          motivo,
+          quantidade,
+          percentual_desconto: percentualDesconto
+        });
+        showToast('success', 'Outlet atualizado', 'A variação foi atualizada.');
+      } else {
+        await apiEstoque.post(`/variacoes/${variacao.id}/outlet`, {
+          motivo,
+          quantidade,
+          percentual_desconto: percentualDesconto
+        });
+        showToast('success', 'Outlet registrado', 'A variação foi marcada como outlet.');
+      }
+
       onSuccess();
       onHide();
-    } catch (err) {
-      toast.current.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao registrar outlet.', life: 3000 });
+    } catch {
+      showToast('error', 'Erro', 'Erro ao registrar outlet.');
     } finally {
       setLoading(false);
     }
@@ -89,7 +79,13 @@ const OutletFormDialog = ({ visible, onHide, variacao, onSuccess }) => {
   return (
     <>
       <Toast ref={toast} />
-      <Dialog header="Registrar como Outlet" visible={visible} onHide={onHide} modal className="w-full md:w-30rem">
+      <Dialog
+        header="Registrar como Outlet"
+        visible={visible}
+        onHide={onHide}
+        modal
+        className="w-full md:w-30rem"
+      >
         <div className="p-fluid">
           <div className="field mb-3">
             <label htmlFor="motivo">Motivo</label>
@@ -111,13 +107,13 @@ const OutletFormDialog = ({ visible, onHide, variacao, onSuccess }) => {
               value={quantidade}
               onValueChange={(e) => setQuantidade(e.value)}
               min={1}
-              max={estoqueTotal - quantidadeJaAlocada}
+              max={maxPermitido}
               inputClassName="w-full"
               showButtons
             />
             <small className="block mt-1 text-color-secondary">
-              Estoque: <strong>{estoqueTotal}</strong> | Já marcado como outlet: <strong>{quantidadeJaAlocada}</strong><br />
-              Máximo permitido para novo outlet: <strong>{estoqueTotal - quantidadeJaAlocada}</strong>
+              Estoque: <strong>{estoqueTotal}</strong> | Já em outlet: <strong>{quantidadeJaAlocada}</strong><br />
+              Máximo disponível: <strong>{maxPermitido}</strong>
             </small>
           </div>
 
@@ -138,11 +134,16 @@ const OutletFormDialog = ({ visible, onHide, variacao, onSuccess }) => {
 
           <div className="flex justify-content-end mt-4">
             <Button label="Cancelar" icon="pi pi-times" className="p-button-text mr-2" onClick={onHide} />
-            <Button label="Confirmar" icon="pi pi-check" loading={loading} onClick={handleSubmit} disabled={loading} />
+            <Button
+              label="Confirmar"
+              icon="pi pi-check"
+              loading={loading}
+              onClick={handleSubmit}
+              disabled={loading || !motivo || !quantidade || !percentualDesconto}
+            />
           </div>
         </div>
       </Dialog>
-
     </>
   );
 };

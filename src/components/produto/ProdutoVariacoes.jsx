@@ -8,9 +8,9 @@ import { formatarMotivo } from './helpers';
 const ProdutoVariacoes = ({
                             variacoes,
                             setVariacoes,
-                            abrirDialogOutlet
+                            abrirDialogOutlet,
+                            confirmarExcluirOutlet
                           }) => {
-
   const updateVariacao = (index, field, value) => {
     const novas = [...variacoes];
     novas[index][field] = value;
@@ -54,21 +54,40 @@ const ProdutoVariacoes = ({
       <p className="text-sm text-color-secondary mb-3">
         Um mesmo móvel pode ter diferentes variações,
         como <strong>cor</strong>, <strong>acabamento</strong> ou <strong>material</strong>.
-        Cada variação pode ter um preço e código de barras distintos.
       </p>
 
       {variacoes.map((v, i) => (
         <div key={i} className="p-fluid p-3 mb-4 border-round surface-border border-1">
           <div className="formgrid grid align-items-start">
-            <div className="field col-12 mt-2">
-              <div className="flex flex-wrap align-items-center gap-2 mb-2">
+            {/* OUTLETS */}
+            <div className="field col-12">
+              <div className="formgrid grid mb-2">
                 {v.outlets?.map((o, index) => (
-                  <Tag
-                    key={index}
-                    value={`${o.quantidade} unid • ${o.percentual_desconto}% • ${formatarMotivo(o.motivo)}`}
-                    severity="warning"
-                    className="text-sm px-3 py-2 border-round"
-                  />
+                  <div key={index} className="field col-12 md:col-6">
+                    <div className="flex justify-content-between align-items-center gap-2 px-3 py-2 surface-100 border-round border-1 border-warning">
+                      <div className="text-sm font-semibold text-yellow-900">
+                        {`${o.quantidade} unid • ${o.percentual_desconto}% • ${formatarMotivo(o.motivo)}`}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          icon="pi pi-pencil"
+                          className="p-button-rounded p-button-text p-button-plain"
+                          onClick={() => abrirDialogOutlet(v, o)}
+                          tooltip="Editar outlet"
+                          tooltipOptions={{ position: 'top' }}
+                          type="button"
+                        />
+                        <Button
+                          icon="pi pi-trash"
+                          className="p-button-rounded p-button-text p-button-plain"
+                          onClick={() => confirmarExcluirOutlet(v, o)}
+                          tooltip="Excluir outlet"
+                          tooltipOptions={{ position: 'top' }}
+                          type="button"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
 
@@ -84,6 +103,7 @@ const ProdutoVariacoes = ({
               )}
             </div>
 
+            {/* CAMPOS DA VARIAÇÃO */}
             <div className="field md:col-3">
               <label>Preço</label>
               <InputNumber
@@ -92,8 +112,6 @@ const ProdutoVariacoes = ({
                 mode="currency"
                 currency="BRL"
                 locale="pt-BR"
-                minFractionDigits={2}
-                maxFractionDigits={2}
               />
             </div>
 
@@ -105,8 +123,6 @@ const ProdutoVariacoes = ({
                 mode="currency"
                 currency="BRL"
                 locale="pt-BR"
-                minFractionDigits={2}
-                maxFractionDigits={2}
               />
             </div>
 
@@ -133,10 +149,12 @@ const ProdutoVariacoes = ({
                 type="button"
                 onClick={() => removeVariacao(i)}
                 tooltip="Remover Variação"
+                tooltipOptions={{ position: 'top' }}
               />
             </div>
           </div>
 
+          {/* ATRIBUTOS */}
           <h5 className="mt-3">Atributos</h5>
           <p className="text-sm text-color-secondary mb-2">
             Detalhe esta variação com atributos. Exemplos: <strong>cor: nogueira</strong>, <strong>material: MDF</strong>.
@@ -165,6 +183,7 @@ const ProdutoVariacoes = ({
                   type="button"
                   onClick={() => removeAtributo(i, j)}
                   tooltip="Remover Atributo"
+                  tooltipOptions={{ position: 'top' }}
                 />
               </div>
             </div>

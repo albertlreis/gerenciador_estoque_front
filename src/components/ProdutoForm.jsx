@@ -1,17 +1,23 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
+import { confirmDialog } from 'primereact/confirmdialog';
 
 import { useProdutoForm } from './produto/useProdutoForm';
 import ProdutoVariacoes from './produto/ProdutoVariacoes';
 import ProdutoImagens from './produto/ProdutoImagens';
 import OutletFormDialog from './OutletFormDialog';
-import apiEstoque from "../services/apiEstoque";
+import apiEstoque from '../services/apiEstoque';
 
-const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
+const ProdutoForm = ({ initialData = {}, onSubmit, onCancel, onProdutoAtualizado }) => {
+  const [produto, setProduto] = useState(initialData);
+  const [showOutletDialog, setShowOutletDialog] = useState(false);
+  const [variacaoSelecionada, setVariacaoSelecionada] = useState(null);
+  const [outletSelecionado, setOutletSelecionado] = useState(null);
+
   const {
     nome, setNome,
     descricao, setDescricao,
@@ -25,38 +31,58 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
     totalSize, setTotalSize,
     toastRef,
     fileUploadRef,
-  } = useProdutoForm(initialData);
+  } = useProdutoForm(produto);
 
-  const [showOutletDialog, setShowOutletDialog] = React.useState(false);
-  const [variacaoSelecionada, setVariacaoSelecionada] = React.useState(null);
-
-  const abrirDialogOutlet = (variacao) => {
+  const abrirDialogOutlet = (variacao, outlet = null) => {
     setVariacaoSelecionada(variacao);
+    setOutletSelecionado(outlet);
     setShowOutletDialog(true);
   };
 
-  const atualizarVariacoes = async () => {
-    if (!variacaoSelecionada?.id) return;
-    try {
-      const response = await apiEstoque.get(`/variacoes/${variacaoSelecionada.id}`);
-      const nova = response.data;
-      const novas = [...variacoes];
-      const index = novas.findIndex((v) => v.id === nova.id);
-      if (index !== -1) {
-        novas[index] = { ...novas[index], ...nova };
-        setVariacoes(novas);
+  const fecharDialogOutlet = () => {
+    setShowOutletDialog(false);
+    setOutletSelecionado(null);
+  };
+
+  const confirmarExcluirOutlet = (variacao, outlet) => {
+    confirmDialog({
+      message: 'Tem certeza que deseja excluir este outlet?',
+      header: 'Confirmação',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sim',
+      rejectLabel: 'Não',
+      accept: async () => {
+        try {
+          await apiEstoque.delete(`/variacoes/${variacao.id}/outlet/${outlet.id}`);
+          toastRef.current?.show({ severity: 'success', summary: 'Outlet excluído', life: 3000 });
+          await atualizarProduto();
+        } catch {
+          toastRef.current?.show({ severity: 'error', summary: 'Erro ao excluir outlet', life: 3000 });
+        }
       }
+    });
+  };
+
+  const atualizarProduto = async () => {
+    try {
+      const { data } = await apiEstoque.get(`/produtos/${initialData.id}`);
+      setProduto(data);
+
       toastRef.current?.show({
         severity: 'success',
-        summary: 'Outlet atualizado',
-        detail: 'Os dados da variação foram atualizados.',
+        summary: 'Produto atualizado',
+        detail: 'Dados recarregados com sucesso.',
         life: 3000
       });
+
+      if (typeof onProdutoAtualizado === 'function') {
+        onProdutoAtualizado();
+      }
     } catch {
       toastRef.current?.show({
         severity: 'error',
         summary: 'Erro',
-        detail: 'Não foi possível atualizar a variação.',
+        detail: 'Não foi possível recarregar o produto.',
         life: 3000
       });
     }
@@ -65,14 +91,16 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
     try {
       const productData = {
         nome,
         descricao,
         id_categoria: idCategoria?.id || null,
         id_fornecedor: idFornecedor || null,
-        variacoes
+        variacoes,
       };
+
       await onSubmit(productData);
     } catch {
       toastRef.current?.show({
@@ -134,17 +162,16 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
             />
           </div>
 
-          {/* Variações */}
           <ProdutoVariacoes
             variacoes={variacoes}
             setVariacoes={setVariacoes}
             abrirDialogOutlet={abrirDialogOutlet}
+            confirmarExcluirOutlet={confirmarExcluirOutlet}
           />
 
-          {/* Imagens */}
-          {initialData.id && (
+          {produto.id && (
             <ProdutoImagens
-              produtoId={initialData.id}
+              produtoId={produto.id}
               existingImages={existingImages}
               setExistingImages={setExistingImages}
               toastRef={toastRef}
@@ -163,9 +190,10 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
 
       <OutletFormDialog
         visible={showOutletDialog}
-        onHide={() => setShowOutletDialog(false)}
+        onHide={fecharDialogOutlet}
         variacao={variacaoSelecionada}
-        onSuccess={atualizarVariacoes}
+        outlet={outletSelecionado}
+        onSuccess={atualizarProduto}
       />
     </>
   );

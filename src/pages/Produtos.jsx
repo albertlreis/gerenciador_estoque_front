@@ -164,6 +164,7 @@ const Produtos = () => {
           initialData={editingProduto || {}}
           onSubmit={handleFormSubmit}
           onCancel={() => setShowDialog(false)}
+          onProdutoAtualizado={fetchProdutos}
         />
       </Dialog>
     </SakaiLayout>
