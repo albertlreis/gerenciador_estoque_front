@@ -7,16 +7,16 @@ import { Toast } from 'primereact/toast';
 import apiEstoque from '../services/apiEstoque';
 
 const motivosOutlet = [
-  { label: 'Tempo em estoque', value: 'tempo_estoque' },
-  { label: 'Saiu de linha', value: 'saiu_linha' },
   { label: 'Avariado', value: 'avariado' },
-  { label: 'Devolvido', value: 'devolvido' },
-  { label: 'Exposição em loja', value: 'exposicao' },
-  { label: 'Embalagem danificada', value: 'embalagem_danificada' },
   { label: 'Baixa rotatividade', value: 'baixa_rotatividade' },
+  { label: 'Devolvido', value: 'devolvido' },
+  { label: 'Embalagem danificada', value: 'embalagem_danificada' },
   { label: 'Erro de cadastro', value: 'erro_cadastro' },
+  { label: 'Exposição em loja', value: 'exposicao' },
+  { label: 'Promoção pontual', value: 'promocao_pontual' },
   { label: 'Reposição excedente', value: 'excedente' },
-  { label: 'Promoção pontual', value: 'promocao_pontual' }
+  { label: 'Saiu de linha', value: 'saiu_linha' },
+  { label: 'Tempo em estoque', value: 'tempo_estoque' },
 ];
 
 const OutletFormDialog = ({ visible, onHide, variacao, onSuccess }) => {
@@ -100,6 +100,7 @@ const OutletFormDialog = ({ visible, onHide, variacao, onSuccess }) => {
               onChange={(e) => setMotivo(e.value)}
               placeholder="Selecione o motivo"
               className="w-full"
+              filter
             />
           </div>
 
