@@ -407,3 +407,8 @@ textarea.p-inputtextarea {
   font-weight: 600;
   color: #6c757d;
 }
+
+.linha-atrasada {
+  border-left: 4px solid #dc3545;
+  background-color: #fff9f9;
+}

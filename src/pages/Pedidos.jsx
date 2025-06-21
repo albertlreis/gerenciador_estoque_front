@@ -4,6 +4,7 @@ import { Column } from 'primereact/column';
 import { Toast } from 'primereact/toast';
 import { Button } from 'primereact/button';
 import { Tag } from 'primereact/tag';
+import { Tooltip } from 'primereact/tooltip';
 import { addLocale } from 'primereact/api';
 
 import SakaiLayout from '../layouts/SakaiLayout';
@@ -55,7 +56,7 @@ export default function PedidosListagem() {
     { field: 'vendedor', header: 'Vendedor', body: (row) => row.vendedor?.nome ?? '-' },
     { field: 'valor_total', header: 'Total', body: (row) => formatarReal(row.valor_total) },
     { field: 'status', header: 'Status', body: (row) => statusTemplate(row) },
-    { field: 'data_ultimo_status', header: 'Última Atualização', body: (row) => row.data_ultimo_status ? formatarDataIsoParaBR(row.data_ultimo_status) : '-' },
+    { field: 'data_ultimo_status', header: 'Última Atualização', body: (row) => dataStatusBody(row) },
   ], []);
 
   const [colunasVisiveis, setColunasVisiveis] = useState(colunasDisponiveis);
@@ -98,6 +99,33 @@ export default function PedidosListagem() {
     } finally {
       setLoadingDetalhes(false);
     }
+  };
+
+  const dataStatusBody = (row) => {
+    const dataStatus = formatarDataIsoParaBR(row.data_ultimo_status);
+    const previsao = row.previsao ? formatarDataIsoParaBR(row.previsao) : null;
+
+    return (
+      <div className="flex align-items-center gap-2">
+        <span>{dataStatus}</span>
+        {previsao && (
+          <span
+            className="text-500 text-sm"
+            title={`Previsão de ${row.proximo_status_label ?? 'próximo status'}: ${previsao}`}
+          >
+          <i className="pi pi-clock" />
+        </span>
+        )}
+        {row.atrasado && (
+          <>
+            <i
+              className="pi pi-exclamation-triangle text-red-500"
+              title="Pedido em atraso"
+            />
+          </>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -149,6 +177,9 @@ export default function PedidosListagem() {
           emptyMessage="Nenhum pedido encontrado."
           scrollable
           responsiveLayout="scroll"
+          rowClassName={(row) => row.atrasado ? 'linha-atrasada' : ''}
+          className="text-sm"
+          size="small"
         >
           {colunasVisiveis.map((col) => (
             <Column
