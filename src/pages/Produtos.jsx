@@ -16,21 +16,47 @@ const Produtos = () => {
   const [editingProduto, setEditingProduto] = useState(null);
   const [dialogTitle, setDialogTitle] = useState('');
   const toastTopCenter = useRef(null);
+  const [lazyParams, setLazyParams] = useState({
+    first: 0,
+    rows: 10,
+    page: 0
+  });
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  const onPage = (event) => {
+    setLazyParams(event);
+  };
 
   useEffect(() => {
     fetchProdutos();
-  }, []);
+  }, [lazyParams]);
 
   const fetchProdutos = async () => {
+    setLoading(true);
     try {
-      const response = await apiEstoque.get('/produtos');
-      const data = Array.isArray(response.data.data) ? response.data.data : [];
+      const response = await apiEstoque.get('/produtos', {
+        params: {
+          page: lazyParams.page + 1,
+          per_page: lazyParams.rows
+        }
+      });
+      const { data, meta } = response.data;
       setProdutos(data);
+      setTotalRecords(meta.total || 0);
     } catch (error) {
       console.error('Erro ao carregar produtos:', error.response?.data || error.message);
-      toastTopCenter.current.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao carregar produtos', life: 3000 });
+      toastTopCenter.current.show({
+        severity: 'error',
+        summary: 'Erro',
+        detail: 'Erro ao carregar produtos',
+        life: 3000
+      });
+    } finally {
+      setLoading(false);
     }
   };
+
 
   const openNewProdutoDialog = () => {
     setEditingProduto(null);
@@ -59,7 +85,7 @@ const Produtos = () => {
     if (window.confirm('Tem certeza que deseja deletar este produto?')) {
       try {
         await apiEstoque.delete(`/produtos/${id}`);
-        fetchProdutos();
+        await fetchProdutos();
         toastTopCenter.current.show({ severity: 'success', summary: 'Sucesso', detail: 'Produto deletado', life: 3000 });
       } catch (error) {
         console.error('Erro ao deletar produto:', error.response?.data || error.message);
@@ -81,7 +107,7 @@ const Produtos = () => {
         toastTopCenter.current.show({ severity: 'success', summary: 'Sucesso', detail: 'Produto cadastrado com sucesso', life: 3000 });
       }
 
-      fetchProdutos();
+      await fetchProdutos();
     } catch (error) {
       console.error('Erro ao salvar produto:', error.response?.data || error.message);
       toastTopCenter.current.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao salvar produto', life: 3000 });
@@ -106,19 +132,21 @@ const Produtos = () => {
         />
         <Divider type="solid" />
         <DataTable
-          value={Array.isArray(produtos) ? produtos : []}
+          value={produtos}
+          lazy
           paginator
-          rows={10}
+          first={lazyParams.first}
+          rows={lazyParams.rows}
+          totalRecords={totalRecords}
+          onPage={onPage}
           dataKey="id"
+          loading={loading}
           responsiveLayout="scroll"
-          loading={!produtos.length}
           emptyMessage="Nenhum produto encontrado"
         >
           <Column field="id" header="ID" sortable />
           <Column field="nome" header="Nome" sortable />
-          <Column field="descricao" header="Descrição" />
           <Column field="categoria" header="Categoria" sortable body={categoriaBodyTemplate} />
-          <Column field="ativo" header="Ativo" body={(rowData) => (rowData.ativo ? 'Sim' : 'Não')} />
           <Column header="Ações" body={(rowData) => (
             <TableActions rowData={rowData} onEdit={openEditDialog} onDelete={handleDelete} />
           )} />
