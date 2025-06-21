@@ -26,21 +26,24 @@ const PedidoStatusDialog = ({ visible, onHide, pedido, onSalvo, toast }) => {
     try {
       const { data } = await api.get(`/pedidos/${pedido.id}/historico-status`);
       setHistorico(data);
+      return data;
     } catch (err) {
       toast.current?.show({
         severity: 'error',
         summary: 'Erro ao carregar histórico',
         detail: err.response?.data?.message || err.message
       });
+      return [];
     } finally {
       setLoadingHistorico(false);
     }
   };
 
-  const carregarFluxoStatus = async () => {
+  const carregarFluxoStatus = async (historicoUsado) => {
     try {
       const { data } = await api.get(`/pedidos/${pedido.id}/fluxo-status`);
-      const filtrados = OPCOES_STATUS.filter((opt) => data.includes(opt.value));
+      const usados = historicoUsado.map(h => h.status);
+      const filtrados = OPCOES_STATUS.filter((opt) => data.includes(opt.value) && !usados.includes(opt.value));
       setOpcoesStatus(filtrados);
     } catch (err) {
       toast.current?.show({
@@ -58,8 +61,13 @@ const PedidoStatusDialog = ({ visible, onHide, pedido, onSalvo, toast }) => {
       setLoading(false);
       setHistorico([]);
       setOpcoesStatus([]);
-      carregarHistorico();
-      carregarFluxoStatus();
+
+      const carregarDados = async () => {
+        const historicoCarregado = await carregarHistorico();
+        await carregarFluxoStatus(historicoCarregado);
+      };
+
+      carregarDados();
     }
   }, [visible, pedido]);
 
@@ -139,11 +147,7 @@ const PedidoStatusDialog = ({ visible, onHide, pedido, onSalvo, toast }) => {
             <div className="text-sm text-gray-700">
               Próximo status sugerido:{' '}
               <strong>
-                {
-                  opcoesStatus.find(opt =>
-                    !historico.some(h => h.status === opt.value && !h.ehPrevisao)
-                  )?.label || 'Nenhum'
-                }
+                {opcoesStatus[0]?.label || 'Nenhum'}
               </strong>
             </div>
           )}
