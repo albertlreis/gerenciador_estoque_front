@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Toast } from 'primereact/toast';
@@ -15,6 +15,8 @@ import { usePedidos } from '../hooks/usePedidos';
 import { formatarReal } from '../utils/formatters';
 import { STATUS_MAP } from '../constants/statusPedido';
 import api from '../services/apiEstoque';
+import {formatarDataIsoParaBR} from "../utils/formatarData";
+import ColumnSelector from "../components/ColumnSelector";
 
 
 addLocale('pt-BR', {
@@ -28,6 +30,10 @@ addLocale('pt-BR', {
   clear: 'Limpar',
   chooseDate: 'Escolher data',
   dateFormat: 'dd/mm/yy',
+  allSelected: 'Todos selecionados',
+  noResultsFound: 'Nenhum resultado encontrado',
+  selectAll: 'Selecionar todos',
+  unselectAll: 'Desmarcar todos',
 });
 
 export default function PedidosListagem() {
@@ -40,6 +46,19 @@ export default function PedidosListagem() {
   const [loadingDetalhes, setLoadingDetalhes] = useState(false);
 
   const { pedidos, total, paginaAtual, loading, fetchPedidos, setPaginaAtual } = usePedidos(filtros);
+
+  const colunasDisponiveis = useMemo(() => [
+    { field: 'numero', header: 'Nº Pedido', body: (row) => row.numero_externo || row.id },
+    { field: 'data', header: 'Data', body: (row) => row.data ? formatarDataIsoParaBR(row.data) : '-' },
+    { field: 'cliente', header: 'Cliente', body: (row) => row.cliente?.nome ?? '-' },
+    { field: 'parceiro', header: 'Parceiro', body: (row) => row.parceiro?.nome ?? '-' },
+    { field: 'vendedor', header: 'Vendedor', body: (row) => row.vendedor?.nome ?? '-' },
+    { field: 'valor_total', header: 'Total', body: (row) => formatarReal(row.valor_total) },
+    { field: 'status', header: 'Status', body: (row) => statusTemplate(row) },
+    { field: 'data_ultimo_status', header: 'Última Atualização', body: (row) => row.data_ultimo_status ? formatarDataIsoParaBR(row.data_ultimo_status) : '-' },
+  ], []);
+
+  const [colunasVisiveis, setColunasVisiveis] = useState(colunasDisponiveis);
 
   useEffect(() => { fetchPedidos(1); }, []);
 
@@ -105,11 +124,18 @@ export default function PedidosListagem() {
 
       <div className="p-4">
         <div className="flex flex-wrap gap-4 justify-content-between align-items-end mb-3">
-          <PedidosFiltro filtros={filtros} setFiltros={setFiltros} onBuscar={() => fetchPedidos(1)} />
-          <PedidosExportar toast={toast} loading={loading} />
+          <PedidosFiltro filtros={filtros} setFiltros={setFiltros} onBuscar={() => fetchPedidos(1)}/>
+          <PedidosExportar toast={toast} loading={loading}/>
         </div>
 
         <h2 className="mb-3">Pedidos</h2>
+
+        <ColumnSelector
+          columns={colunasDisponiveis}
+          value={colunasVisiveis}
+          onChange={setColunasVisiveis}
+          storageKey="colunasPedidos"
+        />
 
         <DataTable
           value={pedidos}
@@ -124,25 +150,15 @@ export default function PedidosListagem() {
           scrollable
           responsiveLayout="scroll"
         >
-          <Column
-            header="Nº Pedido"
-            body={(row) => row.numero_externo || row.id}
-            style={{ minWidth: '120px' }}
-          />
-          <Column header="Data" body={(row) => row.data ? new Date(row.data).toLocaleDateString('pt-BR') : '-'} />
-          <Column header="Cliente" body={(row) => row.cliente?.nome ?? '-'} />
-          <Column header="Parceiro" body={(row) => row.parceiro?.nome ?? '-'} />
-          <Column header="Vendedor" body={(row) => row.vendedor?.nome ?? '-'} />
-          <Column header="Total" body={(row) => formatarReal(row.valor_total)} />
-          <Column field="status" header="Status" body={statusTemplate} />
-          <Column
-            header="Última Atualização"
-            body={(row) =>
-              row.data_ultimo_status
-                ? new Date(row.data_ultimo_status).toLocaleDateString('pt-BR')
-                : '-'
-            }
-          />
+          {colunasVisiveis.map((col) => (
+            <Column
+              key={col.field}
+              field={col.field}
+              header={col.header}
+              body={col.body}
+              style={{minWidth: '120px'}}
+            />
+          ))}
           <Column
             header=""
             body={(row) => (
