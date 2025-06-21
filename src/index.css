@@ -394,3 +394,16 @@ textarea.p-inputtextarea {
   overflow-x: auto;
   padding-bottom: 1rem;
 }
+
+.status-previsto {
+  background-color: #f8f9fa;
+  border-left: 4px solid #ffc107;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  box-shadow: 0 0 0 1px #ffc10730;
+}
+
+.custom-timeline .p-timeline-event-opposite {
+  font-weight: 600;
+  color: #6c757d;
+}
