@@ -6,27 +6,15 @@ import { InputNumber } from 'primereact/inputnumber';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { Toast } from 'primereact/toast';
-import { confirmDialog } from 'primereact/confirmdialog';
 import { ConfirmDialog } from 'primereact/confirmdialog';
+import { STATUS_CONSIGNACAO } from '../../constants/statusConsignacao';
 import api from '../../services/apiEstoque';
 
-const statusCor = {
-  pendente: 'warning',
-  comprado: 'success',
-  devolvido: 'info',
-  vencido: 'danger'
-};
 
-const statusLabel = {
-  pendente: 'Pendente',
-  comprado: 'Comprado',
-  devolvido: 'Devolvido',
-  vencido: 'Vencido'
+const statusTag = (status) => {
+  const info = STATUS_CONSIGNACAO[status] || { label: status, color: 'secondary' };
+  return <Tag value={info.label} severity={info.color} />;
 };
-
-const statusTag = (status) => (
-  <Tag value={statusLabel[status] || status} severity={statusCor[status] || 'secondary'} />
-);
 
 const ConsignacaoModal = ({ id, visible, onHide, onAtualizar }) => {
   const [consignacoes, setConsignacoes] = useState([]);
@@ -87,7 +75,13 @@ const ConsignacaoModal = ({ id, visible, onHide, onAtualizar }) => {
       <ConfirmDialog />
 
       <Dialog
-        header={`Detalhes do Pedido #${pedido?.id}`}
+        header={`Detalhes do Pedido${
+          pedido?.numero_externo
+            ? ` #${pedido.numero_externo}`
+            : pedido?.id
+              ? ` #${pedido.id}`
+              : ''
+        }`}
         visible={visible}
         onHide={onHide}
         style={{ width: '90vw', maxWidth: '900px' }}

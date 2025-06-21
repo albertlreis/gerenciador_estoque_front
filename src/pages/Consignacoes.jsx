@@ -2,7 +2,6 @@ import React, {useEffect, useState, useRef, useCallback} from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Dropdown } from 'primereact/dropdown';
-import { Calendar } from 'primereact/calendar';
 import { Button } from 'primereact/button';
 import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
@@ -12,14 +11,10 @@ import api from '../services/apiEstoque';
 import ConsignacaoModal from '../components/consignacoes/ConsignacaoModal';
 import { PERFIS } from '../constants/perfis';
 import { useAuth } from '../context/AuthContext';
+import CalendarBR from "../components/CalendarBR";
+import {formatarDataParaISO} from "../utils/formatters";
+import { STATUS_CONSIGNACAO, STATUS_CONSIGNACAO_OPTIONS } from '../constants/statusConsignacao';
 
-const statusOptions = [
-  { label: 'Pendente', value: 'pendente' },
-  { label: 'Comprado', value: 'comprado' },
-  { label: 'Devolvido', value: 'devolvido' },
-  { label: 'Parcial', value: 'parcial' },
-  { label: 'Vencido', value: 'vencido' }
-];
 
 const Consignacoes = () => {
   const { user } = useAuth();
@@ -65,6 +60,8 @@ const Consignacoes = () => {
             ...filtrosAtuais,
             page: paginaAtual + 1,
             per_page: linhas,
+            data_ini: formatarDataParaISO(filtrosAtuais.data_ini),
+            data_fim: formatarDataParaISO(filtrosAtuais.data_fim),
           },
         });
 
@@ -93,23 +90,12 @@ const Consignacoes = () => {
   }, [paginacao]);
 
   const statusTemplate = (rowData) => {
-    const cor = {
-      pendente: 'warning',
-      comprado: 'success',
-      devolvido: 'info',
-      vencido: 'danger',
-      parcial: 'secondary'
-    }[rowData.status] || 'secondary';
+    const { label, color } = STATUS_CONSIGNACAO[rowData.status] || {
+      label: rowData.status,
+      color: 'secondary',
+    };
 
-    const label = {
-      pendente: 'Pendente',
-      comprado: 'Comprado',
-      devolvido: 'Devolvido',
-      vencido: 'Vencido',
-      parcial: 'Parcial'
-    }[rowData.status] || rowData.status;
-
-    return <Tag value={label} severity={cor} />;
+    return <Tag value={label} severity={color} />;
   };
 
   const onPageChange = (e) => {
@@ -188,7 +174,7 @@ const Consignacoes = () => {
                   <div className="field col-12 md:col-4 lg:col-3">
                     <label className="block text-600 mb-1">Status</label>
                     <Dropdown
-                      options={statusOptions}
+                      options={STATUS_CONSIGNACAO_OPTIONS}
                       optionLabel="label"
                       optionValue="value"
                       placeholder="Status"
@@ -203,21 +189,17 @@ const Consignacoes = () => {
 
                   <div className="field col-6 md:col-3">
                     <label className="block text-600 mb-1">De</label>
-                    <Calendar
-                      value={filtros.data_ini || null}
-                      onChange={(e) => setFiltros({...filtros, data_ini: e.value})}
-                      className="w-full"
-                      showIcon
+                    <CalendarBR
+                      value={filtros.data_ini}
+                      onChange={(e) => setFiltros({ ...filtros, data_ini: e.value })}
                     />
                   </div>
 
                   <div className="field col-6 md:col-3">
                     <label className="block text-600 mb-1">Até</label>
-                    <Calendar
-                      value={filtros.data_fim || null}
-                      onChange={(e) => setFiltros({...filtros, data_fim: e.value})}
-                      className="w-full"
-                      showIcon
+                    <CalendarBR
+                      value={filtros.data_fim}
+                      onChange={(e) => setFiltros({ ...filtros, data_fim: e.value })}
                     />
                   </div>
 
