@@ -125,7 +125,21 @@ const Produtos = () => {
           await fetchProdutos();
           toast.current.show({ severity: 'success', summary: 'Sucesso', detail: 'Produto deletado', life: 3000 });
         } catch (error) {
-          toast.current.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao deletar produto', life: 3000 });
+          if (error.response?.status === 422 && error.response?.data?.message) {
+            toast.current.show({
+              severity: 'warn',
+              summary: 'Não permitido',
+              detail: error.response.data.message,
+              life: 5000
+            });
+          } else {
+            toast.current.show({
+              severity: 'error',
+              summary: 'Erro',
+              detail: 'Erro ao deletar produto',
+              life: 3000
+            });
+          }
         }
       }
     });
