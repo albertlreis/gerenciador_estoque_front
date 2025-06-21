@@ -64,7 +64,7 @@ const OutletFormDialog = ({ visible, onHide, variacao, outlet = null, onSuccess 
           quantidade,
           percentual_desconto: percentualDesconto
         });
-        showToast('success', 'Outlet registrado', 'A variação foi marcada como outlet.');
+        showToast('success', 'Outlet registrado', 'O produto foi marcada como outlet.');
       }
 
       onSuccess();
