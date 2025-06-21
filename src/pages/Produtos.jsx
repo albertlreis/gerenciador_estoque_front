@@ -144,9 +144,9 @@ const Produtos = () => {
           responsiveLayout="scroll"
           emptyMessage="Nenhum produto encontrado"
         >
-          <Column field="id" header="ID" sortable />
-          <Column field="nome" header="Nome" sortable />
-          <Column field="categoria" header="Categoria" sortable body={categoriaBodyTemplate} />
+          <Column field="id" header="ID" />
+          <Column field="nome" header="Nome" />
+          <Column field="categoria" header="Categoria" body={categoriaBodyTemplate} />
           <Column header="Ações" body={(rowData) => (
             <TableActions rowData={rowData} onEdit={openEditDialog} onDelete={handleDelete} />
           )} />

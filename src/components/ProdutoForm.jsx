@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { InputText } from 'primereact/inputtext';
 import { InputNumber } from 'primereact/inputnumber';
 import { InputTextarea } from 'primereact/inputtextarea';
-import { InputSwitch } from 'primereact/inputswitch';
 import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
 import { FileUpload } from 'primereact/fileupload';
@@ -22,12 +21,6 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
   );
   const [nome, setNome] = useState(initialData.nome || '');
   const [descricao, setDescricao] = useState(initialData.descricao || '');
-  const [fabricante, setFabricante] = useState(initialData.fabricante || '');
-  const [ativo, setAtivo] = useState(
-    initialData.ativo !== undefined
-      ? (initialData.ativo === true || initialData.ativo === 1 || initialData.ativo === '1')
-      : true
-  );
   const [categorias, setCategorias] = useState([]);
   const [existingImages, setExistingImages] = useState(initialData.imagens || []);
   const [loading, setLoading] = useState(false);
@@ -37,6 +30,11 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
   ]);
   const [showOutletDialog, setShowOutletDialog] = useState(false);
   const [variacaoSelecionada, setVariacaoSelecionada] = useState(null);
+
+  const [idFornecedor, setIdFornecedor] = useState(
+    initialData.id_fornecedor || null
+  );
+  const [fornecedores, setFornecedores] = useState([]);
 
   const toastRef = useRef(null);
   const fileUploadRef = useRef(null);
@@ -64,6 +62,23 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
       if (catObj) setIdCategoria(catObj);
     }
   }, [categorias, idCategoria]);
+
+  useEffect(() => {
+    const fetchFornecedores = async () => {
+      try {
+        const { data } = await apiEstoque.get('/fornecedores');
+        setFornecedores(data);
+      } catch (error) {
+        toastRef.current.show({
+          severity: 'error',
+          summary: 'Erro',
+          detail: 'Erro ao buscar fornecedores',
+          life: 3000
+        });
+      }
+    };
+    fetchFornecedores();
+  }, []);
 
   const abrirDialogOutlet = (variacao) => {
     setVariacaoSelecionada(variacao);
@@ -189,7 +204,7 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
       const productData = {
         nome, descricao,
         id_categoria: idCategoria?.id || null,
-        ativo, fabricante,
+        id_fornecedor: idFornecedor || null,
         variacoes
       };
       await onSubmit(productData);
@@ -231,25 +246,32 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
           </div>
           <div className="field md:col-4">
             <label htmlFor="categoria">Categoria</label>
-            <Dropdown id="categoria" value={idCategoria} options={categorias} onChange={(e) => setIdCategoria(e.value)} optionLabel="nome" placeholder="Selecione a categoria" />
+            <Dropdown id="categoria" value={idCategoria} options={categorias} onChange={(e) => setIdCategoria(e.value)} optionLabel="nome" placeholder="Selecione a categoria" filter/>
           </div>
           <div className="field col-12">
             <label htmlFor="descricao">Descrição</label>
             <InputTextarea id="descricao" value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={3} />
           </div>
-          <div className="field col-12 md:col-8">
-            <label htmlFor="fabricante">Fabricante</label>
-            <InputText id="fabricante" value={fabricante} onChange={(e) => setFabricante(e.target.value)} />
-          </div>
-          <div className="field col-12 md:col-4">
-            <label htmlFor="ativo">Ativo</label>
-            <InputSwitch id="ativo" checked={ativo} onChange={(e) => setAtivo(e.value)} />
+          <div className="field col-12 md:col-6">
+            <label htmlFor="fornecedor">Fornecedor</label>
+            <Dropdown
+              id="fornecedor"
+              value={idFornecedor}
+              options={fornecedores}
+              onChange={(e) => setIdFornecedor(e.value)}
+              optionLabel="nome"
+              optionValue="id"
+              placeholder="Selecione o fornecedor"
+              filter
+            />
           </div>
 
           <div className="field col-12">
             <h4>Variações do Produto</h4>
             <p className="text-sm text-color-secondary mb-3">
-              Um mesmo móvel pode ter diferentes variações, como <strong>cor</strong>, <strong>acabamento</strong> ou <strong>material</strong> (ex: "Mesa Retangular - Madeira Clara"). Cada variação pode ter um preço e código de barras distintos.
+              Um mesmo móvel pode ter diferentes variações,
+              como <strong>cor</strong>, <strong>acabamento</strong> ou <strong>material</strong> (ex: "Mesa Retangular
+              - Madeira Clara"). Cada variação pode ter um preço e código de barras distintos.
             </p>
 
             {variacoes.map((v, i) => (
