@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 import { confirmDialog } from 'primereact/confirmdialog';
+import isEqual from 'lodash/isEqual';
 
 import { useProdutoForm } from './produto/useProdutoForm';
 import ProdutoVariacoes from './produto/ProdutoVariacoes';
@@ -12,7 +13,7 @@ import ProdutoImagens from './produto/ProdutoImagens';
 import OutletFormDialog from './OutletFormDialog';
 import apiEstoque from '../services/apiEstoque';
 
-const ProdutoForm = ({ initialData = {}, onSubmit, onCancel, onProdutoAtualizado }) => {
+const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
   const [produto, setProduto] = useState(initialData);
   const [showOutletDialog, setShowOutletDialog] = useState(false);
   const [variacaoSelecionada, setVariacaoSelecionada] = useState(null);
@@ -31,7 +32,14 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel, onProdutoAtualizado
     totalSize, setTotalSize,
     toastRef,
     fileUploadRef,
+    atualizarDados,
   } = useProdutoForm(produto);
+
+  useEffect(() => {
+    if (!isEqual(produto, initialData)) {
+      setProduto(initialData);
+    }
+  }, [initialData]);
 
   const abrirDialogOutlet = (variacao, outlet = null) => {
     setVariacaoSelecionada(variacao);
@@ -55,7 +63,7 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel, onProdutoAtualizado
         try {
           await apiEstoque.delete(`/variacoes/${variacao.id}/outlet/${outlet.id}`);
           toastRef.current?.show({ severity: 'success', summary: 'Outlet excluído', life: 3000 });
-          await atualizarProduto();
+          await atualizarProduto(true);
         } catch {
           toastRef.current?.show({ severity: 'error', summary: 'Erro ao excluir outlet', life: 3000 });
         }
@@ -63,20 +71,20 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel, onProdutoAtualizado
     });
   };
 
-  const atualizarProduto = async () => {
+  const atualizarProduto = async (silent = false) => {
     try {
-      const { data } = await apiEstoque.get(`/produtos/${initialData.id}`);
-      setProduto(data);
+      const response = await apiEstoque.get(`/produtos/${produto.id}`);
+      const produtoAtualizado = response.data?.data || response.data;
+      atualizarDados(produtoAtualizado);
+      setProduto(produtoAtualizado);
 
-      toastRef.current?.show({
-        severity: 'success',
-        summary: 'Produto atualizado',
-        detail: 'Dados recarregados com sucesso.',
-        life: 3000
-      });
-
-      if (typeof onProdutoAtualizado === 'function') {
-        onProdutoAtualizado();
+      if (!silent) {
+        toastRef.current?.show({
+          severity: 'success',
+          summary: 'Produto atualizado',
+          detail: 'Dados recarregados com sucesso.',
+          life: 3000
+        });
       }
     } catch {
       toastRef.current?.show({
@@ -96,7 +104,7 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel, onProdutoAtualizado
       const productData = {
         nome,
         descricao,
-        id_categoria: idCategoria?.id || null,
+        id_categoria: typeof idCategoria === 'object' ? idCategoria.id : idCategoria,
         id_fornecedor: idFornecedor || null,
         variacoes,
       };
@@ -133,6 +141,7 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel, onProdutoAtualizado
               options={categorias}
               onChange={(e) => setIdCategoria(e.value)}
               optionLabel="nome"
+              optionValue="id"
               placeholder="Selecione a categoria"
               filter
             />
@@ -169,7 +178,7 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel, onProdutoAtualizado
             confirmarExcluirOutlet={confirmarExcluirOutlet}
           />
 
-          {produto.id && (
+          {produto?.id && (
             <ProdutoImagens
               produtoId={produto.id}
               existingImages={existingImages}
@@ -193,7 +202,7 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel, onProdutoAtualizado
         onHide={fecharDialogOutlet}
         variacao={variacaoSelecionada}
         outlet={outletSelecionado}
-        onSuccess={atualizarProduto}
+        onSuccess={() => atualizarProduto(true)}
       />
     </>
   );

@@ -2,7 +2,6 @@ import React from 'react';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { InputNumber } from 'primereact/inputnumber';
-import { Tag } from 'primereact/tag';
 import { formatarMotivo } from './helpers';
 
 const ProdutoVariacoes = ({
@@ -13,31 +12,34 @@ const ProdutoVariacoes = ({
                           }) => {
   const updateVariacao = (index, field, value) => {
     const novas = [...variacoes];
-    novas[index][field] = value;
+    novas[index] = { ...novas[index], [field]: value };
     setVariacoes(novas);
   };
 
   const updateAtributo = (varIndex, attrIndex, field, value) => {
     const novas = [...variacoes];
-    novas[varIndex].atributos[attrIndex][field] = value;
+    const atributos = [...novas[varIndex].atributos];
+    atributos[attrIndex] = { ...atributos[attrIndex], [field]: value };
+    novas[varIndex].atributos = atributos;
     setVariacoes(novas);
   };
 
   const addAtributo = (varIndex) => {
     const novas = [...variacoes];
-    novas[varIndex].atributos.push({ atributo: '', valor: '' });
+    const atributos = [...(novas[varIndex].atributos || [])];
+    atributos.push({ atributo: '', valor: '' });
+    novas[varIndex].atributos = atributos;
     setVariacoes(novas);
   };
 
   const removeAtributo = (varIndex, attrIndex) => {
     const novas = [...variacoes];
-    novas[varIndex].atributos.splice(attrIndex, 1);
+    novas[varIndex].atributos = novas[varIndex].atributos.filter((_, i) => i !== attrIndex);
     setVariacoes(novas);
   };
 
   const removeVariacao = (index) => {
-    const novas = [...variacoes];
-    novas.splice(index, 1);
+    const novas = variacoes.filter((_, i) => i !== index);
     setVariacoes(novas);
   };
 
@@ -52,14 +54,13 @@ const ProdutoVariacoes = ({
     <div className="field col-12">
       <h4>Variações do Produto</h4>
       <p className="text-sm text-color-secondary mb-3">
-        Um mesmo móvel pode ter diferentes variações,
-        como <strong>cor</strong>, <strong>acabamento</strong> ou <strong>material</strong>.
+        Um mesmo móvel pode ter diferentes variações, como <strong>cor</strong>, <strong>acabamento</strong> ou <strong>material</strong>.
       </p>
 
       {variacoes.map((v, i) => (
         <div key={i} className="p-fluid p-3 mb-4 border-round surface-border border-1">
           <div className="formgrid grid align-items-start">
-            {/* OUTLETS */}
+            {/* Outlets */}
             <div className="field col-12">
               <div className="formgrid grid mb-2">
                 {v.outlets?.map((o, index) => (
@@ -103,7 +104,7 @@ const ProdutoVariacoes = ({
               )}
             </div>
 
-            {/* CAMPOS DA VARIAÇÃO */}
+            {/* Campos principais */}
             <div className="field md:col-3">
               <label>Preço</label>
               <InputNumber
@@ -154,7 +155,7 @@ const ProdutoVariacoes = ({
             </div>
           </div>
 
-          {/* ATRIBUTOS */}
+          {/* Atributos */}
           <h5 className="mt-3">Atributos</h5>
           <p className="text-sm text-color-secondary mb-2">
             Detalhe esta variação com atributos. Exemplos: <strong>cor: nogueira</strong>, <strong>material: MDF</strong>.

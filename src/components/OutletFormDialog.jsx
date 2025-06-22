@@ -9,6 +9,7 @@ import { motivosOutlet } from './produto/motivosOutlet';
 
 const OutletFormDialog = ({ visible, onHide, variacao, outlet = null, onSuccess }) => {
   const toast = useRef(null);
+
   const [motivo, setMotivo] = useState(null);
   const [quantidade, setQuantidade] = useState(null);
   const [percentualDesconto, setPercentualDesconto] = useState(null);
@@ -17,18 +18,20 @@ const OutletFormDialog = ({ visible, onHide, variacao, outlet = null, onSuccess 
   const estoqueTotal = variacao?.estoque?.quantidade ?? 0;
   const outletAtuais = variacao?.outlets ?? [];
   const quantidadeJaAlocada = outletAtuais.reduce((soma, o) => soma + (o.quantidade || 0), 0);
-  const maxPermitido = estoqueTotal - quantidadeJaAlocada;
+  const maxPermitido = outlet?.id
+    ? estoqueTotal - (quantidadeJaAlocada - (outlet.quantidade || 0))
+    : estoqueTotal - quantidadeJaAlocada;
 
   useEffect(() => {
     if (visible) {
-      setMotivo(outlet?.motivo || null);
-      setQuantidade(outlet?.quantidade || null);
-      setPercentualDesconto(outlet?.percentual_desconto || null);
+      setMotivo(outlet?.motivo ?? null);
+      setQuantidade(outlet?.quantidade ?? null);
+      setPercentualDesconto(outlet?.percentual_desconto ?? null);
     }
   }, [visible, outlet]);
 
   const showToast = (severity, summary, detail, life = 3000) => {
-    toast.current?.show({ severity, summary, detail, life });
+    toast.current?.show({ group: 'outlet', severity, summary, detail, life });
   };
 
   const handleSubmit = async () => {
@@ -40,34 +43,32 @@ const OutletFormDialog = ({ visible, onHide, variacao, outlet = null, onSuccess 
       return showToast('warn', 'Quantidade inválida', 'Informe uma quantidade maior que zero.');
     }
 
-    if (quantidadeJaAlocada + quantidade > estoqueTotal) {
+    if (quantidade > maxPermitido) {
       return showToast(
         'warn',
         'Estoque insuficiente',
-        `A soma (${quantidadeJaAlocada + quantidade}) ultrapassa o estoque (${estoqueTotal}).`,
+        `Quantidade excede o máximo disponível (${maxPermitido}).`,
         5000
       );
     }
 
     setLoading(true);
     try {
+      const payload = {
+        motivo,
+        quantidade,
+        percentual_desconto: percentualDesconto,
+      };
+
       if (outlet?.id) {
-        await apiEstoque.put(`/variacoes/${variacao.id}/outlet/${outlet.id}`, {
-          motivo,
-          quantidade,
-          percentual_desconto: percentualDesconto
-        });
+        await apiEstoque.put(`/variacoes/${variacao.id}/outlet/${outlet.id}`, payload);
         showToast('success', 'Outlet atualizado', 'A variação foi atualizada.');
       } else {
-        await apiEstoque.post(`/variacoes/${variacao.id}/outlet`, {
-          motivo,
-          quantidade,
-          percentual_desconto: percentualDesconto
-        });
-        showToast('success', 'Outlet registrado', 'O produto foi marcada como outlet.');
+        await apiEstoque.post(`/variacoes/${variacao.id}/outlet`, payload);
+        showToast('success', 'Outlet registrado', 'O produto foi marcado como outlet.');
       }
 
-      onSuccess();
+      onSuccess(true);
       onHide();
     } catch {
       showToast('error', 'Erro', 'Erro ao registrar outlet.');
@@ -78,9 +79,9 @@ const OutletFormDialog = ({ visible, onHide, variacao, outlet = null, onSuccess 
 
   return (
     <>
-      <Toast ref={toast} />
+      <Toast ref={toast} group="outlet" />
       <Dialog
-        header="Registrar como Outlet"
+        header={outlet?.id ? 'Editar Outlet' : 'Registrar como Outlet'}
         visible={visible}
         onHide={onHide}
         modal
@@ -108,8 +109,8 @@ const OutletFormDialog = ({ visible, onHide, variacao, outlet = null, onSuccess 
               onValueChange={(e) => setQuantidade(e.value)}
               min={1}
               max={maxPermitido}
-              inputClassName="w-full"
               showButtons
+              inputClassName="w-full"
             />
             <small className="block mt-1 text-color-secondary">
               Estoque: <strong>{estoqueTotal}</strong> | Já em outlet: <strong>{quantidadeJaAlocada}</strong><br />
@@ -127,8 +128,8 @@ const OutletFormDialog = ({ visible, onHide, variacao, outlet = null, onSuccess 
               max={99}
               mode="decimal"
               suffix="%"
-              inputClassName="w-full"
               showButtons
+              inputClassName="w-full"
             />
           </div>
 

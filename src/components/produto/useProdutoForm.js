@@ -1,33 +1,56 @@
 import { useEffect, useRef, useState } from 'react';
 import apiEstoque from '../../services/apiEstoque';
+import isEqual from 'lodash/isEqual';
 
-export const useProdutoForm = (initialData = {}) => {
+export const useProdutoForm = (produto = {}) => {
   const toastRef = useRef(null);
   const fileUploadRef = useRef(null);
 
-  const [nome, setNome] = useState(initialData.nome || '');
-  const [descricao, setDescricao] = useState(initialData.descricao || '');
-  const [idCategoria, setIdCategoria] = useState(
-    initialData.categoria ? initialData.categoria : initialData.id_categoria || null
-  );
-  const [idFornecedor, setIdFornecedor] = useState(initialData.id_fornecedor || null);
+  const [nome, setNome] = useState(produto.nome || '');
+  const [descricao, setDescricao] = useState(produto.descricao || '');
+  const [idCategoria, setIdCategoria] = useState(produto.categoria || produto.id_categoria || null);
+  const [idFornecedor, setIdFornecedor] = useState(produto.id_fornecedor || null);
   const [categorias, setCategorias] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
-  const [variacoes, setVariacoes] = useState(initialData.variacoes || [
-    { nome: '', preco: '', custo: '', referencia: '', codigo_barras: '', atributos: [] }
-  ]);
-  const [existingImages, setExistingImages] = useState(initialData.imagens || []);
+  const [variacoes, setVariacoes] = useState(
+    produto.variacoes?.length
+      ? produto.variacoes
+      : [{ nome: '', preco: '', custo: '', referencia: '', codigo_barras: '', atributos: [] }]
+  );
+  const [existingImages, setExistingImages] = useState(produto.imagens || []);
   const [loading, setLoading] = useState(false);
   const [totalSize, setTotalSize] = useState(0);
 
   useEffect(() => {
-    setNome(initialData.nome || '');
-    setDescricao(initialData.descricao || '');
-    setIdCategoria(initialData.categoria || initialData.id_categoria || null);
-    setIdFornecedor(initialData.id_fornecedor || null);
-    setVariacoes(initialData.variacoes || []);
-    setExistingImages(initialData.imagens || []);
-  }, [initialData]);
+    if (!produto || !produto.id) return;
+
+    const novo = {
+      nome: produto.nome || '',
+      descricao: produto.descricao || '',
+      idCategoria: produto.categoria || produto.id_categoria || null,
+      idFornecedor: produto.id_fornecedor || null,
+      variacoes: produto.variacoes?.length
+        ? produto.variacoes
+        : [{ nome: '', preco: '', custo: '', referencia: '', codigo_barras: '', atributos: [] }],
+      imagens: produto.imagens || [],
+    };
+
+    if (
+      nome !== novo.nome ||
+      descricao !== novo.descricao ||
+      !isEqual(idCategoria, novo.idCategoria) ||
+      idFornecedor !== novo.idFornecedor ||
+      !isEqual(variacoes, novo.variacoes) ||
+      !isEqual(existingImages, novo.imagens)
+    ) {
+      setNome(novo.nome);
+      setDescricao(novo.descricao);
+      setIdCategoria(novo.idCategoria);
+      setIdFornecedor(novo.idFornecedor);
+      setVariacoes(novo.variacoes);
+      setExistingImages(novo.imagens);
+    }
+  }, [produto]);
 
   useEffect(() => {
     const fetchCategorias = async () => {
@@ -48,8 +71,8 @@ export const useProdutoForm = (initialData = {}) => {
 
   useEffect(() => {
     if (categorias.length > 0 && typeof idCategoria === 'number') {
-      const catObj = categorias.find((c) => c.id === idCategoria);
-      if (catObj) setIdCategoria(catObj);
+      const obj = categorias.find((c) => c.id === idCategoria);
+      if (obj) setIdCategoria(obj);
     }
   }, [categorias, idCategoria]);
 
@@ -70,6 +93,19 @@ export const useProdutoForm = (initialData = {}) => {
     fetchFornecedores();
   }, []);
 
+  const atualizarDados = (data) => {
+    setNome(data.nome || '');
+    setDescricao(data.descricao || '');
+    setIdCategoria(data.categoria || data.id_categoria || null);
+    setIdFornecedor(data.id_fornecedor || null);
+    setVariacoes(
+      data.variacoes?.length
+        ? data.variacoes
+        : [{ nome: '', preco: '', custo: '', referencia: '', codigo_barras: '', atributos: [] }]
+    );
+    setExistingImages(data.imagens || []);
+  };
+
   return {
     nome, setNome,
     descricao, setDescricao,
@@ -83,5 +119,6 @@ export const useProdutoForm = (initialData = {}) => {
     totalSize, setTotalSize,
     toastRef,
     fileUploadRef,
+    atualizarDados,
   };
 };

@@ -5,7 +5,6 @@ import { Column } from 'primereact/column';
 import { Dialog } from 'primereact/dialog';
 import { Toast } from 'primereact/toast';
 import { InputText } from 'primereact/inputtext';
-import { Dropdown } from 'primereact/dropdown';
 import { MultiSelect } from 'primereact/multiselect';
 import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 import { Divider } from 'primereact/divider';
@@ -27,11 +26,8 @@ const Produtos = () => {
 
   const [lazyParams, setLazyParams] = useState({ first: 0, rows: 10, page: 0 });
 
-  const [filtros, setFiltros] = useState({
-    nome: '',
-    id_categoria: [],
-    fornecedor_id: [],
-  });
+  const filtrosIniciais = { nome: '', id_categoria: [], fornecedor_id: [] };
+  const [filtros, setFiltros] = useState(filtrosIniciais);
 
   const [categorias, setCategorias] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
@@ -163,19 +159,19 @@ const Produtos = () => {
     }
   };
 
-  const categoriaBodyTemplate = (rowData) => rowData.categoria ? rowData.categoria.nome : '';
+  const categoriaBodyTemplate = (rowData) =>
+    categorias.find(c => c.id === rowData.id_categoria)?.nome || '—';
 
-  const fornecedorBodyTemplate = (rowData) => rowData.fornecedor ? rowData.fornecedor.nome : '';
+  const fornecedorBodyTemplate = (rowData) =>
+    fornecedores.find(f => f.id === rowData.id_fornecedor)?.nome || '—';
 
   const aplicarFiltros = () => {
-    setLazyParams({ ...lazyParams, page: 0, first: 0 });
-    fetchProdutos();
+    setLazyParams(prev => ({ ...prev, page: 0, first: 0 }));
   };
 
   const limparFiltros = () => {
-    setFiltros({ nome: '', id_categoria: [], fornecedor_id: [] });
-    setLazyParams({ ...lazyParams, page: 0, first: 0 });
-    fetchProdutos();
+    setFiltros(filtrosIniciais);
+    setLazyParams(prev => ({ ...prev, page: 0, first: 0 }));
   };
 
   return (
@@ -271,9 +267,17 @@ const Produtos = () => {
           <Column field="nome" header="Nome"/>
           <Column field="fornecedor" header="Fornecedor" body={fornecedorBodyTemplate}/>
           <Column field="categoria" header="Categoria" body={categoriaBodyTemplate}/>
-          <Column header="Ações" body={(rowData) => (
-            <TableActions rowData={rowData} onEdit={openEditDialog} onDelete={() => handleDelete(rowData.id)}/>
-          )}/>
+          <Column
+            header="Ações"
+            body={(rowData) => (
+              <TableActions
+                rowData={rowData}
+                onEdit={openEditDialog}
+                onDelete={() => handleDelete(rowData.id)}
+              />
+            )}
+            style={{ textAlign: 'center', width: '120px' }}
+          />
         </DataTable>
       </div>
 
@@ -288,7 +292,6 @@ const Produtos = () => {
           initialData={editingProduto || {}}
           onSubmit={handleFormSubmit}
           onCancel={() => setShowDialog(false)}
-          onProdutoAtualizado={fetchProdutos}
         />
       </Dialog>
     </SakaiLayout>
