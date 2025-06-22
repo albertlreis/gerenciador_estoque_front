@@ -305,7 +305,7 @@ const FinalizarPedido = () => {
                   >
                     <div className="col-12 md:col-3 flex justify-content-center">
                       <img
-                        src={item.variacao?.produto?.imagem_principal?.url || '/placeholder.jpg'}
+                        src={item.variacao?.produto?.imagem || '/placeholder.jpg'}
                         alt={item.variacao?.nome_completo || 'Produto'}
                         className="shadow-1 border-round"
                         style={{ width: '100%', objectFit: 'cover' }}
@@ -320,32 +320,30 @@ const FinalizarPedido = () => {
                         <div className="flex flex-wrap gap-2 mb-2">
                           {item.variacao.atributos.map((attr, idx) => (
                             <span key={idx} className="text-sm px-2 py-1 bg-blue-100 border-round">
-                              {attr.nome}: {attr.valor}
+                              {attr.atributo}: {attr.valor}
                             </span>
                           ))}
                         </div>
                       )}
 
-                      {modoConsignacao && (
-                        <div className="mb-2">
-                          <label className="text-sm block font-medium mb-1">Depósito de saída</label>
-                          <Dropdown
-                            value={item.id_deposito}
-                            options={depositos}
-                            optionLabel="nome"
-                            optionValue="id"
-                            onChange={(e) => {
-                              const novoDeposito = e.value;
-                              api.post('/carrinho-itens/atualizar-deposito', {
-                                id_carrinho_item: item.id,
-                                id_deposito: novoDeposito
-                              });
-                            }}
-                            placeholder="Selecione o depósito"
-                            className="w-full"
-                          />
-                        </div>
-                      )}
+                      <div className="mb-2">
+                        <label className="text-sm block font-medium mb-1">Depósito de saída</label>
+                        <Dropdown
+                          value={item.id_deposito}
+                          options={depositos}
+                          optionLabel="nome"
+                          optionValue="id"
+                          onChange={(e) => {
+                            const novoDeposito = e.value;
+                            api.post('/carrinho-itens/atualizar-deposito', {
+                              id_carrinho_item: item.id,
+                              id_deposito: novoDeposito
+                            });
+                          }}
+                          placeholder="Selecione o depósito"
+                          className="w-full"
+                        />
+                      </div>
 
                       <div className="flex align-items-center gap-3 mb-2">
                         <InputNumber

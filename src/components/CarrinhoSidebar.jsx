@@ -68,15 +68,14 @@ const CarrinhoSidebar = ({ visible, onHide }) => {
       ) : (
         itens.map((item) => (
           <div key={item.id} className="mb-4 border-bottom pb-2">
-            <div className="font-semibold mb-1">{item.variacao?.produto?.nome || 'Produto'}</div>
-            <div className="text-sm text-gray-600 mb-1">{item.variacao?.descricao || 'Variação'}</div>
+            <div className="font-semibold mb-1">{item.nome_produto || 'Produto'}</div>
 
             {/* Atributos como badges */}
             {Array.isArray(item.variacao?.atributos) && item.variacao.atributos.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-2">
                 {item.variacao.atributos.map((attr, idx) => (
                   <span key={idx} className="text-xs px-2 py-1 bg-blue-100 border-round">
-                    {attr.nome}: {attr.valor}
+                    {attr.atributo}: {attr.valor}
                   </span>
                 ))}
               </div>
