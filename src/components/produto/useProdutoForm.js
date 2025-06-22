@@ -8,7 +8,7 @@ export const useProdutoForm = (produto = {}) => {
 
   const [nome, setNome] = useState(produto.nome || '');
   const [descricao, setDescricao] = useState(produto.descricao || '');
-  const [idCategoria, setIdCategoria] = useState(produto.categoria || produto.id_categoria || null);
+  const [idCategoria, setIdCategoria] = useState(produto.id_categoria || produto.categoria?.id || null);
   const [idFornecedor, setIdFornecedor] = useState(produto.id_fornecedor || null);
   const [categorias, setCategorias] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
@@ -68,13 +68,6 @@ export const useProdutoForm = (produto = {}) => {
     };
     fetchCategorias();
   }, []);
-
-  useEffect(() => {
-    if (categorias.length > 0 && typeof idCategoria === 'number') {
-      const obj = categorias.find((c) => c.id === idCategoria);
-      if (obj) setIdCategoria(obj);
-    }
-  }, [categorias, idCategoria]);
 
   useEffect(() => {
     const fetchFornecedores = async () => {

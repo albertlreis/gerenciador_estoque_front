@@ -104,7 +104,7 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
       const productData = {
         nome,
         descricao,
-        id_categoria: typeof idCategoria === 'object' ? idCategoria.id : idCategoria,
+        id_categoria: idCategoria || null,
         id_fornecedor: idFornecedor || null,
         variacoes,
       };
