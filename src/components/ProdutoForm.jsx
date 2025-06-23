@@ -20,6 +20,11 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
   const [variacaoSelecionada, setVariacaoSelecionada] = useState(null);
   const [outletSelecionado, setOutletSelecionado] = useState(null);
 
+  const [altura, setAltura] = useState(initialData.altura || '');
+  const [largura, setLargura] = useState(initialData.largura || '');
+  const [profundidade, setProfundidade] = useState(initialData.profundidade || '');
+  const [peso, setPeso] = useState(initialData.peso || '');
+
   const {
     nome, setNome,
     descricao, setDescricao,
@@ -38,6 +43,10 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
   useEffect(() => {
     if (!isEqual(produto, initialData)) {
       setProduto(initialData);
+      setAltura(initialData.altura || '');
+      setLargura(initialData.largura || '');
+      setProfundidade(initialData.profundidade || '');
+      setPeso(initialData.peso || '');
     }
   }, [initialData]);
 
@@ -75,8 +84,15 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
     try {
       const response = await apiEstoque.get(`/produtos/${produto.id}`);
       const produtoAtualizado = response.data?.data || response.data;
+
+      console.log("produtoAtualizado: ", produtoAtualizado)
+
       atualizarDados(produtoAtualizado);
       setProduto(produtoAtualizado);
+      setAltura(produtoAtualizado.altura || '');
+      setLargura(produtoAtualizado.largura || '');
+      setProfundidade(produtoAtualizado.profundidade || '');
+      setPeso(produtoAtualizado.peso || '');
 
       if (!silent) {
         toastRef.current?.show({
@@ -102,17 +118,17 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
 
     try {
       const payload = {
-        nome,
-        descricao,
+        nome: nome || null,
+        descricao: descricao || null,
         id_categoria: idCategoria || null,
         id_fornecedor: idFornecedor || null,
+        altura: altura || null,
+        largura: largura || null,
+        profundidade: profundidade || null,
+        peso: peso || null,
       };
 
-      const response = await onSubmit(payload);
-      const produtoAtualizado = response?.data?.data || response?.data;
-
-      atualizarDados(produtoAtualizado);
-      setProduto(produtoAtualizado);
+      await onSubmit(payload);
 
       toastRef.current?.show({
         severity: 'success',
@@ -139,7 +155,8 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
       <form onSubmit={handleSubmit} className="p-fluid">
         <Panel header="Informações Gerais">
           <div className="formgrid grid">
-            <div className="field md:col-8">
+            {/* Nome */}
+            <div className="field md:col-12">
               <label htmlFor="nome" className="font-bold">Nome *</label>
               <InputText
                 id="nome"
@@ -150,7 +167,8 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
               />
             </div>
 
-            <div className="field md:col-4">
+            {/* Categoria */}
+            <div className="field col-12 md:col-4">
               <label htmlFor="categoria" className="font-bold">Categoria *</label>
               <Dropdown
                 id="categoria"
@@ -165,19 +183,8 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
               />
             </div>
 
-            <div className="field col-12">
-              <label htmlFor="descricao" className="font-bold">Descrição</label>
-              <InputTextarea
-                id="descricao"
-                value={descricao}
-                onChange={(e) => setDescricao(e.target.value)}
-                rows={3}
-                autoResize
-                placeholder="Adicione uma descrição opcional"
-              />
-            </div>
-
-            <div className="field col-12 md:col-6">
+            {/* Fornecedor */}
+            <div className="field col-12 md:col-8">
               <label htmlFor="fornecedor" className="font-bold">Fornecedor *</label>
               <Dropdown
                 id="fornecedor"
@@ -191,11 +198,42 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
                 required
               />
             </div>
+
+            {/* Descrição */}
+            <div className="field col-12">
+              <label htmlFor="descricao" className="font-bold">Descrição</label>
+              <InputTextarea
+                id="descricao"
+                value={descricao}
+                onChange={(e) => setDescricao(e.target.value)}
+                rows={3}
+                autoResize
+                placeholder="Adicione uma descrição opcional"
+              />
+            </div>
+
+            {/* Dimensões e Peso */}
+            <div className="field col-6 md:col-3">
+              <label htmlFor="altura" className="font-bold">Altura (cm)</label>
+              <InputText id="altura" value={altura} onChange={(e) => setAltura(e.target.value)} />
+            </div>
+            <div className="field col-6 md:col-3">
+              <label htmlFor="largura" className="font-bold">Largura (cm)</label>
+              <InputText id="largura" value={largura} onChange={(e) => setLargura(e.target.value)} />
+            </div>
+            <div className="field col-6 md:col-3">
+              <label htmlFor="profundidade" className="font-bold">Profundidade (cm)</label>
+              <InputText id="profundidade" value={profundidade} onChange={(e) => setProfundidade(e.target.value)} />
+            </div>
+            <div className="field col-6 md:col-3">
+              <label htmlFor="peso" className="font-bold">Peso (kg)</label>
+              <InputText id="peso" value={peso} onChange={(e) => setPeso(e.target.value)} />
+            </div>
           </div>
 
           <div className="mt-3 flex justify-content-end gap-2">
-            <Button label="Salvar Dados" type="submit" icon="pi pi-check" loading={loading}/>
-            <Button label="Cancelar" type="button" icon="pi pi-times" className="p-button-secondary" onClick={onCancel}/>
+            <Button label="Salvar Dados" type="submit" icon="pi pi-check" loading={loading} />
+            <Button label="Cancelar" type="button" icon="pi pi-times" className="p-button-secondary" onClick={onCancel} />
           </div>
         </Panel>
 

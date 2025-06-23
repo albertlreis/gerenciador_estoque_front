@@ -143,19 +143,20 @@ const Produtos = () => {
 
   const handleFormSubmit = async (produtoData) => {
     try {
+      let response;
       if (editingProduto) {
-        await apiEstoque.put(`/produtos/${editingProduto.id}`, produtoData);
+        response = await apiEstoque.put(`/produtos/${editingProduto.id}`, produtoData);
         toast.current.show({ severity: 'success', summary: 'Sucesso', detail: 'Produto atualizado com sucesso', life: 3000 });
-        setShowDialog(false);
       } else {
-        const response = await apiEstoque.post('/produtos', produtoData);
-        setEditingProduto(response.data.produto);
+        response = await apiEstoque.post('/produtos', produtoData);
         setDialogTitle('Editar Produto');
         toast.current.show({ severity: 'success', summary: 'Sucesso', detail: 'Produto cadastrado com sucesso', life: 3000 });
       }
       await fetchProdutos();
+      return response;
     } catch (error) {
       toast.current.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao salvar produto', life: 3000 });
+      throw error;
     }
   };
 

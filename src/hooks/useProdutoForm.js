@@ -10,6 +10,12 @@ export const useProdutoForm = (produto = {}) => {
   const [descricao, setDescricao] = useState(produto.descricao || '');
   const [idCategoria, setIdCategoria] = useState(produto.id_categoria || produto.categoria?.id || null);
   const [idFornecedor, setIdFornecedor] = useState(produto.id_fornecedor || null);
+
+  const [altura, setAltura] = useState(produto.altura || '');
+  const [largura, setLargura] = useState(produto.largura || '');
+  const [profundidade, setProfundidade] = useState(produto.profundidade || '');
+  const [peso, setPeso] = useState(produto.peso || '');
+
   const [categorias, setCategorias] = useState([]);
   const [fornecedores, setFornecedores] = useState([]);
   const [variacoes, setVariacoes] = useState(
@@ -27,8 +33,12 @@ export const useProdutoForm = (produto = {}) => {
     const novo = {
       nome: produto.nome || '',
       descricao: produto.descricao || '',
-      idCategoria: produto.categoria || produto.id_categoria || null,
+      idCategoria: produto.categoria?.id || produto.id_categoria || null,
       idFornecedor: produto.id_fornecedor || null,
+      altura: produto.altura || '',
+      largura: produto.largura || '',
+      profundidade: produto.profundidade || '',
+      peso: produto.peso || '',
       variacoes: produto.variacoes?.length
         ? produto.variacoes
         : [{ nome: '', preco: '', custo: '', referencia: '', codigo_barras: '', atributos: [] }],
@@ -40,6 +50,10 @@ export const useProdutoForm = (produto = {}) => {
       descricao !== novo.descricao ||
       !isEqual(idCategoria, novo.idCategoria) ||
       idFornecedor !== novo.idFornecedor ||
+      altura !== novo.altura ||
+      largura !== novo.largura ||
+      profundidade !== novo.profundidade ||
+      peso !== novo.peso ||
       !isEqual(variacoes, novo.variacoes) ||
       !isEqual(existingImages, novo.imagens)
     ) {
@@ -47,6 +61,10 @@ export const useProdutoForm = (produto = {}) => {
       setDescricao(novo.descricao);
       setIdCategoria(novo.idCategoria);
       setIdFornecedor(novo.idFornecedor);
+      setAltura(novo.altura);
+      setLargura(novo.largura);
+      setProfundidade(novo.profundidade);
+      setPeso(novo.peso);
       setVariacoes(novo.variacoes);
       setExistingImages(novo.imagens);
     }
@@ -89,8 +107,12 @@ export const useProdutoForm = (produto = {}) => {
   const atualizarDados = (data) => {
     setNome(data.nome || '');
     setDescricao(data.descricao || '');
-    setIdCategoria(data.categoria || data.id_categoria || null);
+    setIdCategoria(data.categoria?.id || data.id_categoria || null);
     setIdFornecedor(data.id_fornecedor || null);
+    setAltura(data.altura || '');
+    setLargura(data.largura || '');
+    setProfundidade(data.profundidade || '');
+    setPeso(data.peso || '');
     setVariacoes(
       data.variacoes?.length
         ? data.variacoes
@@ -104,6 +126,10 @@ export const useProdutoForm = (produto = {}) => {
     descricao, setDescricao,
     idCategoria, setIdCategoria,
     idFornecedor, setIdFornecedor,
+    altura, setAltura,
+    largura, setLargura,
+    profundidade, setProfundidade,
+    peso, setPeso,
     categorias,
     fornecedores,
     variacoes, setVariacoes,

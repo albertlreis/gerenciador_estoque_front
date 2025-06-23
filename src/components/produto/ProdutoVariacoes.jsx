@@ -4,6 +4,7 @@ import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { InputNumber } from 'primereact/inputnumber';
 import { Tooltip } from 'primereact/tooltip';
+import { formatarMotivo } from './helpers';
 import ProdutoAtributos from "../ProdutoAtributos";
 import apiEstoque from '../../services/apiEstoque';
 
@@ -61,28 +62,73 @@ const ProdutoVariacoes = ({
     if (!produtoId) return;
 
     setLoading(true);
-    try {
-      const payload = variacoes.map(v => ({
-        ...v,
-        atributos: (v.atributos || []).filter(a => a.atributo && a.valor)
-      }));
 
-      await apiEstoque.put(`/produtos/${produtoId}/variacoes`, payload);
+    try {
+      const novas = [];
+      const existentes = [];
+
+      for (const v of variacoes) {
+        const data = {
+          ...v,
+          atributos: (v.atributos || []).filter(a => a.atributo && a.valor)
+        };
+
+        if (v.id) {
+          existentes.push(data);
+        } else {
+          novas.push(data);
+        }
+      }
+
+      if (existentes.length) {
+        await apiEstoque.put(`/produtos/${produtoId}/variacoes`, existentes);
+      }
+
+      for (const nova of novas) {
+        await apiEstoque.post(`/produtos/${produtoId}/variacoes`, nova);
+      }
+
+      await carregarVariacoes();
 
       toastRef.current?.show({
         severity: 'success',
         summary: 'Variações salvas',
+        detail: `Foram ${novas.length} adicionadas e ${existentes.length} atualizadas.`,
         life: 3000
       });
-    } catch {
+    } catch (error) {
+      console.error('Erro ao salvar variações:', error);
+
+      const mensagem = error?.response?.data?.message || 'Erro ao salvar variações';
+
       toastRef.current?.show({
         severity: 'error',
         summary: 'Erro',
-        detail: 'Erro ao salvar variações',
-        life: 3000
+        detail: mensagem,
+        life: 4000
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const carregarVariacoes = async () => {
+    if (!produtoId) return;
+
+    try {
+      const { data } = await apiEstoque.get(`/produtos/${produtoId}/variacoes`);
+      setVariacoes(data);
+    } catch (error) {
+      console.error('Erro ao carregar variações:', error);
+
+      const mensagem = error?.response?.data?.message || 'Erro ao carregar variações do produto';
+
+      toastRef.current?.show({
+        severity: 'error',
+        summary: 'Erro',
+        detail: mensagem,
+        life: 4000
+      });
     }
   };
 
@@ -166,6 +212,40 @@ const ProdutoVariacoes = ({
                   />
                 </div>
               </div>
+
+              {/* Outlets */}
+              {v.outlets?.length > 0 && (
+                <>
+                  <h6 className="mt-3 mb-2">Outlets cadastrados</h6>
+                  <div className="formgrid grid">
+                    {v.outlets.map((o, j) => (
+                      <div key={j} className="col-12 md:col-6">
+                        <div className="flex justify-content-between align-items-center gap-2 px-3 py-2 surface-100 border-round border-1 border-warning">
+                          <span className="text-sm font-semibold text-yellow-900">
+                            {`${o.quantidade} unid • ${o.percentual_desconto}% • ${formatarMotivo(o.motivo)}`}
+                          </span>
+                          <div className="flex gap-2">
+                            <Button icon="pi pi-pencil" className="p-button-rounded p-button-text" type="button"
+                                    onClick={() => abrirDialogOutlet(v, o)} />
+                            <Button icon="pi pi-trash" className="p-button-rounded p-button-text" type="button"
+                                    onClick={() => confirmarExcluirOutlet(v, o)} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {v.id && (
+                <Button
+                  label="Adicionar Outlet"
+                  icon="pi pi-plus"
+                  className="p-button-sm p-button-warning mt-2 mb-4"
+                  type="button"
+                  onClick={() => abrirDialogOutlet(v)}
+                />
+              )}
 
               <ProdutoAtributos
                 atributos={v.atributos}

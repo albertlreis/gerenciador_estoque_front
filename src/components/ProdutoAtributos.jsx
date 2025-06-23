@@ -20,7 +20,7 @@ const ProdutoAtributos = ({ atributos, onChange, onAdd, onRemove }) => {
   const isDuplicado = (atributoAtual, indexAtual) =>
     atributos.some((a, i) => a.atributo === atributoAtual && i !== indexAtual);
 
-  const atributosValidos = atributos.filter((a) => a.atributo && a.valor);
+  const atributosValidos = (atributos && atributos.length) ? atributos.filter((a) => a.atributo && a.valor) : [];
 
   return (
     <>
@@ -37,7 +37,7 @@ const ProdutoAtributos = ({ atributos, onChange, onAdd, onRemove }) => {
         </div>
       )}
 
-      {atributos.map((attr, j) => {
+      {(atributos || []).map((attr, j) => {
         const duplicado = isDuplicado(attr.atributo, j);
         return (
           <div key={attr.id || j} className="formgrid grid align-items-center">
