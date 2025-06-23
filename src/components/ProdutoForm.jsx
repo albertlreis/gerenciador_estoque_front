@@ -101,15 +101,25 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
     setLoading(true);
 
     try {
-      const productData = {
+      const payload = {
         nome,
         descricao,
         id_categoria: idCategoria || null,
         id_fornecedor: idFornecedor || null,
-        variacoes,
       };
 
-      await onSubmit(productData);
+      const response = await onSubmit(payload);
+      const produtoAtualizado = response?.data?.data || response?.data;
+
+      atualizarDados(produtoAtualizado);
+      setProduto(produtoAtualizado);
+
+      toastRef.current?.show({
+        severity: 'success',
+        summary: 'Salvo',
+        detail: 'Informações gerais salvas com sucesso.',
+        life: 3000
+      });
     } catch {
       toastRef.current?.show({
         severity: 'error',
@@ -124,7 +134,7 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
 
   return (
     <>
-      <Toast ref={toastRef} position="top-center"/>
+      <Toast ref={toastRef} position="top-center" />
 
       <form onSubmit={handleSubmit} className="p-fluid">
         <Panel header="Informações Gerais">
@@ -182,6 +192,11 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
               />
             </div>
           </div>
+
+          <div className="mt-3 flex justify-content-end gap-2">
+            <Button label="Salvar Dados" type="submit" icon="pi pi-check" loading={loading}/>
+            <Button label="Cancelar" type="button" icon="pi pi-times" className="p-button-secondary" onClick={onCancel}/>
+          </div>
         </Panel>
 
         <Panel header="Variações do Produto" className="mt-4">
@@ -191,6 +206,10 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
           </p>
 
           <ProdutoVariacoes
+            produtoId={produto?.id}
+            toastRef={toastRef}
+            loading={loading}
+            setLoading={setLoading}
             variacoes={variacoes}
             setVariacoes={setVariacoes}
             abrirDialogOutlet={abrirDialogOutlet}
@@ -213,22 +232,6 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
             />
           </Panel>
         )}
-
-        <div className="mt-4 flex justify-content-end gap-2">
-          <Button
-            label="Salvar"
-            type="submit"
-            icon="pi pi-check"
-            loading={loading}
-          />
-          <Button
-            label="Cancelar"
-            type="button"
-            icon="pi pi-times"
-            className="p-button-secondary"
-            onClick={onCancel}
-          />
-        </div>
       </form>
 
       <OutletFormDialog

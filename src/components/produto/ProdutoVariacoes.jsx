@@ -4,14 +4,18 @@ import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { InputNumber } from 'primereact/inputnumber';
 import { Tooltip } from 'primereact/tooltip';
-import { formatarMotivo } from './helpers';
 import ProdutoAtributos from "../ProdutoAtributos";
+import apiEstoque from '../../services/apiEstoque';
 
 const ProdutoVariacoes = ({
+                            produtoId,
                             variacoes,
                             setVariacoes,
                             abrirDialogOutlet,
-                            confirmarExcluirOutlet
+                            confirmarExcluirOutlet,
+                            toastRef,
+                            loading,
+                            setLoading
                           }) => {
   const updateVariacao = (index, field, value) => {
     const novas = [...variacoes];
@@ -53,43 +57,65 @@ const ProdutoVariacoes = ({
     ]);
   };
 
+  const salvarVariacoes = async () => {
+    if (!produtoId) return;
+
+    setLoading(true);
+    try {
+      const payload = variacoes.map(v => ({
+        ...v,
+        atributos: (v.atributos || []).filter(a => a.atributo && a.valor)
+      }));
+
+      await apiEstoque.put(`/produtos/${produtoId}/variacoes`, payload);
+
+      toastRef.current?.show({
+        severity: 'success',
+        summary: 'Variações salvas',
+        life: 3000
+      });
+    } catch {
+      toastRef.current?.show({
+        severity: 'error',
+        summary: 'Erro',
+        detail: 'Erro ao salvar variações',
+        life: 3000
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const variacoesIncompletas = variacoes.some(v => !v.preco || !v.referencia);
+
   const renderHeader = (v, i) => {
-    const invalido = !v.preco || !v.custo || !v.referencia;
+    const invalido = !v.preco || !v.referencia;
     const tooltipId = `tooltip-var-${i}`;
 
     return (
       <div className="flex align-items-center justify-content-between w-full gap-2">
-      <span className="flex align-items-center gap-2">
-        {invalido && (
-          <>
-            <i
-              id={tooltipId}
-              className="pi pi-exclamation-triangle text-orange-600"
-              style={{ fontSize: '1rem' }}
-            />
-            <Tooltip
-              target={`#${tooltipId}`}
-              content="Preencha os campos obrigatórios"
-              position="top"
-            />
-          </>
-        )}
-        <strong>Variação {i + 1}</strong>
-        {v.referencia ? ` - ${v.referencia}` : ''}
-      </span>
+        <span className="flex align-items-center gap-2">
+          {invalido && (
+            <>
+              <i id={tooltipId} className="pi pi-exclamation-triangle text-orange-600" />
+              <Tooltip target={`#${tooltipId}`} content="Preencha os campos obrigatórios" position="top" />
+            </>
+          )}
+          <strong>Variação {i + 1}</strong>
+          {v.referencia ? ` - ${v.referencia}` : ''}
+        </span>
       </div>
     );
   };
 
-  // Reordena: incompletas no topo
   const ordenadas = [...variacoes].sort((a, b) => {
-    const aValido = a.preco && a.custo && a.referencia;
-    const bValido = b.preco && b.custo && b.referencia;
+    const aValido = a.preco && a.referencia;
+    const bValido = b.preco && b.referencia;
     return aValido === bValido ? 0 : aValido ? 1 : -1;
   });
 
   const activeIndex = ordenadas
-    .map((v, i) => (!v.preco || !v.custo || !v.referencia ? i : null))
+    .map((v, i) => (!v.preco || !v.referencia ? i : null))
     .filter((i) => i !== null);
 
   return (
@@ -108,85 +134,38 @@ const ProdutoVariacoes = ({
                     mode="currency"
                     currency="BRL"
                     locale="pt-BR"
-                    placeholder="Preço de venda"
                     className={!v.preco ? 'p-invalid' : ''}
                   />
                 </div>
-
                 <div className="field md:col-3">
-                  <label>Custo *</label>
+                  <label>Custo</label>
                   <InputNumber
                     value={parseFloat(v.custo) || 0}
                     onValueChange={(e) => updateVariacao(indexReal, 'custo', e.value)}
                     mode="currency"
                     currency="BRL"
                     locale="pt-BR"
-                    placeholder="Custo do produto"
-                    className={!v.custo ? 'p-invalid' : ''}
                   />
                 </div>
-
                 <div className="field md:col-4">
                   <label>Referência *</label>
                   <InputText
                     value={v.referencia}
                     onChange={(e) => updateVariacao(indexReal, 'referencia', e.target.value)}
-                    placeholder="Código ou referência interna"
                     className={!v.referencia ? 'p-invalid' : ''}
                   />
                 </div>
-
                 <div className="field md:col-2 text-right">
-                  <Button
-                    icon="pi pi-trash"
-                    className="p-button-rounded p-button-danger mt-4"
-                    type="button"
-                    onClick={() => removeVariacao(indexReal)}
-                    tooltip="Remover variação"
-                  />
+                  <Button icon="pi pi-trash" className="p-button-rounded p-button-danger mt-4" type="button" onClick={() => removeVariacao(indexReal)} />
                 </div>
-
                 <div className="field md:col-6">
                   <label>Código de Barras</label>
                   <InputText
                     value={v.codigo_barras}
                     onChange={(e) => updateVariacao(indexReal, 'codigo_barras', e.target.value)}
-                    placeholder="Código de barras"
                   />
                 </div>
               </div>
-
-              {/* Outlets */}
-              {v.outlets?.length > 0 && (
-                <>
-                  <h6 className="mt-3 mb-2">Outlets cadastrados</h6>
-                  <div className="formgrid grid">
-                    {v.outlets.map((o, j) => (
-                      <div key={j} className="col-12 md:col-6">
-                        <div className="flex justify-content-between align-items-center gap-2 px-3 py-2 surface-100 border-round border-1 border-warning">
-                          <span className="text-sm font-semibold text-yellow-900">
-                            {`${o.quantidade} unid • ${o.percentual_desconto}% • ${formatarMotivo(o.motivo)}`}
-                          </span>
-                          <div className="flex gap-2">
-                            <Button icon="pi pi-pencil" className="p-button-rounded p-button-text" type="button"
-                                    onClick={() => abrirDialogOutlet(v, o)} />
-                            <Button icon="pi pi-trash" className="p-button-rounded p-button-text" type="button"
-                                    onClick={() => confirmarExcluirOutlet(v, o)} />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              <Button
-                label="Adicionar Outlet"
-                icon="pi pi-plus"
-                className="p-button-sm p-button-warning mt-2 mb-4"
-                type="button"
-                onClick={() => abrirDialogOutlet(v)}
-              />
 
               <ProdutoAtributos
                 atributos={v.atributos}
@@ -199,13 +178,31 @@ const ProdutoVariacoes = ({
         })}
       </Accordion>
 
-      <Button
-        type="button"
-        label="Adicionar Variação"
-        icon="pi pi-plus"
-        className="p-button-secondary mt-3"
-        onClick={addVariacao}
-      />
+      <div className="mt-3 flex justify-content-end gap-2">
+        <Button type="button" label="Adicionar Variação" icon="pi pi-plus" className="p-button-secondary"
+                onClick={addVariacao}/>
+
+        <Button
+          type="button"
+          label="Salvar Variações"
+          icon="pi pi-save"
+          className="p-button-success"
+          onClick={() => {
+            if (variacoesIncompletas) {
+              toastRef.current?.show({
+                severity: 'warn',
+                summary: 'Variações incompletas',
+                detail: 'Preencha todos os campos obrigatórios (preço e referência) antes de salvar.',
+                life: 4000
+              });
+              return;
+            }
+
+            salvarVariacoes();
+          }}
+          disabled={loading}
+        />
+      </div>
     </div>
   );
 };
