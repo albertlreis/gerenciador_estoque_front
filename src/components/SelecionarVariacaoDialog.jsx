@@ -3,6 +3,7 @@ import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { Tag } from 'primereact/tag';
 import formatarPreco from '../utils/formatarPreco';
+import getImageSrc from "../utils/getImageSrc";
 
 const SelecionarVariacaoDialog = ({
                                     produto,
@@ -46,7 +47,7 @@ const SelecionarVariacaoDialog = ({
         {/* Imagem do Produto */}
         <div className="col-12 md:col-3 flex justify-content-center align-items-start mb-4 p-0">
           <img
-            src={produto.imagem_principal || '/placeholder.jpg'}
+            src={getImageSrc(produto.imagem_principal)}
             alt={produto.nome}
             style={{ maxWidth: '100%', borderRadius: '4px' }}
           />

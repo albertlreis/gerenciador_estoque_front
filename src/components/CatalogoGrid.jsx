@@ -4,6 +4,7 @@ import { Dialog } from 'primereact/dialog';
 import { Divider } from 'primereact/divider';
 import { Tag } from 'primereact/tag';
 import formatarPreco from '../utils/formatarPreco';
+import getImageSrc from '../utils/getImageSrc';
 
 /**
  * Componente responsável por exibir os produtos em grid com suporte ao botão de "Detalhes"
@@ -53,16 +54,16 @@ const CatalogoGrid = ({ produtos, onAdicionarAoCarrinho }) => {
             <div className="p-fluid">
               <img
                 src={selectedProduto.imagem_principal
-                  ? `${selectedProduto.imagem_principal}`
+                  ? getImageSrc(selectedProduto.imagem_principal)
                   : 'https://placehold.co/500x300?text=Sem+Imagem'}
                 alt={selectedProduto.nome}
-                style={{ width: '100%', objectFit: 'cover' }}
+                style={{width: '100%', objectFit: 'cover'}}
                 className="mb-3 border-round"
               />
 
               <p><strong>Descrição:</strong> {selectedProduto.descricao || 'Sem descrição.'}</p>
 
-              <Divider />
+              <Divider/>
 
               <p><strong>Variações:</strong></p>
               {selectedProduto.variacoes?.length > 0 ? (
@@ -90,10 +91,10 @@ const CatalogoGrid = ({ produtos, onAdicionarAoCarrinho }) => {
                               <span style={{textDecoration: 'line-through', marginRight: '0.5rem', color: '#999'}}>
                                 {formatarPreco(preco)}
                               </span>
-                                                    <span style={{fontWeight: 'bold', color: '#0f9d58', marginRight: '0.5rem'}}>
+                              <span style={{fontWeight: 'bold', color: '#0f9d58', marginRight: '0.5rem'}}>
                                 {formatarPreco(precoOutlet)}
                               </span>
-                                                    <span style={{color: '#d32f2f', fontWeight: 'bold'}}>
+                              <span style={{color: '#d32f2f', fontWeight: 'bold'}}>
                                 (-{melhorOutlet.percentual_desconto}%)
                               </span>
                             </>

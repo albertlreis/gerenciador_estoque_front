@@ -7,7 +7,7 @@ import { Toast } from 'primereact/toast';
 import { confirmDialog } from 'primereact/confirmdialog';
 import isEqual from 'lodash/isEqual';
 
-import { useProdutoForm } from './produto/useProdutoForm';
+import { useProdutoForm } from '../hooks/useProdutoForm';
 import ProdutoVariacoes from './produto/ProdutoVariacoes';
 import ProdutoImagens from './produto/ProdutoImagens';
 import OutletFormDialog from './OutletFormDialog';

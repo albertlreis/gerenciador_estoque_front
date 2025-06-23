@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import apiEstoque from '../../services/apiEstoque';
+import apiEstoque from '../services/apiEstoque';
 import isEqual from 'lodash/isEqual';
 
 export const useProdutoForm = (produto = {}) => {

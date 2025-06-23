@@ -1,6 +1,7 @@
 import React from 'react';
 import { Tag } from 'primereact/tag';
 import formatarPreco from '../utils/formatarPreco';
+import getImageSrc from '../utils/getImageSrc';
 
 const ProdutoCard = ({ produto, onDetalhes, onAdicionar }) => {
   const variacao = produto.variacoes?.[0];
@@ -9,7 +10,7 @@ const ProdutoCard = ({ produto, onDetalhes, onAdicionar }) => {
   return (
     <div
       className="p-3 border-1 surface-border border-round surface-card shadow-1 relative h-full flex flex-column justify-between"
-      style={{ minHeight: '370px' }}
+      style={{minHeight: '370px'}}
     >
       {Boolean(produto.is_outlet) && (
         <div className="absolute top-0 right-0 p-1 bg-orange-500 text-white text-xs font-bold z-2 border-round-right">
@@ -19,11 +20,11 @@ const ProdutoCard = ({ produto, onDetalhes, onAdicionar }) => {
 
       <img
         src={produto.imagem_principal
-          ? `${produto.imagem_principal}`
+          ? getImageSrc(produto.imagem_principal)
           : 'https://placehold.co/500x300?text=Sem+Imagem'}
         alt={produto.nome}
         className="w-full mb-2 border-round"
-        style={{ height: '180px', objectFit: 'cover' }}
+        style={{height: '180px', objectFit: 'cover'}}
       />
 
       <div className="flex-grow-1">
@@ -61,10 +62,10 @@ const ProdutoCard = ({ produto, onDetalhes, onAdicionar }) => {
                     <span style={{textDecoration: 'line-through', color: '#999', marginRight: '0.5rem'}}>
                       {formatarPreco(preco)}
                     </span>
-                                <span style={{fontWeight: 'bold', color: '#0f9d58', marginRight: '0.5rem'}}>
+                    <span style={{fontWeight: 'bold', color: '#0f9d58', marginRight: '0.5rem'}}>
                       {formatarPreco(precoOutlet)}
                     </span>
-                                <span style={{color: '#d32f2f', fontWeight: 'bold'}}>
+                    <span style={{color: '#d32f2f', fontWeight: 'bold'}}>
                       (-{melhorOutlet.percentual_desconto}%)
                     </span>
                   </>
