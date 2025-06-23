@@ -86,14 +86,17 @@ const CatalogoProdutos = () => {
   };
 
   const confirmarVariacao = () => {
-    const preco = Number(variacaoSelecionada.preco);
-    const quantidade = 1;
+    const precoBase = Number(variacaoSelecionada.preco);
+    const outlet = variacaoSelecionada.outletSelecionado;
+    const desconto = outlet ? outlet.percentual_desconto : 0;
+    const precoFinal = precoBase * (1 - desconto / 100);
 
     adicionarItem({
       id_variacao: variacaoSelecionada.id,
-      quantidade,
-      preco_unitario: preco,
-      subtotal: preco * quantidade,
+      quantidade: 1,
+      preco_unitario: precoFinal,
+      subtotal: precoFinal,
+      outlet_id: outlet?.id ?? null
     });
 
     setDialogVariacaoVisible(false);

@@ -3,11 +3,12 @@ import { Sidebar } from 'primereact/sidebar';
 import { Button } from 'primereact/button';
 import { ConfirmDialog } from 'primereact/confirmdialog';
 import { confirmDialog } from 'primereact/confirmdialog';
+import { Tag } from 'primereact/tag';
 import { useCarrinho } from '../context/CarrinhoContext';
 import formatarPreco from '../utils/formatarPreco';
 
 const CarrinhoSidebar = ({ visible, onHide }) => {
-  const { itens, removerItem, limparCarrinho, carregarCarrinho, adicionarItem  } = useCarrinho();
+  const { itens, removerItem, limparCarrinho, adicionarItem } = useCarrinho();
   const [limpando, setLimpando] = useState(false);
 
   const total = itens.reduce((sum, item) => sum + Number(item.subtotal || 0), 0);
@@ -34,7 +35,8 @@ const CarrinhoSidebar = ({ visible, onHide }) => {
         id_variacao: item.id_variacao,
         quantidade: novaQtd,
         preco_unitario: Number(item.preco_unitario),
-        subtotal: novaQtd * Number(item.preco_unitario)
+        subtotal: novaQtd * Number(item.preco_unitario),
+        outlet_id: item.outlet_id ?? null,
       });
     } catch (err) {
       console.error('Erro ao atualizar quantidade', err);
@@ -52,9 +54,12 @@ const CarrinhoSidebar = ({ visible, onHide }) => {
         setLimpando(true);
         await limparCarrinho();
         setLimpando(false);
-      }
+      },
     });
   };
+
+  const motivoLegivel = (motivo) =>
+    motivo?.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
 
   return (
     <Sidebar visible={visible} onHide={onHide} position="right" showCloseIcon style={{ width: '400px' }}>
@@ -66,37 +71,60 @@ const CarrinhoSidebar = ({ visible, onHide }) => {
           <p className="mt-2">Nenhum item no carrinho.</p>
         </div>
       ) : (
-        itens.map((item) => (
-          <div key={item.id} className="mb-4 border-bottom pb-2">
-            <div className="font-semibold mb-1">{item.nome_produto || 'Produto'}</div>
+        itens.map((item) => {
+          const isOutlet = !!item.outlet_id;
+          const outlet = item.outlet || null;
 
-            {/* Atributos como badges */}
-            {Array.isArray(item.variacao?.atributos) && item.variacao.atributos.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-2">
-                {item.variacao.atributos.map((attr, idx) => (
-                  <span key={idx} className="text-xs px-2 py-1 bg-blue-100 border-round">
-                    {attr.atributo}: {attr.valor}
-                  </span>
-                ))}
+          return (
+            <div
+              key={item.id}
+              className={`mb-4 border-bottom pb-2 p-2 border-round ${isOutlet ? 'bg-yellow-50 border-yellow-300' : ''}`}
+            >
+              <div className="flex justify-content-between align-items-center mb-1">
+                <div className="font-semibold">{item.nome_produto || 'Produto'}</div>
+                {isOutlet && (
+                  <Tag
+                    value="OUTLET"
+                    severity="warning"
+                    className="text-xs"
+                    title={`Desconto: ${outlet?.percentual_desconto}% • ${motivoLegivel(outlet?.motivo)}`}
+                  />
+                )}
               </div>
-            )}
 
-            {/* Medidas do produto */}
-            {item.variacao?.produto && (
-              <div className="text-xs text-gray-600 mb-2">
-                MED: {item.variacao.produto.largura} x {item.variacao.produto.profundidade} x {item.variacao.produto.altura} cm
+              {/* Atributos como badges */}
+              {Array.isArray(item.variacao?.atributos) && item.variacao.atributos.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {item.variacao.atributos.map((attr, idx) => (
+                    <span key={idx} className="text-xs px-2 py-1 bg-blue-100 border-round">
+                      {attr.atributo}: {attr.valor}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Medidas do produto */}
+              {item.variacao?.produto && (
+                <div className="text-xs text-gray-600 mb-2">
+                  MED: {item.variacao.produto.largura} x {item.variacao.produto.profundidade} x{' '}
+                  {item.variacao.produto.altura} cm
+                </div>
+              )}
+
+              <div className="flex align-items-center gap-2">
+                <Button icon="pi pi-minus" text onClick={() => atualizarQuantidadeItem(item, item.quantidade - 1)} />
+                <span className="font-medium">{item.quantidade}</span>
+                <Button icon="pi pi-plus" text onClick={() => atualizarQuantidadeItem(item, item.quantidade + 1)} />
+                <span className="ml-2 text-sm">x {formatarPreco(item.preco_unitario)}</span>
+                <Button
+                  icon="pi pi-trash"
+                  className="p-button-text p-button-danger ml-auto"
+                  onClick={() => confirmarRemocaoItem(item.id)}
+                />
               </div>
-            )}
-
-            <div className="flex align-items-center gap-2">
-              <Button icon="pi pi-minus" text onClick={() => atualizarQuantidadeItem(item, item.quantidade - 1)} />
-              <span className="font-medium">{item.quantidade}</span>
-              <Button icon="pi pi-plus" text onClick={() => atualizarQuantidadeItem(item, item.quantidade + 1)} />
-              <span className="ml-2 text-sm">x {formatarPreco(item.preco_unitario)}</span>
-              <Button icon="pi pi-trash" className="p-button-text p-button-danger ml-auto" onClick={() => confirmarRemocaoItem(item.id)} />
             </div>
-          </div>
-        ))
+          );
+        })
       )}
 
       <hr />

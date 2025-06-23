@@ -56,7 +56,7 @@ export const CarrinhoProvider = ({ children }) => {
     }
   };
 
-  const adicionarItem = async ({ id_variacao, quantidade, preco_unitario, subtotal }) => {
+  const adicionarItem = async ({ id_variacao, quantidade, preco_unitario, subtotal, outlet_id }) => {
     if (!carrinhoAtual?.id) return;
 
     try {
@@ -66,6 +66,7 @@ export const CarrinhoProvider = ({ children }) => {
         quantidade,
         preco_unitario,
         subtotal: subtotal ?? preco_unitario * quantidade,
+        outlet_id
       });
       await carregarCarrinho(carrinhoAtual.id);
     } catch (e) {
