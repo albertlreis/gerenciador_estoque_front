@@ -10,6 +10,9 @@ import { confirmDialog } from 'primereact/confirmdialog';
 import { ConfirmDialog } from 'primereact/confirmdialog';
 import SakaiLayout from '../layouts/SakaiLayout';
 import api from '../services/apiEstoque';
+import {useAuth} from "../context/AuthContext";
+import {PERFIS} from "../constants/perfis";
+import apiAuth from "../services/apiAuth";
 
 const formatarValor = (valor) =>
   Number(valor).toLocaleString('pt-BR', {
@@ -18,6 +21,9 @@ const formatarValor = (valor) =>
   });
 
 const FinalizarPedido = () => {
+  const { user } = useAuth();
+  const isAdmin = user?.perfis?.includes(PERFIS.ADMINISTRADOR.slug);
+
   const { id } = useParams();
   const navigate = useNavigate();
   const toast = useRef(null);
@@ -38,19 +44,52 @@ const FinalizarPedido = () => {
   const [modoConsignacao, setModoConsignacao] = useState(false);
   const [prazoConsignacao, setPrazoConsignacao] = useState(null);
   const [itensEmFalta, setItensEmFalta] = useState([]);
-  const [depositos, setDepositos] = useState([]);
+  const [depositosPorItem, setDepositosPorItem] = useState({});
+  const [vendedores, setVendedores] = useState([]);
+  const [idVendedorSelecionado, setIdVendedorSelecionado] = useState(null);
 
-  const fetchDepositos = async () => {
-    const { data } = await api.get('/depositos');
-    setDepositos(data);
+  const carregarDepositosParaItens = async () => {
+    try {
+      const promises = itens.map(item =>
+        api.get(`/estoque/por-variacao/${item.id_variacao}`)
+          .then(res => ({ itemId: item.id, data: res.data }))
+          .catch(() => ({ itemId: item.id, data: [] }))
+      );
+
+      const resultados = await Promise.all(promises);
+
+      const mapeado = resultados.reduce((acc, { itemId, data }) => {
+        acc[itemId] = data;
+        return acc;
+      }, {});
+
+      setDepositosPorItem(mapeado);
+    } catch (err) {
+      console.error('Erro ao carregar depósitos por item', err);
+    }
   };
 
   useEffect(() => {
-    carregarCarrinho(id);
-    fetchClientes();
-    fetchParceiros();
-    fetchDepositos();
+    const carregarTudo = async () => {
+      await carregarCarrinho(id);
+      await fetchClientes();
+      await fetchParceiros();
+      if (isAdmin) await fetchVendedores();
+    };
+    carregarTudo();
   }, [id]);
+
+  useEffect(() => {
+    if (isAdmin && carrinhoAtual?.id_usuario) {
+      setIdVendedorSelecionado(carrinhoAtual.id_usuario);
+    }
+  }, [isAdmin, carrinhoAtual]);
+
+  useEffect(() => {
+    if (itens.length > 0) {
+      carregarDepositosParaItens();
+    }
+  }, [itens]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -62,6 +101,16 @@ const FinalizarPedido = () => {
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
   }, [observacoes]);
+
+  const fetchVendedores = async () => {
+    try {
+      const { data } = await apiAuth.get('/usuarios/vendedores');
+      setVendedores(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Erro ao buscar vendedores:', error);
+      setVendedores([]);
+    }
+  };
 
   const fetchClientes = async () => {
     const { data } = await api.get('/clientes');
@@ -126,19 +175,33 @@ const FinalizarPedido = () => {
     }
 
     try {
-      await finalizarPedido({
+      const resultado = await finalizarPedido({
         id_parceiro: carrinhoAtual?.id_parceiro,
         observacoes,
         modo_consignacao: modoConsignacao,
         prazo_consignacao: prazoConsignacao,
+        id_usuario: isAdmin ? idVendedorSelecionado : carrinhoAtual?.id_usuario,
         depositos_por_item: itens.map(item => ({
           id_carrinho_item: item.id,
           id_deposito: item.id_deposito || null
         }))
       });
 
-      toast.current.show({ severity: 'success', summary: 'Pedido finalizado!', detail: 'Pedido criado com sucesso.' });
-      navigate('/pedidos');
+      if (resultado?.success) {
+        toast.current.show({
+          severity: 'success',
+          summary: 'Pedido finalizado!',
+          detail: 'Pedido criado com sucesso.',
+        });
+        navigate('/pedidos');
+      } else {
+        toast.current.show({
+          severity: 'error',
+          summary: 'Erro ao finalizar pedido',
+          detail: resultado?.message || 'Não foi possível criar o pedido.',
+          life: 5000,
+        });
+      }
     } catch (err) {
       toast.current.show({ severity: 'error', summary: 'Erro', detail: 'Falha ao finalizar pedido.' });
     }
@@ -172,6 +235,23 @@ const FinalizarPedido = () => {
           <h2 className="text-xl font-bold mb-4">Finalizar Pedido</h2>
 
           <div className="grid mb-4 gap-3">
+            {isAdmin && (
+              <div className="col-12 md:col-6">
+                <label className="block mb-1 font-medium">Vendedor</label>
+                <Dropdown
+                  value={idVendedorSelecionado}
+                  options={vendedores}
+                  optionLabel="nome"
+                  optionValue="id"
+                  onChange={(e) => setIdVendedorSelecionado(e.value)}
+                  placeholder="Selecione o vendedor"
+                  className="w-full"
+                  filter
+                />
+              </div>
+            )}
+
+
             <div className="col-12 md:col-6">
               <label className="block mb-1 font-medium">Cliente</label>
               <Dropdown
@@ -196,6 +276,7 @@ const FinalizarPedido = () => {
                 }}
                 placeholder="Selecione o cliente"
                 className="w-full"
+                filter
               />
             </div>
 
@@ -223,6 +304,7 @@ const FinalizarPedido = () => {
                 }}
                 placeholder="Selecione o parceiro"
                 className="w-full"
+                filter
               />
             </div>
           </div>
@@ -313,8 +395,7 @@ const FinalizarPedido = () => {
                     </div>
 
                     <div className="col-12 md:col-9">
-                      <div className="font-medium text-lg mb-1">{item.variacao?.nome_completo || 'Produto'}</div>
-                      <div className="text-sm text-gray-600 mb-2">{item.variacao?.descricao}</div>
+                      <div className="font-medium text-lg mb-1">{item.variacao?.produto?.nome || 'Produto'}</div>
 
                       {Array.isArray(item.variacao?.atributos) && item.variacao.atributos.length > 0 && (
                         <div className="flex flex-wrap gap-2 mb-2">
@@ -330,17 +411,27 @@ const FinalizarPedido = () => {
                         <label className="text-sm block font-medium mb-1">Depósito de saída</label>
                         <Dropdown
                           value={item.id_deposito}
-                          options={depositos}
+                          options={depositosPorItem[item.id] || []}
                           optionLabel="nome"
                           optionValue="id"
-                          onChange={(e) => {
+                          onChange={async (e) => {
                             const novoDeposito = e.value;
-                            api.post('/carrinho-itens/atualizar-deposito', {
-                              id_carrinho_item: item.id,
-                              id_deposito: novoDeposito
-                            });
+                            try {
+                              await api.post('/carrinho-itens/atualizar-deposito', {
+                                id_carrinho_item: item.id,
+                                id_deposito: novoDeposito
+                              });
+                              await carregarCarrinho(id);
+                            } catch (err) {
+                              toast.current?.show({
+                                severity: 'error',
+                                summary: 'Erro',
+                                detail: 'Não foi possível atualizar o depósito.',
+                              });
+                            }
                           }}
                           placeholder="Selecione o depósito"
+                          emptyMessage="Nenhum depósito disponível"
                           className="w-full"
                         />
                       </div>

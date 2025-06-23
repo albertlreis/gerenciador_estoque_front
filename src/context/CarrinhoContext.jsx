@@ -104,10 +104,19 @@ export const CarrinhoProvider = ({ children }) => {
       setCarrinhoAtual(null);
       setItens([]);
       await listarCarrinhos();
-      return response.data?.data || response.data;
-    } catch (e) {
-      console.error('Erro ao finalizar pedido', e);
-      return null;
+      return { success: true, data: response.data?.data || response.data };
+    } catch (error) {
+      console.error('Erro ao finalizar pedido', error);
+
+      const message =
+        error.response?.data?.message ||
+        'Erro inesperado ao finalizar o pedido.';
+
+      return {
+        success: false,
+        message,
+        status: error.response?.status,
+      };
     }
   };
 
