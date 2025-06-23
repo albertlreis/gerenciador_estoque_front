@@ -5,10 +5,6 @@ import formatarPreco from '../utils/formatarPreco';
 const ProdutoCard = ({ produto, onDetalhes, onAdicionar }) => {
   const variacao = produto.variacoes?.[0];
   const preco = Number(variacao?.preco || 0);
-  const promocional = Number(variacao?.preco_promocional || 0);
-  const temDesconto = promocional > 0 && promocional < preco;
-  const percentual = temDesconto ? Math.round(((preco - promocional) / preco) * 100) : 0;
-  const quantidade = variacao?.estoque?.quantidade ?? 0;
 
   return (
     <div
@@ -50,19 +46,30 @@ const ProdutoCard = ({ produto, onDetalhes, onAdicionar }) => {
           <>
             <div className="mb-1 text-sm">
               <strong>Preço:</strong>{' '}
-              {temDesconto ? (
-                <>
-                  <span style={{ textDecoration: 'line-through', color: '#999', marginRight: '0.5rem' }}>
-                    {formatarPreco(preco)}
-                  </span>
-                  <span style={{ fontWeight: 'bold', color: '#0f9d58', marginRight: '0.5rem' }}>
-                    {formatarPreco(promocional)}
-                  </span>
-                  <span style={{ color: '#d32f2f', fontWeight: 'bold' }}>
-                    (-{percentual}%)
-                  </span>
-                </>
-              ) : (
+              {produto.is_outlet && variacao.outlets?.length > 0 ? (() => {
+                const outletsValidos = variacao.outlets.filter(o => o.quantidade_restante > 0);
+                if (outletsValidos.length === 0) return <span>{formatarPreco(preco)}</span>;
+
+                const melhorOutlet = outletsValidos.reduce((menor, atual) =>
+                  atual.percentual_desconto > menor.percentual_desconto ? atual : menor
+                );
+
+                const precoOutlet = preco * (1 - melhorOutlet.percentual_desconto / 100);
+
+                return (
+                  <>
+                    <span style={{textDecoration: 'line-through', color: '#999', marginRight: '0.5rem'}}>
+                      {formatarPreco(preco)}
+                    </span>
+                                <span style={{fontWeight: 'bold', color: '#0f9d58', marginRight: '0.5rem'}}>
+                      {formatarPreco(precoOutlet)}
+                    </span>
+                                <span style={{color: '#d32f2f', fontWeight: 'bold'}}>
+                      (-{melhorOutlet.percentual_desconto}%)
+                    </span>
+                  </>
+                );
+              })() : (
                 <span>{formatarPreco(preco)}</span>
               )}
             </div>
