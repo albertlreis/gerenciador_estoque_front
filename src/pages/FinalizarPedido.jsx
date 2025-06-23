@@ -1,24 +1,21 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useCarrinho } from '../context/CarrinhoContext';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Dropdown } from 'primereact/dropdown';
 import { InputTextarea } from 'primereact/inputtextarea';
-import { Button } from 'primereact/button';
-import { InputNumber } from 'primereact/inputnumber';
+import { ProgressSpinner } from 'primereact/progressspinner';
 import { Toast } from 'primereact/toast';
-import { confirmDialog } from 'primereact/confirmdialog';
-import { ConfirmDialog } from 'primereact/confirmdialog';
+import { confirmDialog, ConfirmDialog } from 'primereact/confirmdialog';
 import SakaiLayout from '../layouts/SakaiLayout';
 import api from '../services/apiEstoque';
-import {useAuth} from "../context/AuthContext";
-import {PERFIS} from "../constants/perfis";
-import apiAuth from "../services/apiAuth";
+import { useAuth } from '../context/AuthContext';
+import { PERFIS } from '../constants/perfis';
+import apiAuth from '../services/apiAuth';
 
-const formatarValor = (valor) =>
-  Number(valor).toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  });
+import ResumoPedidoCard from '../components/ResumoPedidoCard';
+import ItemPedidoCard from '../components/ItemPedidoCard';
+import SelecionarEntidades from '../components/SelecionarEntidades';
+import ConsignacaoSection from '../components/ConsignacaoSection';
+import { formatarValor } from '../utils/formatters';
 
 const FinalizarPedido = () => {
   const { user } = useAuth();
@@ -47,34 +44,19 @@ const FinalizarPedido = () => {
   const [depositosPorItem, setDepositosPorItem] = useState({});
   const [vendedores, setVendedores] = useState([]);
   const [idVendedorSelecionado, setIdVendedorSelecionado] = useState(null);
-
-  const carregarDepositosParaItens = async () => {
-    try {
-      const promises = itens.map(item =>
-        api.get(`/estoque/por-variacao/${item.id_variacao}`)
-          .then(res => ({ itemId: item.id, data: res.data }))
-          .catch(() => ({ itemId: item.id, data: [] }))
-      );
-
-      const resultados = await Promise.all(promises);
-
-      const mapeado = resultados.reduce((acc, { itemId, data }) => {
-        acc[itemId] = data;
-        return acc;
-      }, {});
-
-      setDepositosPorItem(mapeado);
-    } catch (err) {
-      console.error('Erro ao carregar depósitos por item', err);
-    }
-  };
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const carregarTudo = async () => {
-      await carregarCarrinho(id);
-      await fetchClientes();
-      await fetchParceiros();
-      if (isAdmin) await fetchVendedores();
+      try {
+        setLoading(true);
+        await carregarCarrinho(id);
+        await fetchClientes();
+        await fetchParceiros();
+        if (isAdmin) await fetchVendedores();
+      } finally {
+        setLoading(false);
+      }
     };
     carregarTudo();
   }, [id]);
@@ -86,9 +68,7 @@ const FinalizarPedido = () => {
   }, [isAdmin, carrinhoAtual]);
 
   useEffect(() => {
-    if (itens.length > 0) {
-      carregarDepositosParaItens();
-    }
+    if (itens.length > 0) carregarDepositosParaItens();
   }, [itens]);
 
   useEffect(() => {
@@ -101,6 +81,24 @@ const FinalizarPedido = () => {
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
   }, [observacoes]);
+
+  const carregarDepositosParaItens = async () => {
+    try {
+      const promises = itens.map(item =>
+        api.get(`/estoque/por-variacao/${item.id_variacao}`)
+          .then(res => ({ itemId: item.id, data: res.data }))
+          .catch(() => ({ itemId: item.id, data: [] }))
+      );
+      const resultados = await Promise.all(promises);
+      const mapeado = resultados.reduce((acc, { itemId, data }) => {
+        acc[itemId] = data;
+        return acc;
+      }, {});
+      setDepositosPorItem(mapeado);
+    } catch (err) {
+      console.error('Erro ao carregar depósitos por item', err);
+    }
+  };
 
   const fetchVendedores = async () => {
     try {
@@ -123,9 +121,7 @@ const FinalizarPedido = () => {
   };
 
   const verificarEstoqueInsuficiente = () => {
-    return itens.filter(
-      (item) => (item.variacao?.estoque_total ?? 0) < item.quantidade
-    );
+    return itens.filter(item => (item.variacao?.estoque_total ?? 0) < item.quantidade);
   };
 
   const handleAtualizarQuantidade = async (item, novaQtd) => {
@@ -158,10 +154,25 @@ const FinalizarPedido = () => {
     }
   };
 
+  const handleAtualizarDeposito = async (itemId, idDeposito) => {
+    try {
+      await api.post('/carrinho-itens/atualizar-deposito', {
+        id_carrinho_item: itemId,
+        id_deposito: idDeposito
+      });
+      await carregarCarrinho(id);
+    } catch (err) {
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Erro',
+        detail: 'Não foi possível atualizar o depósito.',
+      });
+    }
+  };
+
   const handleFinalizar = async () => {
     if (modoConsignacao) {
       const faltando = verificarEstoqueInsuficiente();
-
       if (faltando.length > 0) {
         toast.current.show({
           severity: 'warn',
@@ -224,299 +235,86 @@ const FinalizarPedido = () => {
     navigate('/catalogo');
   };
 
-  const total = itens.reduce((sum, item) => sum + Number(item.subtotal || 0), 0);
+  const total = formatarValor(itens.reduce((sum, item) => sum + Number(item.subtotal || 0), 0));
 
   return (
     <SakaiLayout>
       <Toast ref={toast} />
       <ConfirmDialog />
-      <div className="grid p-4">
-        <div className="col-12 md:col-8">
-          <h2 className="text-xl font-bold mb-4">Finalizar Pedido</h2>
 
-          <div className="grid mb-4 gap-3">
-            {isAdmin && (
-              <div className="col-12 md:col-6">
-                <label className="block mb-1 font-medium">Vendedor</label>
-                <Dropdown
-                  value={idVendedorSelecionado}
-                  options={vendedores}
-                  optionLabel="nome"
-                  optionValue="id"
-                  onChange={(e) => setIdVendedorSelecionado(e.value)}
-                  placeholder="Selecione o vendedor"
-                  className="w-full"
-                  filter
-                />
-              </div>
-            )}
+      {loading ? (
+        <div className="flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
+          <ProgressSpinner />
+        </div>
+      ) : (
+        <div className="grid p-4">
+          <div className="col-12 md:col-8">
+            <h2 className="text-xl font-bold mb-4">Finalizar Pedido</h2>
 
+            <SelecionarEntidades
+              isAdmin={isAdmin}
+              vendedores={vendedores}
+              clientes={clientes}
+              parceiros={parceiros}
+              carrinhoAtual={carrinhoAtual}
+              idVendedorSelecionado={idVendedorSelecionado}
+              setIdVendedorSelecionado={setIdVendedorSelecionado}
+              onAtualizarCarrinho={atualizarCarrinho}
+              toast={toast}
+            />
 
-            <div className="col-12 md:col-6">
-              <label className="block mb-1 font-medium">Cliente</label>
-              <Dropdown
-                value={carrinhoAtual?.id_cliente}
-                options={clientes}
-                optionLabel="nome"
-                optionValue="id"
-                onChange={(e) => {
-                  const novoId = e.value;
-                  if (novoId === carrinhoAtual?.id_cliente) return;
-                  confirmDialog({
-                    message: 'Deseja alterar o cliente do carrinho?',
-                    header: 'Alterar Cliente',
-                    icon: 'pi pi-exclamation-triangle',
-                    acceptLabel: 'Sim',
-                    rejectLabel: 'Cancelar',
-                    accept: () => {
-                      atualizarCarrinho(carrinhoAtual.id, { id_cliente: novoId });
-                      toast.current.show({ severity: 'success', summary: 'Cliente alterado' });
-                    }
-                  });
-                }}
-                placeholder="Selecione o cliente"
+            <ConsignacaoSection
+              modoConsignacao={modoConsignacao}
+              prazoConsignacao={prazoConsignacao}
+              setModoConsignacao={setModoConsignacao}
+              setPrazoConsignacao={setPrazoConsignacao}
+              verificarEstoqueInsuficiente={verificarEstoqueInsuficiente}
+              setItensEmFalta={setItensEmFalta}
+              toast={toast}
+            />
+
+            <div className="mb-4">
+              <label className="block mb-1 font-medium">Observações</label>
+              <InputTextarea
+                value={observacoes}
+                onChange={(e) => setObservacoes(e.target.value)}
+                rows={3}
                 className="w-full"
-                filter
               />
             </div>
 
-            <div className="col-12 md:col-6">
-              <label className="block mb-1 font-medium">Parceiro</label>
-              <Dropdown
-                value={carrinhoAtual?.id_parceiro}
-                options={parceiros}
-                optionLabel="nome"
-                optionValue="id"
-                onChange={(e) => {
-                  const novoId = e.value;
-                  if (novoId === carrinhoAtual?.id_parceiro) return;
-                  confirmDialog({
-                    message: 'Deseja alterar o parceiro do carrinho?',
-                    header: 'Alterar Parceiro',
-                    icon: 'pi pi-exclamation-triangle',
-                    acceptLabel: 'Sim',
-                    rejectLabel: 'Cancelar',
-                    accept: () => {
-                      atualizarCarrinho(carrinhoAtual.id, { id_parceiro: novoId });
-                      toast.current.show({ severity: 'success', summary: 'Parceiro alterado' });
-                    }
-                  });
-                }}
-                placeholder="Selecione o parceiro"
-                className="w-full"
-                filter
-              />
+            <div className="border rounded shadow-sm bg-white p-3">
+              <h3 className="text-lg font-semibold mb-3">Itens do Pedido</h3>
+              {itens.length === 0 ? (
+                <p className="text-gray-500">Nenhum item no carrinho.</p>
+              ) : (
+                itens.map((item) => (
+                  <ItemPedidoCard
+                    key={item.id}
+                    item={item}
+                    emFalta={(item.variacao?.estoque_total ?? 0) < item.quantidade}
+                    emFaltaNoConsignado={itensEmFalta.includes(item.id)}
+                    depositosDisponiveis={depositosPorItem[item.id] || []}
+                    onAtualizarQuantidade={handleAtualizarQuantidade}
+                    onRemoverItem={removerItem}
+                    onAtualizarDeposito={handleAtualizarDeposito}
+                  />
+                ))
+              )}
             </div>
           </div>
 
-          <div className="grid mb-4 gap-3">
-            <div className="col-12">
-              <div className="flex align-items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="consignacao"
-                  checked={modoConsignacao}
-                  onChange={(e) => {
-                    const checked = e.target.checked;
-
-                    if (checked) {
-                      const faltando = verificarEstoqueInsuficiente();
-
-                      if (faltando.length > 0) {
-                        setItensEmFalta(faltando.map((i) => i.id));
-
-                        toast.current.show({
-                          severity: 'warn',
-                          summary: 'Estoque insuficiente',
-                          detail: 'Alguns itens não possuem estoque disponível. Corrija antes de ativar consignação.',
-                          life: 5000,
-                        });
-                        return;
-                      }
-                    }
-
-                    setItensEmFalta([]);
-                    setModoConsignacao(checked);
-                  }}
-                />
-                <label htmlFor="consignacao" className="font-medium">Pedido em consignação</label>
-              </div>
-            </div>
-
-            {modoConsignacao && (
-              <div className="col-12 md:col-6">
-                <label className="block mb-1 font-medium">Prazo para resposta</label>
-                <InputNumber
-                  value={prazoConsignacao}
-                  onValueChange={(e) => setPrazoConsignacao(e.value)}
-                  suffix=" dias"
-                  min={1}
-                  max={30}
-                  placeholder="Informe o prazo"
-                  className="w-full"
-                />
-              </div>
-            )}
-          </div>
-
-          <div className="mb-4">
-            <label className="block mb-1 font-medium">Observações</label>
-            <InputTextarea
-              value={observacoes}
-              onChange={(e) => setObservacoes(e.target.value)}
-              rows={3}
-              className="w-full"
+          <div className="col-12 md:col-4">
+            <ResumoPedidoCard
+              total={total}
+              quantidadeItens={itens.length}
+              onSalvar={handleSalvarAlteracoes}
+              onFinalizar={handleFinalizar}
+              onCancelar={handleCancelar}
             />
           </div>
-
-          <div className="border rounded shadow-sm bg-white p-3">
-            <h3 className="text-lg font-semibold mb-3">Itens do Pedido</h3>
-
-            {itens.length === 0 ? (
-              <p className="text-gray-500">Nenhum item no carrinho.</p>
-            ) : (
-              itens.map((item) => {
-                const estoqueDisponivel = item.variacao?.estoque_total ?? 0;
-                const emFalta = estoqueDisponivel < item.quantidade;
-                const emFaltaNoConsignado = itensEmFalta.includes(item.id);
-
-                return (
-                  <div
-                    key={item.id}
-                    className={`grid border-bottom pb-4 mb-4 transition-all duration-300 ${emFaltaNoConsignado ? 'border-red-500 bg-red-50' : ''}`}
-                  >
-                    <div className="col-12 md:col-3 flex justify-content-center">
-                      <img
-                        src={item.variacao?.produto?.imagem || '/placeholder.jpg'}
-                        alt={item.variacao?.nome_completo || 'Produto'}
-                        className="shadow-1 border-round"
-                        style={{ width: '100%', objectFit: 'cover' }}
-                      />
-                    </div>
-
-                    <div className="col-12 md:col-9">
-                      <div className="font-medium text-lg mb-1">{item.variacao?.produto?.nome || 'Produto'}</div>
-
-                      {Array.isArray(item.variacao?.atributos) && item.variacao.atributos.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mb-2">
-                          {item.variacao.atributos.map((attr, idx) => (
-                            <span key={idx} className="text-sm px-2 py-1 bg-blue-100 border-round">
-                              {attr.atributo}: {attr.valor}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-
-                      <div className="mb-2">
-                        <label className="text-sm block font-medium mb-1">Depósito de saída</label>
-                        <Dropdown
-                          value={item.id_deposito}
-                          options={depositosPorItem[item.id] || []}
-                          optionLabel="nome"
-                          optionValue="id"
-                          onChange={async (e) => {
-                            const novoDeposito = e.value;
-                            try {
-                              await api.post('/carrinho-itens/atualizar-deposito', {
-                                id_carrinho_item: item.id,
-                                id_deposito: novoDeposito
-                              });
-                              await carregarCarrinho(id);
-                            } catch (err) {
-                              toast.current?.show({
-                                severity: 'error',
-                                summary: 'Erro',
-                                detail: 'Não foi possível atualizar o depósito.',
-                              });
-                            }
-                          }}
-                          placeholder="Selecione o depósito"
-                          emptyMessage="Nenhum depósito disponível"
-                          className="w-full"
-                        />
-                      </div>
-
-                      <div className="flex align-items-center gap-3 mb-2">
-                        <InputNumber
-                          value={item.quantidade}
-                          min={0}
-                          onValueChange={(e) => handleAtualizarQuantidade(item, e.value)}
-                          showButtons
-                          buttonLayout="horizontal"
-                          decrementButtonClassName="p-button-text"
-                          incrementButtonClassName="p-button-text"
-                          inputStyle={{ width: 60 }}
-                        />
-                        <Button
-                          icon="pi pi-trash"
-                          className="p-button-sm p-button-text p-button-danger"
-                          onClick={() => {
-                            confirmDialog({
-                              message: 'Deseja remover este item?',
-                              header: 'Remover Item',
-                              icon: 'pi pi-exclamation-triangle',
-                              acceptLabel: 'Sim',
-                              rejectLabel: 'Cancelar',
-                              accept: () => removerItem(item.id),
-                            });
-                          }}
-                        />
-                      </div>
-
-                      {emFalta && (
-                        <div className="text-sm text-red-600 mb-2">
-                          Estoque insuficiente: disponível {estoqueDisponivel}
-                        </div>
-                      )}
-
-                      <div className="flex justify-content-between text-sm text-gray-700">
-                        <span>Unit: {formatarValor(item.preco_unitario)}</span>
-                        <span>Subtotal: {formatarValor(item.subtotal)}</span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
         </div>
-
-        <div className="col-12 md:col-4">
-          <div className="shadow-2 rounded p-4 bg-white sticky top-4">
-            <h3 className="text-lg font-semibold mb-3">Resumo do Pedido</h3>
-            <div className="flex justify-between mb-2">
-              <span className="text-sm">Total de itens: </span>
-              <span className="text-sm font-medium">{itens.length}</span>
-            </div>
-            <div className="flex justify-between mb-2">
-              <span className="text-sm">Valor total:</span>
-              <span className="text-lg font-bold text-green-700">{formatarValor(total)}</span>
-            </div>
-
-            <div className="mt-4 flex flex-column gap-2">
-              <Button
-                label="Salvar alterações"
-                icon="pi pi-save"
-                className="p-button-info w-full"
-                onClick={handleSalvarAlteracoes}
-              />
-              <Button
-                label="Finalizar Pedido"
-                icon="pi pi-check"
-                className="p-button-success w-full"
-                onClick={handleFinalizar}
-                disabled={itens.length === 0}
-              />
-              <Button
-                label="Cancelar Carrinho"
-                icon="pi pi-times"
-                className="p-button-danger w-full"
-                onClick={handleCancelar}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+      )}
     </SakaiLayout>
   );
 };
