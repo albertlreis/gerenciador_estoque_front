@@ -93,13 +93,14 @@ export const CarrinhoProvider = ({ children }) => {
     }
   };
 
-  const finalizarPedido = async ({ id_parceiro, observacoes }) => {
+  const finalizarPedido = async ({ id_parceiro, observacoes, id_usuario }) => {
     try {
       const response = await api.post('/pedidos', {
         id_carrinho: carrinhoAtual.id,
         id_cliente: carrinhoAtual.id_cliente,
         id_parceiro,
-        observacoes
+        observacoes,
+        id_usuario
       });
       setCarrinhoAtual(null);
       setItens([]);

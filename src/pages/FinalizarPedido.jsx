@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useCarrinho } from '../context/CarrinhoContext';
 import { useNavigate, useParams } from 'react-router-dom';
 import { InputTextarea } from 'primereact/inputtextarea';
-import { ProgressSpinner } from 'primereact/progressspinner';
 import { Toast } from 'primereact/toast';
 import { confirmDialog, ConfirmDialog } from 'primereact/confirmdialog';
 import SakaiLayout from '../layouts/SakaiLayout';
@@ -16,6 +15,7 @@ import ItemPedidoCard from '../components/ItemPedidoCard';
 import SelecionarEntidades from '../components/SelecionarEntidades';
 import ConsignacaoSection from '../components/ConsignacaoSection';
 import { formatarValor } from '../utils/formatters';
+import FinalizarPedidoSkeleton from "../components/skeletons/FinalizarPedidoSkeleton";
 
 const FinalizarPedido = () => {
   const { user } = useAuth();
@@ -243,9 +243,7 @@ const FinalizarPedido = () => {
       <ConfirmDialog />
 
       {loading ? (
-        <div className="flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
-          <ProgressSpinner />
-        </div>
+        <FinalizarPedidoSkeleton />
       ) : (
         <div className="grid p-4">
           <div className="col-12 md:col-8">
