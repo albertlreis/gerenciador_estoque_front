@@ -5,6 +5,7 @@ import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 import { confirmDialog } from 'primereact/confirmdialog';
+import { Panel } from 'primereact/panel';
 import isEqual from 'lodash/isEqual';
 
 import { useProdutoForm } from '../hooks/useProdutoForm';
@@ -29,7 +30,6 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
     variacoes, setVariacoes,
     existingImages, setExistingImages,
     loading, setLoading,
-    totalSize, setTotalSize,
     toastRef,
     fileUploadRef,
     atualizarDados,
@@ -124,52 +124,71 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
 
   return (
     <>
-      <Toast ref={toastRef} position="top-center" />
+      <Toast ref={toastRef} position="top-center"/>
 
       <form onSubmit={handleSubmit} className="p-fluid">
-        <div className="formgrid grid">
-          <div className="field md:col-8">
-            <label htmlFor="nome">Nome</label>
-            <InputText id="nome" value={nome} onChange={(e) => setNome(e.target.value)} />
-          </div>
+        <Panel header="Informações Gerais">
+          <div className="formgrid grid">
+            <div className="field md:col-8">
+              <label htmlFor="nome" className="font-bold">Nome *</label>
+              <InputText
+                id="nome"
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                required
+                placeholder="Digite o nome do produto"
+              />
+            </div>
 
-          <div className="field md:col-4">
-            <label htmlFor="categoria">Categoria</label>
-            <Dropdown
-              id="categoria"
-              value={idCategoria}
-              options={categorias}
-              onChange={(e) => setIdCategoria(e.value)}
-              optionLabel="nome"
-              optionValue="id"
-              placeholder="Selecione a categoria"
-              filter
-            />
-          </div>
+            <div className="field md:col-4">
+              <label htmlFor="categoria" className="font-bold">Categoria *</label>
+              <Dropdown
+                id="categoria"
+                value={idCategoria}
+                options={categorias}
+                onChange={(e) => setIdCategoria(e.value)}
+                optionLabel="nome"
+                optionValue="id"
+                placeholder="Selecione uma categoria"
+                filter
+                required
+              />
+            </div>
 
-          <div className="field col-12">
-            <label htmlFor="descricao">Descrição</label>
-            <InputTextarea
-              id="descricao"
-              value={descricao}
-              onChange={(e) => setDescricao(e.target.value)}
-              rows={3}
-            />
-          </div>
+            <div className="field col-12">
+              <label htmlFor="descricao" className="font-bold">Descrição</label>
+              <InputTextarea
+                id="descricao"
+                value={descricao}
+                onChange={(e) => setDescricao(e.target.value)}
+                rows={3}
+                autoResize
+                placeholder="Adicione uma descrição opcional"
+              />
+            </div>
 
-          <div className="field col-12 md:col-6">
-            <label htmlFor="fornecedor">Fornecedor</label>
-            <Dropdown
-              id="fornecedor"
-              value={idFornecedor}
-              options={fornecedores}
-              onChange={(e) => setIdFornecedor(e.value)}
-              optionLabel="nome"
-              optionValue="id"
-              placeholder="Selecione o fornecedor"
-              filter
-            />
+            <div className="field col-12 md:col-6">
+              <label htmlFor="fornecedor" className="font-bold">Fornecedor *</label>
+              <Dropdown
+                id="fornecedor"
+                value={idFornecedor}
+                options={fornecedores}
+                onChange={(e) => setIdFornecedor(e.value)}
+                optionLabel="nome"
+                optionValue="id"
+                placeholder="Selecione um fornecedor"
+                filter
+                required
+              />
+            </div>
           </div>
+        </Panel>
+
+        <Panel header="Variações do Produto" className="mt-4">
+          <p className="text-sm text-color-secondary mb-3">
+            Um mesmo móvel pode ter diferentes variações,
+            como <strong>cor</strong>, <strong>acabamento</strong> ou <strong>material</strong>.
+          </p>
 
           <ProdutoVariacoes
             variacoes={variacoes}
@@ -177,23 +196,38 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
             abrirDialogOutlet={abrirDialogOutlet}
             confirmarExcluirOutlet={confirmarExcluirOutlet}
           />
+        </Panel>
 
-          {produto?.id && (
+        {produto?.id && (
+          <Panel header="Imagens do Produto" className="mt-4">
+            <p className="text-sm text-color-secondary mb-3">
+              As imagens são compartilhadas entre todas as variações do produto.
+            </p>
+
             <ProdutoImagens
               produtoId={produto.id}
               existingImages={existingImages}
               setExistingImages={setExistingImages}
               toastRef={toastRef}
               fileUploadRef={fileUploadRef}
-              totalSize={totalSize}
-              setTotalSize={setTotalSize}
             />
-          )}
+          </Panel>
+        )}
 
-          <div className="field col-12 flex justify-content-end">
-            <Button label="Salvar" type="submit" icon="pi pi-check" loading={loading} className="mr-2" />
-            <Button label="Cancelar" type="button" icon="pi pi-times" className="p-button-secondary" onClick={onCancel} />
-          </div>
+        <div className="mt-4 flex justify-content-end gap-2">
+          <Button
+            label="Salvar"
+            type="submit"
+            icon="pi pi-check"
+            loading={loading}
+          />
+          <Button
+            label="Cancelar"
+            type="button"
+            icon="pi pi-times"
+            className="p-button-secondary"
+            onClick={onCancel}
+          />
         </div>
       </form>
 

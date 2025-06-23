@@ -1,10 +1,11 @@
 import React from 'react';
-import { Button } from 'primereact/button';
-import { FileUpload } from 'primereact/fileupload';
-import { Tag } from 'primereact/tag';
-import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
+import {Button} from 'primereact/button';
+import {FileUpload} from 'primereact/fileupload';
+import {Tag} from 'primereact/tag';
+import {ConfirmDialog, confirmDialog} from 'primereact/confirmdialog';
 import apiEstoque from '../../services/apiEstoque';
-import { MAX_IMAGE_SIZE, IMAGES_FOLDER } from './constantes';
+import {MAX_IMAGE_SIZE, IMAGES_FOLDER} from './constantes';
+import {Panel} from 'primereact/panel';
 
 const ProdutoImagens = ({
                           produtoId,
@@ -89,7 +90,7 @@ const ProdutoImagens = ({
         const response = await apiEstoque.post(
           `/produtos/${produtoId}/imagens`,
           formData,
-          { headers: { 'Content-Type': 'multipart/form-data' } }
+          {headers: {'Content-Type': 'multipart/form-data'}}
         );
 
         setExistingImages(prev => [...prev, response.data]);
@@ -114,11 +115,6 @@ const ProdutoImagens = ({
 
   return (
     <div className="field col-12">
-      <h4 className="mb-2">Imagens do Produto</h4>
-      <p className="text-sm text-color-secondary mb-3">
-        As imagens são compartilhadas entre todas as variações do produto.
-      </p>
-
       {existingImages.length === 0 ? (
         <div className="mb-3 text-color-secondary border-1 border-dashed surface-border border-round p-4 text-center">
           Nenhuma imagem enviada ainda.
@@ -129,7 +125,7 @@ const ProdutoImagens = ({
             <div
               key={img.id}
               className="relative border-1 surface-border border-round p-1"
-              style={{ width: '100px', height: '100px' }}
+              style={{width: '100px', height: '100px'}}
             >
               <img
                 src={getImageSrc(img.url)}
@@ -142,7 +138,7 @@ const ProdutoImagens = ({
                   value="Principal"
                   severity="info"
                   className="absolute top-0 left-0 m-1"
-                  style={{ fontSize: '10px' }}
+                  style={{fontSize: '10px'}}
                 />
               )}
 
@@ -150,7 +146,7 @@ const ProdutoImagens = ({
                 type="button"
                 icon="pi pi-times"
                 className="p-button-rounded p-button-danger p-button-sm absolute"
-                style={{ top: '-8px', right: '-8px' }}
+                style={{top: '-8px', right: '-8px'}}
                 onClick={() => confirmDelete(img)}
                 tooltip="Remover imagem"
               />
@@ -160,7 +156,7 @@ const ProdutoImagens = ({
                   type="button"
                   icon="pi pi-star"
                   className="p-button-rounded p-button-warning p-button-sm absolute"
-                  style={{ bottom: '-8px', right: '-8px' }}
+                  style={{bottom: '-8px', right: '-8px'}}
                   onClick={() => handleSetPrincipal(img.id)}
                   tooltip="Definir como principal"
                 />
@@ -187,7 +183,7 @@ const ProdutoImagens = ({
         }
       />
 
-      <ConfirmDialog />
+      <ConfirmDialog/>
     </div>
   );
 };
