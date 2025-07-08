@@ -13,6 +13,7 @@ import ProdutoVariacoes from './produto/ProdutoVariacoes';
 import ProdutoImagens from './produto/ProdutoImagens';
 import OutletFormDialog from './OutletFormDialog';
 import apiEstoque from '../services/apiEstoque';
+import ProdutoManualConservacao from "./produto/ProdutoManualConservacao";
 
 const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
   const [produto, setProduto] = useState(initialData);
@@ -24,6 +25,7 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
   const [largura, setLargura] = useState(initialData.largura || '');
   const [profundidade, setProfundidade] = useState(initialData.profundidade || '');
   const [peso, setPeso] = useState(initialData.peso || '');
+  const [manualArquivo, setManualArquivo] = useState(null);
 
   const {
     nome, setNome,
@@ -116,16 +118,19 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
     e.preventDefault();
     setLoading(true);
 
+    console.log(produto)
+
     try {
       const payload = {
-        nome: nome || null,
-        descricao: descricao || null,
-        id_categoria: idCategoria || null,
-        id_fornecedor: idFornecedor || null,
-        altura: altura || null,
-        largura: largura || null,
-        profundidade: profundidade || null,
-        peso: peso || null,
+        nome,
+        descricao,
+        id_categoria: idCategoria,
+        id_fornecedor: idFornecedor,
+        altura,
+        largura,
+        profundidade,
+        peso,
+        manualArquivo,
       };
 
       await onSubmit(payload);
@@ -136,7 +141,7 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
         detail: 'Informações gerais salvas com sucesso.',
         life: 3000
       });
-    } catch {
+    } catch (error) {
       toastRef.current?.show({
         severity: 'error',
         summary: 'Erro',
@@ -215,25 +220,33 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
             {/* Dimensões e Peso */}
             <div className="field col-6 md:col-3">
               <label htmlFor="altura" className="font-bold">Altura (cm)</label>
-              <InputText id="altura" value={altura} onChange={(e) => setAltura(e.target.value)} />
+              <InputText id="altura" value={altura} onChange={(e) => setAltura(e.target.value)}/>
             </div>
             <div className="field col-6 md:col-3">
               <label htmlFor="largura" className="font-bold">Largura (cm)</label>
-              <InputText id="largura" value={largura} onChange={(e) => setLargura(e.target.value)} />
+              <InputText id="largura" value={largura} onChange={(e) => setLargura(e.target.value)}/>
             </div>
             <div className="field col-6 md:col-3">
               <label htmlFor="profundidade" className="font-bold">Profundidade (cm)</label>
-              <InputText id="profundidade" value={profundidade} onChange={(e) => setProfundidade(e.target.value)} />
+              <InputText id="profundidade" value={profundidade} onChange={(e) => setProfundidade(e.target.value)}/>
             </div>
             <div className="field col-6 md:col-3">
               <label htmlFor="peso" className="font-bold">Peso (kg)</label>
-              <InputText id="peso" value={peso} onChange={(e) => setPeso(e.target.value)} />
+              <InputText id="peso" value={peso} onChange={(e) => setPeso(e.target.value)}/>
             </div>
+
+            <ProdutoManualConservacao
+              produto={produto}
+              manualArquivo={manualArquivo}
+              setManualArquivo={setManualArquivo}
+              toastRef={toastRef}
+            />
           </div>
 
           <div className="mt-3 flex justify-content-end gap-2">
-            <Button label="Salvar Dados" type="submit" icon="pi pi-check" loading={loading} />
-            <Button label="Cancelar" type="button" icon="pi pi-times" className="p-button-secondary" onClick={onCancel} />
+            <Button label="Salvar Dados" type="submit" icon="pi pi-check" loading={loading}/>
+            <Button label="Cancelar" type="button" icon="pi pi-times" className="p-button-secondary"
+                    onClick={onCancel}/>
           </div>
         </Panel>
 

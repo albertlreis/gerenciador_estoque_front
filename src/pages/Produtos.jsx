@@ -143,19 +143,94 @@ const Produtos = () => {
 
   const handleFormSubmit = async (produtoData) => {
     try {
-      let response;
-      if (editingProduto) {
-        response = await apiEstoque.put(`/produtos/${editingProduto.id}`, produtoData);
-        toast.current.show({ severity: 'success', summary: 'Sucesso', detail: 'Produto atualizado com sucesso', life: 3000 });
-      } else {
-        response = await apiEstoque.post('/produtos', produtoData);
-        setDialogTitle('Editar Produto');
-        toast.current.show({ severity: 'success', summary: 'Sucesso', detail: 'Produto cadastrado com sucesso', life: 3000 });
+      const formData = new FormData();
+
+      // Validação básica no front-end
+      if (!produtoData.nome || !produtoData.id_categoria) {
+        toast.current?.show({
+          severity: 'error',
+          summary: 'Erro',
+          detail: 'Preencha o nome e a categoria do produto.',
+          life: 4000
+        });
+        throw new Error('Campos obrigatórios ausentes');
       }
+
+      formData.append('nome', produtoData.nome);
+      formData.append('descricao', produtoData.descricao || '');
+      formData.append('id_categoria', produtoData.id_categoria);
+      formData.append('id_fornecedor', produtoData.id_fornecedor || '');
+      formData.append('altura', produtoData.altura || '');
+      formData.append('largura', produtoData.largura || '');
+      formData.append('profundidade', produtoData.profundidade || '');
+      formData.append('peso', produtoData.peso || '');
+
+      console.log(produtoData)
+
+      if (produtoData.manualArquivo instanceof File) {
+        if (produtoData.manualArquivo instanceof File) {
+          const allowedTypes = ['application/pdf'];
+          if (!allowedTypes.includes(produtoData.manualArquivo.type)) {
+            toast.current?.show({
+              severity: 'warn',
+              summary: 'Arquivo inválido',
+              detail: 'O manual deve ser um arquivo PDF.',
+              life: 4000,
+            });
+            return;
+          }
+
+          formData.append('manual_conservacao', produtoData.manualArquivo);
+        }
+
+        formData.append('manual_conservacao', produtoData.manualArquivo);
+      }
+
+      let response;
+
+      if (editingProduto) {
+        formData.append('_method', 'PUT');
+        response = await apiEstoque.post(`/produtos/${editingProduto.id}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        toast.current?.show({
+          severity: 'success',
+          summary: 'Sucesso',
+          detail: 'Produto atualizado com sucesso',
+          life: 3000
+        });
+      } else {
+        response = await apiEstoque.post('/produtos', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        toast.current?.show({
+          severity: 'success',
+          summary: 'Sucesso',
+          detail: 'Produto cadastrado com sucesso',
+          life: 3000
+        });
+      }
+
       await fetchProdutos();
+      // setShowDialog(false);
       return response;
     } catch (error) {
-      toast.current.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao salvar produto', life: 3000 });
+      if (error.response?.data?.errors) {
+        const mensagens = Object.values(error.response.data.errors).flat().join('\n');
+        toast.current?.show({
+          severity: 'error',
+          summary: 'Erro de Validação',
+          detail: mensagens,
+          life: 5000
+        });
+      } else {
+        toast.current?.show({
+          severity: 'error',
+          summary: 'Erro',
+          detail: 'Erro ao salvar produto',
+          life: 3000
+        });
+      }
       throw error;
     }
   };

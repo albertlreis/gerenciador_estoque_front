@@ -5,7 +5,6 @@ import {Tag} from 'primereact/tag';
 import {ConfirmDialog, confirmDialog} from 'primereact/confirmdialog';
 import apiEstoque from '../../services/apiEstoque';
 import {MAX_IMAGE_SIZE, IMAGES_FOLDER} from './constantes';
-import {Panel} from 'primereact/panel';
 
 const ProdutoImagens = ({
                           produtoId,
