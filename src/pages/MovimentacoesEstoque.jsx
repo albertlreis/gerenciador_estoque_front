@@ -21,10 +21,17 @@ const MovimentacoesEstoque = () => {
   const [totalEstoque, setTotalEstoque] = useState(0);
   const [firstEstoque, setFirstEstoque] = useState(0);
 
+  const [paginaMovs, setPaginaMovs] = useState(1);
+  const [firstMovs, setFirstMovs] = useState(0);
+  const [totalMovs, setTotalMovs] = useState(0);
+
   const [movimentacoes, setMovimentacoes] = useState([]);
   const [estoqueAtual, setEstoqueAtual] = useState([]);
   const [depositos, setDepositos] = useState([]);
-  const [loading, setLoading] = useState(false);
+
+  const [loadingEstoque, setLoadingEstoque] = useState(false);
+  const [loadingMovs, setLoadingMovs] = useState(false);
+
   const [resumo, setResumo] = useState({
     totalProdutos: 0,
     totalPecas: 0,
@@ -59,17 +66,30 @@ const MovimentacoesEstoque = () => {
   }, []);
 
   useEffect(() => {
-    const savedFilters = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (savedFilters) {
-      fetchDados();
-    }
+    fetchEstoqueAtual();
   }, [paginaEstoque]);
 
-  const fetchDados = async () => {
-    setLoading(true);
+  useEffect(() => {
+    fetchMovimentacoes();
+  }, [paginaMovs]);
+
+  useEffect(() => {
+    const depositoId = searchParams.get('deposito');
+    const savedFilters = localStorage.getItem(LOCAL_STORAGE_KEY);
+
+    if (savedFilters) {
+      setFiltros(JSON.parse(savedFilters));
+    } else if (depositoId) {
+      setFiltros((prev) => ({ ...prev, deposito: parseInt(depositoId) }));
+    }
+
+    fetchDepositos();
+  }, []);
+
+  const fetchEstoqueAtual = async () => {
+    setLoadingEstoque(true);
     try {
-      const formatDate = (d) =>
-        d instanceof Date ? d.toISOString().split('T')[0] : null;
+      const formatDate = (d) => d instanceof Date ? d.toISOString().split('T')[0] : null;
 
       const filtroParams = {
         ...filtros,
@@ -81,26 +101,56 @@ const MovimentacoesEstoque = () => {
         per_page: 10,
       };
 
-      const [movsRes, estoqueRes, resumoRes] = await Promise.all([
-        apiEstoque.get('/estoque/movimentacoes', { params: filtroParams }),
+      const [estoqueRes, resumoRes] = await Promise.all([
         apiEstoque.get('/estoque/atual', { params: filtroParams }),
         apiEstoque.get('/estoque/resumo', { params: filtroParams }),
       ]);
 
-      setMovimentacoes(movsRes.data);
       setEstoqueAtual(estoqueRes.data.data);
-      setTotalEstoque(estoqueRes.data.total);
+      setTotalEstoque(estoqueRes.data.meta?.total || 0);
       setResumo(resumoRes.data);
-
     } catch (err) {
       toast.current.show({
         severity: 'error',
         summary: 'Erro',
-        detail: 'Erro ao carregar dados de estoque',
+        detail: 'Erro ao carregar estoque atual',
         life: 3000,
       });
     } finally {
-      setLoading(false);
+      setLoadingEstoque(false);
+    }
+  };
+
+  const fetchMovimentacoes = async () => {
+    setLoadingMovs(true);
+    try {
+      const formatDate = (d) => d instanceof Date ? d.toISOString().split('T')[0] : null;
+
+      const filtroParams = {
+        ...filtros,
+        periodo:
+          filtros.periodo?.length === 2 && filtros.periodo[1]
+            ? [formatDate(filtros.periodo[0]), formatDate(filtros.periodo[1])]
+            : null,
+        page: paginaMovs,
+        per_page: 10,
+      };
+
+      const movsRes = await apiEstoque.get('/estoque/movimentacoes', {
+        params: filtroParams,
+      });
+
+      setMovimentacoes(movsRes.data.data);
+      setTotalMovs(movsRes.data.meta?.total || 0);
+    } catch (err) {
+      toast.current.show({
+        severity: 'error',
+        summary: 'Erro',
+        detail: 'Erro ao carregar movimentações',
+        life: 3000,
+      });
+    } finally {
+      setLoadingMovs(false);
     }
   };
 
@@ -184,9 +234,11 @@ const MovimentacoesEstoque = () => {
                 onClick={() => {
                   localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(filtros));
                   setPaginaEstoque(1);
+                  setPaginaMovs(1);
                   setFirstEstoque(0);
-                  setPaginaEstoque(1);
-                  fetchDados();
+                  setFirstMovs(0);
+                  fetchEstoqueAtual();
+                  fetchMovimentacoes();
                 }}
               />
               <Button
@@ -234,7 +286,7 @@ const MovimentacoesEstoque = () => {
           <h3 className="mb-3">Estoque Atual por Produto e Depósito</h3>
           <DataTable
             value={estoqueAtual}
-            loading={loading}
+            loading={loadingEstoque}
             paginator
             first={firstEstoque}
             rows={10}
@@ -272,14 +324,21 @@ const MovimentacoesEstoque = () => {
           <h3 className="mb-3">Movimentações Recentes</h3>
           <DataTable
             value={movimentacoes}
-            loading={loading}
+            loading={loadingMovs}
             paginator
             rows={10}
+            first={firstMovs}
+            totalRecords={totalMovs}
+            onPage={(e) => {
+              setPaginaMovs(e.page + 1);
+              setFirstMovs(e.first);
+            }}
+            lazy
             responsiveLayout="scroll"
             emptyMessage="Nenhuma movimentação encontrada"
           >
-            <Column field="data_movimentacao" header="Data"/>
-            <Column field="produto_nome" header="Produto"/>
+            <Column field="data_movimentacao" header="Data" />
+            <Column field="produto_nome" header="Produto" />
             <Column
               header="Movimentação"
               body={(rowData) => {
@@ -297,19 +356,19 @@ const MovimentacoesEstoque = () => {
                 if (rowData.tipo === 'transferencia') {
                   return (
                     <span>
-                      <i className="pi pi-refresh text-primary mr-1" />
-                                  {origem} → {destino}
-                    </span>
+            <i className="pi pi-refresh text-primary mr-1" />
+                      {origem} → {destino}
+          </span>
                   );
                 }
 
                 return `${origem} → ${destino}`;
               }}
             />
-
-            <Column field="tipo" header="Tipo" body={(row) => tipoTemplate(row.tipo)}/>
-            <Column field="quantidade" header="Quantidade"/>
+            <Column field="tipo" header="Tipo" body={(row) => tipoTemplate(row.tipo)} />
+            <Column field="quantidade" header="Quantidade" />
           </DataTable>
+
         </div>
 
       </div>

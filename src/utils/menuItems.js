@@ -99,7 +99,7 @@ const menuItems = (navigate, has) => {
         {
           label: 'Movimentações de Estoque',
           key: 'estoque-movimentacoes',
-          icon: 'pi pi-fw pi-exchange',
+          icon: 'pi pi-fw pi-sort-alt',
           command: () => navigate('/movimentacoes-estoque')
         }
       ]
