@@ -25,9 +25,9 @@ export const usePedidos = (filtros) => {
       }
 
       const response = await apiEstoque.get('/pedidos', { params });
-      setPedidos(response.data.data);
-      setTotal(response.data.total);
-      setPaginaAtual(response.data.current_page);
+      setPedidos(response.data.original.data);
+      setTotal(response.data.original.meta.total);
+      setPaginaAtual(response.data.original.meta.current_page);
     } catch (e) {
       console.error('Erro ao carregar pedidos', e);
       setPedidos([]);
