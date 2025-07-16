@@ -97,6 +97,28 @@ const PedidoFabricaForm = ({ visible, onHide, onSave, pedidoEditavel = null }) =
     }, 300);
   };
 
+  const buscarPedidos = async (termo) => {
+    if (!termo || termo.length < 2) return [];
+
+    try {
+      const {data} = await apiEstoque.get('/pedidos', {
+        params: { busca: termo }
+      });
+
+      console.log(data)
+
+      const pedidos = data?.original?.data || [];
+      
+      return pedidos.map(p => ({
+        id: p.id,
+        label: `Pedido #${p.numero_externo || p.id} - ${p.cliente?.nome ?? 'Sem cliente'}`
+      }));
+    } catch (error) {
+      console.warn('Erro ao buscar pedidos:', error);
+      return [];
+    }
+  };
+
   const adicionarItem = () => {
     setItens([...itens, {
       produto_variacao_id: null,
@@ -154,95 +176,120 @@ const PedidoFabricaForm = ({ visible, onHide, onSave, pedidoEditavel = null }) =
         }
       >
         {carregandoPedido ? (
-          <p>Carregando pedido...</p>
+          <div className="flex flex-column gap-3 p-3">
+            <div className="surface-100 border-round h-3rem w-10"></div>
+            <div className="surface-100 border-round h-6rem w-full"></div>
+            <div className="surface-100 border-round h-8rem w-full"></div>
+          </div>
         ) : (
           <>
-            <div className="p-fluid mb-3">
-              <label>Previsão de Entrega</label>
-              <Calendar value={dataPrevisao} onChange={(e) => setDataPrevisao(e.value)} dateFormat="dd/mm/yy" showIcon />
+            <div className="p-fluid mb-4">
+              <div className="flex align-items-center gap-2 mb-2">
+                <i className="pi pi-calendar text-xl text-primary" />
+                <label className="font-bold">Previsão de Entrega</label>
+              </div>
+              <Calendar value={dataPrevisao} onChange={(e) => setDataPrevisao(e.value)} dateFormat="dd/mm/yy" showIcon className="w-full" />
             </div>
 
-            <div className="p-fluid mb-3">
-              <label>Observações</label>
-              <InputTextarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} rows={3} />
+            <div className="p-fluid mb-4">
+              <div className="flex align-items-center gap-2 mb-2">
+                <i className="pi pi-comment text-xl text-primary" />
+                <label className="font-bold">Observações</label>
+              </div>
+              <InputTextarea value={observacoes} onChange={(e) => setObservacoes(e.target.value)} rows={3} className="w-full" />
             </div>
 
-            <h5>Itens do Pedido</h5>
+            <div className="flex align-items-center gap-2 mb-3">
+              <i className="pi pi-box text-xl text-primary" />
+              <h5 className="m-0">Itens do Pedido</h5>
+            </div>
+
             {itens.map((item, idx) => (
-              <div key={idx} className="grid mb-2 align-items-center">
-                <div className="col-4">
-                  <AutoComplete
-                    value={item.produto_variacao_nome || ''}
-                    suggestions={sugestoes}
-                    completeMethod={buscarSugestoes}
-                    field="nome_completo"
-                    dropdown
-                    placeholder="Buscar variação"
-                    className="w-full"
-                    onChange={(e) => atualizarItem(idx, 'produto_variacao_nome', e.value)}
-                    onSelect={(e) => {
-                      atualizarItem(idx, 'produto_variacao_id', e.value.id);
-                      atualizarItem(idx, 'produto_variacao_nome', e.value.nome_completo);
-                    }}
-                  />
-                </div>
+              <div key={idx} className="surface-card border-round shadow-1 p-3 mb-3">
+                <div className="grid formgrid align-items-center">
+                  <div className="field col-12 md:col-5">
+                    <label>Variação do Produto</label>
+                    <AutoComplete
+                      value={item.produto_variacao_nome || ''}
+                      suggestions={sugestoes}
+                      completeMethod={buscarSugestoes}
+                      field="nome_completo"
+                      dropdown
+                      placeholder="Buscar variação"
+                      className="w-full"
+                      onChange={(e) => atualizarItem(idx, 'produto_variacao_nome', e.value)}
+                      onSelect={(e) => {
+                        atualizarItem(idx, 'produto_variacao_id', e.value.id);
+                        atualizarItem(idx, 'produto_variacao_nome', e.value.nome_completo);
+                      }}
+                    />
+                  </div>
 
-                <div className="col-2">
-                  <InputText
-                    type="number"
-                    value={item.quantidade}
-                    onChange={(e) => atualizarItem(idx, 'quantidade', Math.max(1, parseInt(e.target.value) || 1))}
-                    placeholder="Qtd"
-                  />
-                </div>
+                  <div className="field col-12 md:col-2">
+                    <label>Quantidade</label>
+                    <InputText
+                      type="number"
+                      value={item.quantidade}
+                      onChange={(e) => atualizarItem(idx, 'quantidade', Math.max(1, parseInt(e.target.value) || 1))}
+                      className="w-full"
+                    />
+                  </div>
 
-                <div className="col-3">
-                  <Dropdown
-                    value={item.deposito_id}
-                    options={depositos}
-                    onChange={(e) => atualizarItem(idx, 'deposito_id', e.value)}
-                    placeholder="Depósito"
-                    className="w-full"
-                  />
-                </div>
+                  <div className="field col-12 md:col-3">
+                    <label>Depósito</label>
+                    <Dropdown
+                      value={item.deposito_id}
+                      options={depositos}
+                      onChange={(e) => atualizarItem(idx, 'deposito_id', e.value)}
+                      placeholder="Depósito"
+                      className="w-full"
+                    />
+                  </div>
 
-                <div className="col-8 mt-2">
-                  <AutoComplete
-                    value={item.pedido_venda_label || ''}
-                    suggestions={item.sugestoesPedidos || []}
-                    completeMethod={async (e) => {
-                      try {
-                        const { data } = await apiEstoque.get('/pedidos', { params: { search: e.query } });
-                        const sugestoes = data.map(p => ({
-                          id: p.id,
-                          label: `Pedido #${p.id} - ${p.cliente?.nome ?? 'Sem cliente'}`
-                        }));
+                  <div className="field col-12 md:col-10">
+                    <label>Pedido de Venda (opcional)</label>
+                    <AutoComplete
+                      value={item.pedido_venda_label || ''}
+                      suggestions={item.sugestoesPedidos || []}
+                      completeMethod={async (e) => {
+                        const sugestoes = await buscarPedidos(e.query);
                         atualizarItem(idx, 'sugestoesPedidos', sugestoes);
-                      } catch {
-                        toast.current.show({ severity: 'warn', summary: 'Erro', detail: 'Erro ao buscar pedidos' });
-                      }
-                    }}
-                    field="label"
-                    dropdown
-                    placeholder="Pedido de Venda (opcional)"
-                    className="w-full"
-                    onChange={(e) => atualizarItem(idx, 'pedido_venda_label', e.value)}
-                    onSelect={(e) => {
-                      atualizarItem(idx, 'pedido_venda_id', e.value.id);
-                      atualizarItem(idx, 'pedido_venda_label', e.value.label);
-                    }}
-                  />
-                </div>
+                      }}
+                      field="label"
+                      dropdown
+                      placeholder="Pedido de Venda"
+                      className="w-full"
+                      onChange={(e) => atualizarItem(idx, 'pedido_venda_label', e.value)}
+                      onSelect={(e) => {
+                        atualizarItem(idx, 'pedido_venda_id', e.value.id);
+                        atualizarItem(idx, 'pedido_venda_label', e.value.label);
+                      }}
+                    />
+                  </div>
 
-                <div className="col-1 flex align-items-center">
-                  <Button icon="pi pi-trash" className="p-button-danger p-button-sm" onClick={() => removerItem(idx)} />
+                  <div className="field col-12 md:col-2 flex align-items-end justify-content-end">
+                    <Button
+                      icon="pi pi-trash"
+                      className="p-button-danger p-button-text"
+                      onClick={() => removerItem(idx)}
+                      tooltip="Remover item"
+                    />
+                  </div>
                 </div>
               </div>
             ))}
 
-            <Button label="Adicionar Item" icon="pi pi-plus" className="p-button-text mt-3" onClick={adicionarItem} />
+            <div className="flex justify-content-end mt-2 mb-4">
+              <Button
+                label="Adicionar Item"
+                icon="pi pi-plus"
+                className="p-button-sm p-button-outlined p-button-primary"
+                onClick={adicionarItem}
+              />
+            </div>
           </>
         )}
+
       </Dialog>
     </>
   );

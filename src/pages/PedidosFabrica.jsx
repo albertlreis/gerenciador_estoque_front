@@ -47,16 +47,18 @@ const PedidosFabrica = () => {
   };
 
   const alterarStatus = (pedido) => {
+    const proximo = proximoStatus(pedido.status);
+    const proximoLabel = statusOpcoes.find(s => s.value === proximo)?.label || proximo;
+
     confirmDialog({
-      message: `Deseja alterar o status do pedido #${pedido.id}?`,
+      message: `Deseja alterar o status do pedido #${pedido.id} para *${proximoLabel}*?`,
       header: 'Alterar Status',
       acceptLabel: 'Sim',
       rejectLabel: 'Cancelar',
       accept: async () => {
         try {
-          const proximo = proximoStatus(pedido.status);
           await apiEstoque.patch(`/pedidos-fabrica/${pedido.id}/status`, { status: proximo });
-          toast.current.show({ severity: 'success', summary: 'Status atualizado', detail: `Novo status: ${proximo}` });
+          toast.current.show({ severity: 'success', summary: 'Status atualizado', detail: `Novo status: ${proximoLabel}` });
           carregarPedidos();
         } catch {
           toast.current.show({ severity: 'error', summary: 'Erro', detail: 'Falha ao alterar status' });
@@ -64,6 +66,26 @@ const PedidosFabrica = () => {
       }
     });
   };
+
+  const cancelarPedido = (pedido) => {
+    confirmDialog({
+      message: `Tem certeza que deseja cancelar o pedido #${pedido.id}? Esta ação não poderá ser desfeita.`,
+      header: 'Cancelar Pedido',
+      acceptLabel: 'Sim, Cancelar',
+      rejectLabel: 'Não',
+      icon: 'pi pi-exclamation-triangle',
+      accept: async () => {
+        try {
+          await apiEstoque.patch(`/pedidos-fabrica/${pedido.id}/status`, { status: 'cancelado' });
+          toast.current.show({ severity: 'warn', summary: 'Pedido Cancelado', detail: `Pedido #${pedido.id} foi cancelado.` });
+          carregarPedidos();
+        } catch {
+          toast.current.show({ severity: 'error', summary: 'Erro', detail: 'Falha ao cancelar o pedido' });
+        }
+      }
+    });
+  };
+
 
   const proximoStatus = (atual) => {
     const ordem = ['pendente', 'produzindo', 'entregue'];
@@ -106,8 +128,21 @@ const PedidosFabrica = () => {
   };
 
   const statusTemplate = (rowData) => {
-    const label = statusOpcoes.find(s => s.value === rowData.status)?.label;
-    return <span className="capitalize">{label}</span>;
+    const status = rowData?.status;
+    const statusInfo = {
+      pendente: { label: 'Pendente', icon: 'pi-clock', className: 'bg-gray-200 text-gray-800' },
+      produzindo: { label: 'Produzindo', icon: 'pi-cog', className: 'bg-blue-200 text-blue-800' },
+      entregue: { label: 'Entregue', icon: 'pi-check', className: 'bg-green-200 text-green-800' },
+      cancelado: { label: 'Cancelado', icon: 'pi-times', className: 'bg-red-200 text-red-800' },
+    };
+
+    const { label, icon, className } = statusInfo[status] ?? { label: status, icon: '', className: '' };
+
+    return (
+      <span className={`inline-flex align-items-center gap-2 px-2 py-1 border-round text-sm font-semibold ${className}`}>
+      <i className={`pi ${icon}`} /> {label}
+    </span>
+    );
   };
 
   const previsaoTemplate = (rowData) => formatarDataIsoParaBR(rowData.data_previsao_entrega);
@@ -117,26 +152,35 @@ const PedidosFabrica = () => {
   const acoesTemplate = (rowData) => (
     <div className="flex gap-2">
       <Button
+        icon="pi pi-eye"
+        className="p-button-sm p-button-secondary"
+        tooltip="Detalhes"
+        onClick={() => abrirDetalhes(rowData.id)}
+      />
+
+      <Button
         icon="pi pi-pencil"
         className="p-button-sm p-button-info"
         tooltip="Editar"
         onClick={() => editarPedido(rowData)}
       />
-      <Button
-        icon="pi pi-sync"
-        className="p-button-sm p-button-warning"
-        tooltip="Alterar Status"
-        onClick={() => alterarStatus(rowData)}
-      />
+      {rowData.status !== 'entregue' && rowData.status !== 'cancelado' && (
+        <>
+          <Button
+            icon="pi pi-sync"
+            className="p-button-sm p-button-warning"
+            tooltip="Avançar Status"
+            onClick={() => alterarStatus(rowData)}
+          />
+          <Button
+            icon="pi pi-times"
+            className="p-button-sm p-button-danger"
+            tooltip="Cancelar Pedido"
+            onClick={() => cancelarPedido(rowData)}
+          />
+        </>
+      )}
     </div>
-  );
-
-  const detalhesTemplate = (rowData) => (
-    <Button
-      icon="pi pi-eye"
-      className="p-button-text p-button-sm"
-      onClick={() => abrirDetalhes(rowData.id)}
-    />
   );
 
   const header = (
@@ -175,7 +219,6 @@ const PedidosFabrica = () => {
           <Column header="Previsão Entrega" body={previsaoTemplate} />
           <Column header="Total de Itens" body={totalItensTemplate} />
           <Column header="Observações" field="observacoes" />
-          <Column header="Detalhes" body={detalhesTemplate} style={{ width: '100px' }} />
           <Column header="Ações" body={acoesTemplate} style={{ width: '120px' }} />
         </DataTable>
       </div>
@@ -188,31 +231,63 @@ const PedidosFabrica = () => {
       />
 
       <Dialog
-        header={`Pedido #${pedidoDetalhado?.id}`}
+        header={`Detalhes do Pedido #${pedidoDetalhado?.id}`}
         visible={!!pedidoDetalhado}
         onHide={() => setPedidoDetalhado(null)}
-        style={{ width: '50vw' }}
+        style={{ width: '60vw' }}
+        className="p-fluid"
+        modal
       >
-        <div className="mb-3">
-          <strong>Status:</strong> {statusOpcoes.find(s => s.value === pedidoDetalhado?.status)?.label}
-          <br />
-          <strong>Previsão:</strong> {formatarDataIsoParaBR(pedidoDetalhado?.data_previsao_entrega)}
-          <br />
-          <strong>Observações:</strong> {pedidoDetalhado?.observacoes}
+        <div className="mb-4">
+          <div className="flex flex-column gap-2 mb-2">
+            <div className="flex gap-2 align-items-center">
+              <i className="pi pi-tags text-primary" />
+              <span>
+          <strong>Status:</strong>{' '}
+                {statusTemplate(pedidoDetalhado)}
+        </span>
+            </div>
+            <div className="flex gap-2 align-items-center">
+              <i className="pi pi-calendar text-primary" />
+              <span>
+          <strong>Previsão:</strong>{' '}
+                {formatarDataIsoParaBR(pedidoDetalhado?.data_previsao_entrega)}
+        </span>
+            </div>
+            <div className="flex gap-2 align-items-center">
+              <i className="pi pi-align-left text-primary" />
+              <span>
+          <strong>Observações:</strong> {pedidoDetalhado?.observacoes || '—'}
+        </span>
+            </div>
+          </div>
         </div>
 
-        <h5>Itens do Pedido</h5>
-        <ul className="pl-3">
-          {pedidoDetalhado?.itens?.map((item, idx) => (
-            <li key={idx} className="mb-2">
-              <strong>{item.variacao.produto?.nome}</strong> – {item.quantidade} und
-              <br />
-              <small>{item.variacao.atributos?.map(a => a.valor).join(', ')}</small>
-              {item.observacoes && <><br /><em>Obs: {item.observacoes}</em></>}
-            </li>
-          ))}
-        </ul>
+        <h5 className="mt-4 mb-2">Itens do Pedido</h5>
+        <DataTable value={pedidoDetalhado?.itens || []} responsiveLayout="stack">
+          <Column
+            header="Produto"
+            body={(item) => (
+              <div className="flex flex-column">
+                <strong>{item.variacao.produto?.nome ?? '—'}</strong>
+                <small className="text-500">
+                  {item.variacao.atributos?.map((a) => a.valor).join(', ') || '—'}
+                </small>
+              </div>
+            )}
+          />
+          <Column
+            header="Quantidade"
+            body={(item) => `${item.quantidade} und`}
+            style={{ width: '120px' }}
+          />
+          <Column
+            header="Observações"
+            body={(item) => item.observacoes || '—'}
+          />
+        </DataTable>
       </Dialog>
+
     </SakaiLayout>
   );
 };
