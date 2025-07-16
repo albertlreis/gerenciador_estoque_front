@@ -31,6 +31,7 @@ import PermissaoRoute from './routes/PermissaoRoute';
 import {PERMISSOES} from './constants/permissoes';
 import ComCarrinho from "./routes/ComCarrinho";
 import useCheckVersion from "./hooks/useCheckVersion";
+import Reservas from "./pages/Reservas";
 
 const renderProtectedRoute = (element, permissoes) => (
   <PrivateRoute element={<PermissaoRoute element={element} permissoes={permissoes}/>}/>
@@ -74,6 +75,10 @@ const App = () => {
       <Route path="/pedidos" element={renderProtectedRoute(<Pedidos/>, PERMISSOES.PEDIDOS.VISUALIZAR)}/>
       <Route path="/pedidos/importar"
              element={renderProtectedRoute(<ImportacaoPedidos/>, PERMISSOES.PEDIDOS.IMPORTAR)}/>
+      <Route
+        path="/reservas"
+        element={renderProtectedRoute(<Reservas />, PERMISSOES.PEDIDOS.VISUALIZAR)}
+      />
       <Route path="/perfis" element={renderProtectedRoute(<Perfis/>, PERMISSOES.PERFIS.VISUALIZAR)}/>
       <Route path="/permissoes" element={renderProtectedRoute(<Permissoes/>, PERMISSOES.PERMISSOES.VISUALIZAR)}/>
       <Route path="/produto-variacoes"

@@ -101,6 +101,12 @@ const menuItems = (navigate, has) => {
           key: 'estoque-movimentacoes',
           icon: 'pi pi-fw pi-sort-alt',
           command: () => navigate('/movimentacoes-estoque')
+        },
+        {
+          label: 'Reservas Pendentes',
+          key: 'estoque-reservas',
+          icon: 'pi pi-fw pi-clock',
+          command: () => navigate('/reservas')
         }
       ]
     },
