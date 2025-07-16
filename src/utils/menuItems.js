@@ -107,6 +107,12 @@ const menuItems = (navigate, has) => {
           key: 'estoque-reservas',
           icon: 'pi pi-fw pi-clock',
           command: () => navigate('/reservas')
+        },
+        {
+          label: 'Pedidos Fábrica',
+          key: 'estoque-pedidos-fabrica',
+          icon: 'pi pi-fw pi-send',
+          command: () => navigate('/pedidos-fabrica')
         }
       ]
     },

@@ -50,9 +50,6 @@ const Reservas = () => {
   const header = (
     <div className="flex justify-between">
       <h2 className="m-0">Reservas de Produtos com Entrega Pendente</h2>
-      <span className="p-input-icon-left">
-        <i className="pi pi-search" />
-      </span>
     </div>
   );
 
