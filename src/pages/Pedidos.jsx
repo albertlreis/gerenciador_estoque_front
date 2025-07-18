@@ -199,6 +199,24 @@ export default function PedidosListagem() {
           ))}
           <Column
             header=""
+            body={(row) => {
+              return row.tem_devolucao
+                ? (
+                  <Tag
+                    value="Devolução/Troca"
+                    icon="pi pi-exchange"
+                    severity="warning"
+                    className="text-xs px-2 py-1"
+                    title="Este pedido possui devoluções ou trocas"
+                  />
+                )
+                : null;
+            }}
+            style={{ minWidth: '140px' }}
+          />
+
+          <Column
+            header=""
             body={(row) => (
               <Button
                 icon="pi pi-refresh"

@@ -16,6 +16,16 @@ export default function DialogDevolucao({ pedido, onHide, onSucesso }) {
   const toast = React.useRef(null);
 
   useEffect(() => {
+    const listener = (e) => {
+      if (e.detail?.id === pedido?.id) {
+        setVisible(true);
+      }
+    };
+    window.addEventListener('abrir-dialog-devolucao', listener);
+    return () => window.removeEventListener('abrir-dialog-devolucao', listener);
+  }, [pedido]);
+
+  useEffect(() => {
     if (pedido?.itens) {
       setItens(
         pedido.itens.map((item) => ({

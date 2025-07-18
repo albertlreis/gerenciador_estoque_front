@@ -120,6 +120,44 @@ const PedidoDetalhado = ({ visible, onHide, pedido }) => {
         )}
       </div>
 
+      <h4 className="mt-4 mb-2">🔁 Trocas e Créditos</h4>
+
+      {pedido.devolucoes?.length > 0 ? pedido.devolucoes.map((dev, i) => (
+        <div key={i} className="mb-3 border-1 p-3 border-round surface-border">
+          <div className="mb-1 text-sm">
+            <strong>Tipo:</strong> {dev.tipo === 'troca' ? 'Troca' : 'Crédito em loja'}<br/>
+            <strong>Status:</strong> {dev.status}<br/>
+            <strong>Motivo:</strong> {dev.motivo}
+          </div>
+
+          {dev.itens.map((item, j) => (
+            <div key={j} className="text-sm pl-2 mb-2">
+              • Devolvido: <strong>{item.nome_produto}</strong> ({item.quantidade})
+              {item.trocas?.length > 0 && (
+                <div className="ml-3">
+                  {item.trocas.map((troca, k) => (
+                    <div key={k}>
+                      → Trocado por: <strong>{troca.nome_completo}</strong> ({troca.quantidade}) — {formatarReal(troca.preco_unitario)}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+
+          {dev.credito && (
+            <div className="mt-2 text-sm text-green-700">
+              💰 Crédito gerado: <strong>{formatarReal(dev.credito.valor)}</strong>
+              {dev.credito.utilizado ? ' (utilizado)' : ' (disponível)'}
+              {dev.credito.data_validade && <> — válido até {new Date(dev.credito.data_validade).toLocaleDateString('pt-BR')}</>}
+            </div>
+          )}
+        </div>
+      )) : (
+        <div className="text-sm text-gray-500">Nenhuma devolução registrada.</div>
+      )}
+
+
       {pedido.historico?.length > 0 && (
         <>
           <h4 className="mt-4 mb-2">🕓 Histórico de Status</h4>
