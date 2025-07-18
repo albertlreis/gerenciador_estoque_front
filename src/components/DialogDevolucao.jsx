@@ -27,6 +27,12 @@ export default function DialogDevolucao({ pedido, onHide, onSucesso }) {
 
   useEffect(() => {
     if (pedido?.itens) {
+      const trocadosIds = new Set(
+        pedido.devolucoes
+          ?.filter((dev) => dev.tipo === 'troca')
+          .flatMap((dev) => dev.itens.map((item) => item.pedido_item_id))
+      );
+
       setItens(
         pedido.itens.map((item) => ({
           ...item,
@@ -34,6 +40,7 @@ export default function DialogDevolucao({ pedido, onHide, onSucesso }) {
           quantidade: 1,
           trocas: [],
           variacoesDisponiveis: [],
+          jaTrocado: trocadosIds.has(item.id)
         }))
       );
     }
@@ -70,6 +77,27 @@ export default function DialogDevolucao({ pedido, onHide, onSucesso }) {
       return;
     }
 
+    for (const item of selecionados) {
+      if (item.jaTrocado) {
+        toast.current?.show({
+          severity: 'warn',
+          summary: 'Item já foi trocado',
+          detail: `O item "${item.nome_produto}" já foi trocado anteriormente e não pode ser trocado novamente.`,
+        });
+        return;
+      }
+
+      const totalTrocado = quantidadeTrocada(item.trocas);
+      if (tipo === 'troca' && totalTrocado > item.quantidade) {
+        toast.current?.show({
+          severity: 'warn',
+          summary: 'Quantidade trocada excede a comprada',
+          detail: `O item "${item.nome_produto}" não pode ser trocado por uma quantidade maior que ${item.quantidade}.`,
+        });
+        return;
+      }
+    }
+
     const payload = {
       pedido_id: pedido.id,
       tipo,
@@ -102,6 +130,10 @@ export default function DialogDevolucao({ pedido, onHide, onSucesso }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const quantidadeTrocada = (trocas) => {
+    return trocas.reduce((total, t) => total + (t.quantidade || 0), 0);
   };
 
   return (
@@ -148,24 +180,44 @@ export default function DialogDevolucao({ pedido, onHide, onSucesso }) {
 
         <h4 className="mb-2">Itens do Pedido</h4>
         {itens.map((item, idx) => (
-          <div key={idx} className="mb-3 border-1 p-3 border-round surface-border">
+          <div
+            key={idx}
+            className={`mb-3 border-2 p-3 border-round surface-border ${
+              item.jaTrocado
+                ? 'border-yellow-500'
+                : item.devolve && tipo === 'troca' && quantidadeTrocada(item.trocas) > item.quantidade
+                  ? 'border-red-500'
+                  : ''
+            }`}
+          >
             <div className="flex align-items-center justify-content-between mb-2">
               <div className="flex align-items-center gap-3">
                 <img
                   src={item.imagem ?? '/placeholder.jpg'}
                   alt={item.nome_produto}
-                  style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '6px' }}
+                  style={{
+                    width: '60px',
+                    height: '60px',
+                    objectFit: 'cover',
+                    borderRadius: '6px',
+                  }}
                 />
                 <div>
                   <div className="font-semibold">{item.nome_produto}</div>
                   <div className="text-sm text-gray-600">Ref: {item.referencia}</div>
                   <div className="text-sm text-gray-600">Qtd: {item.quantidade}</div>
+                  {item.jaTrocado && (
+                    <div className="mt-2 text-sm text-yellow-800 font-medium">
+                      ⚠ Este item já foi trocado anteriormente.
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="flex align-items-center gap-2">
                 <input
                   type="checkbox"
                   checked={item.devolve}
+                  disabled={item.jaTrocado}
                   onChange={(e) => {
                     const novos = [...itens];
                     novos[idx].devolve = e.target.checked;
@@ -190,6 +242,12 @@ export default function DialogDevolucao({ pedido, onHide, onSucesso }) {
                     setItens(novos);
                   }}
                 />
+
+                {quantidadeTrocada(item.trocas) > item.quantidade && (
+                  <div className="mt-1 text-red-600 text-sm">
+                    ⚠ A quantidade trocada excede a quantidade comprada ({item.quantidade})
+                  </div>
+                )}
 
                 {tipo === 'troca' && (
                   <div className="mt-3">
@@ -238,6 +296,7 @@ export default function DialogDevolucao({ pedido, onHide, onSucesso }) {
                         const novas = [...item.trocas, { variacao: null, quantidade: 1 }];
                         handleTrocaChange(idx, novas);
                       }}
+                      disabled={item.jaTrocado}
                     />
                   </div>
                 )}

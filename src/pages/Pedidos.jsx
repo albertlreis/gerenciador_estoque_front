@@ -247,12 +247,16 @@ export default function PedidosListagem() {
         <DialogDevolucao
           pedido={pedidoParaDevolucao}
           onHide={() => setPedidoParaDevolucao(null)}
-          onSucesso={() => {
+          onSucesso={async () => {
             toast.current?.show({
               severity: 'success',
               summary: 'Devolução registrada com sucesso'
             });
-            fetchPedidos(paginaAtual);
+
+            await fetchPedidos(paginaAtual);
+            if (detalhesVisivel && pedidoParaDevolucao?.id) {
+              await carregarDetalhesPedido(pedidoParaDevolucao);
+            }
           }}
         />
       )}
