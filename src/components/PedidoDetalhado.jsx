@@ -2,6 +2,7 @@ import React from 'react';
 import { Dialog } from 'primereact/dialog';
 import { Tag } from 'primereact/tag';
 import { Timeline } from 'primereact/timeline';
+import { Button } from 'primereact/button';
 import { formatarReal } from '../utils/formatters';
 import { STATUS_MAP } from '../constants/statusPedido';
 
@@ -14,22 +15,43 @@ const PedidoDetalhado = ({ visible, onHide, pedido }) => {
 
   return (
     <Dialog
-      header={<> <i className="pi pi-box mr-2"/> Detalhes do Pedido <strong>{numeroExterno}</strong></>}
+      header={<> <i className="pi pi-box mr-2" /> Detalhes do Pedido <strong>{numeroExterno}</strong></>}
       visible={visible}
       onHide={onHide}
       modal
       style={{ width: '65vw' }}
+      footer={
+        <div className="flex justify-content-end gap-2">
+          <Button
+            label="Fechar"
+            icon="pi pi-times"
+            onClick={onHide}
+            severity="secondary"
+          />
+          <Button
+            label="Solicitar Devolução ou Troca"
+            icon="pi pi-sync"
+            severity="warning"
+            disabled={!pedido.itens?.length}
+            onClick={() =>
+              window.dispatchEvent(
+                new CustomEvent('abrir-dialog-devolucao', { detail: pedido })
+              )
+            }
+          />
+        </div>
+      }
     >
       <div className="mb-4">
         <h3 className="mb-1">{pedido.cliente?.nome ?? 'Cliente não informado'}</h3>
         <div className="text-sm text-gray-700 mb-2">
-          <div><i className="pi pi-user mr-1"/> <strong>Vendedor:</strong> {pedido.usuario?.nome ?? '—'}</div>
-          <div><i className="pi pi-bookmark mr-1"/> <strong>Parceiro:</strong> {pedido.parceiro?.nome ?? '—'}</div>
-          <div><i className="pi pi-calendar mr-1"/> <strong>Data:</strong> {dataPedido}</div>
-          <div><i className="pi pi-dollar mr-1"/> <strong>Valor Total:</strong> {formatarReal(pedido.valor_total)}</div>
+          <div><i className="pi pi-user mr-1" /> <strong>Vendedor:</strong> {pedido.usuario?.nome ?? '—'}</div>
+          <div><i className="pi pi-bookmark mr-1" /> <strong>Parceiro:</strong> {pedido.parceiro?.nome ?? '—'}</div>
+          <div><i className="pi pi-calendar mr-1" /> <strong>Data:</strong> {dataPedido}</div>
+          <div><i className="pi pi-dollar mr-1" /> <strong>Valor Total:</strong> {formatarReal(pedido.valor_total)}</div>
           <div className="flex align-items-center gap-2 mt-1">
             <strong>Status:</strong>
-            <Tag value={status.label} severity={status.color} icon={status.icon}/>
+            <Tag value={status.label} severity={status.color} icon={status.icon} />
           </div>
           {pedido.observacoes && (
             <div className="mt-2 text-sm text-gray-600">
@@ -78,7 +100,6 @@ const PedidoDetalhado = ({ visible, onHide, pedido }) => {
               </div>
             ))}
 
-            {/* RESUMO FINAL */}
             <div className="col-12 mt-4">
               <div className="flex justify-content-end border-top pt-3">
                 <div className="text-right">

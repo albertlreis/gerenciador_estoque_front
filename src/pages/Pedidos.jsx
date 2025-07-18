@@ -4,7 +4,6 @@ import { Column } from 'primereact/column';
 import { Toast } from 'primereact/toast';
 import { Button } from 'primereact/button';
 import { Tag } from 'primereact/tag';
-import { Tooltip } from 'primereact/tooltip';
 import { addLocale } from 'primereact/api';
 
 import SakaiLayout from '../layouts/SakaiLayout';
@@ -18,6 +17,7 @@ import { STATUS_MAP } from '../constants/statusPedido';
 import api from '../services/apiEstoque';
 import {formatarDataIsoParaBR} from "../utils/formatarData";
 import ColumnSelector from "../components/ColumnSelector";
+import DialogDevolucao from "../components/DialogDevolucao";
 
 
 addLocale('pt-BR', {
@@ -43,6 +43,7 @@ export default function PedidosListagem() {
   const [pedidoSelecionado, setPedidoSelecionado] = useState(null);
   const [exibirDialogStatus, setExibirDialogStatus] = useState(false);
   const [pedidoDetalhado, setPedidoDetalhado] = useState(null);
+  const [pedidoParaDevolucao, setPedidoParaDevolucao] = useState(null);
   const [detalhesVisivel, setDetalhesVisivel] = useState(false);
   const [loadingDetalhes, setLoadingDetalhes] = useState(false);
 
@@ -62,6 +63,12 @@ export default function PedidosListagem() {
   const [colunasVisiveis, setColunasVisiveis] = useState(colunasDisponiveis);
 
   useEffect(() => { fetchPedidos(1); }, []);
+
+  useEffect(() => {
+    const listener = (e) => setPedidoParaDevolucao(e.detail);
+    window.addEventListener('abrir-dialog-devolucao', listener);
+    return () => window.removeEventListener('abrir-dialog-devolucao', listener);
+  }, []);
 
   const onPageChange = (e) => {
     const novaPagina = Math.floor(e.first / 10) + 1;
@@ -87,7 +94,7 @@ export default function PedidosListagem() {
     setDetalhesVisivel(true);
     try {
       const { data } = await api.get(`/pedidos/${pedido.id}/completo`);
-      setPedidoDetalhado(data);
+      setPedidoDetalhado(data.data);
     } catch (err) {
       toast.current?.show({
         severity: 'error',
@@ -217,6 +224,21 @@ export default function PedidosListagem() {
           />
         </DataTable>
       </div>
+
+      {pedidoParaDevolucao && (
+        <DialogDevolucao
+          pedido={pedidoParaDevolucao}
+          onHide={() => setPedidoParaDevolucao(null)}
+          onSucesso={() => {
+            toast.current?.show({
+              severity: 'success',
+              summary: 'Devolução registrada com sucesso'
+            });
+            fetchPedidos(paginaAtual);
+          }}
+        />
+      )}
+
     </SakaiLayout>
   );
 }
