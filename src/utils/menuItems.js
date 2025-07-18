@@ -147,6 +147,13 @@ const menuItems = (navigate, has) => {
       ].filter(Boolean)
     },
 
+    has(PERMISSOES.RELATORIOS.VISUALIZAR) && {
+      label: 'Relatórios',
+      key: 'relatorios',
+      icon: 'pi pi-fw pi-file',
+      command: () => navigate('/relatorios')
+    },
+
     {
       label: 'Monitoramento',
       key: 'monitoramento',

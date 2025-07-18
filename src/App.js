@@ -33,6 +33,7 @@ import ComCarrinho from "./routes/ComCarrinho";
 import useCheckVersion from "./hooks/useCheckVersion";
 import Reservas from "./pages/Reservas";
 import PedidosFabrica from "./pages/PedidosFabrica";
+import Relatorios from "./pages/Relatorios";
 
 const renderProtectedRoute = (element, permissoes) => (
   <PrivateRoute element={<PermissaoRoute element={element} permissoes={permissoes}/>}/>
@@ -106,6 +107,10 @@ const App = () => {
              element={renderProtectedRoute(<Configuracoes/>, PERMISSOES.CONFIGURACOES.VISUALIZAR)}/>
       <Route path="/monitoramento/cache"
              element={renderProtectedRoute(<MonitoramentoCache/>, PERMISSOES.MONITORAMENTO.VISUALIZAR)}/>
+      <Route
+        path="/relatorios"
+        element={renderProtectedRoute(<Relatorios />, PERMISSOES.RELATORIOS.VISUALIZAR)}
+      />
     </Routes>
   );
 };
