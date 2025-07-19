@@ -35,14 +35,6 @@ const ImportacaoPedidoPDF = () => {
   }, []);
 
   useEffect(() => {
-    const total = itens.reduce((soma, item) => {
-      const valorTotalItem = parseFloat(item.valor) || 0;
-      return soma + valorTotalItem;
-    }, 0);
-    setPedido(prev => ({ ...prev, total: parseFloat(total.toFixed(2)) }));
-  }, [itens]);
-
-  useEffect(() => {
     apiEstoque.get('/depositos')
       .then(res => setDepositos(res.data))
       .catch(() => setDepositos([]));
@@ -412,9 +404,9 @@ const ImportacaoPedidoPDF = () => {
           {pedido.parcelas?.length > 0 && (
             <Card title="Parcelas" className="mt-4">
               <DataTable value={pedido.parcelas}>
-                <Column field="descricao" header="Descrição"/>
+                <Column field="parcela" header="Parcela"/>
                 <Column field="vencimento" header="Vencimento"/>
-                <Column field="forma" header="Forma de Pagamento"/>
+                <Column field="forma_pagamento" header="Forma de Pagamento"/>
                 <Column
                   field="valor"
                   header="Valor"
