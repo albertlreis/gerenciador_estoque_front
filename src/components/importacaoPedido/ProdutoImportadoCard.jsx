@@ -1,5 +1,6 @@
 import React from 'react';
 import { Card } from 'primereact/card';
+import { Calendar } from 'primereact/calendar';
 import { Dropdown } from 'primereact/dropdown';
 import { InputText } from 'primereact/inputtext';
 import { InputNumber } from 'primereact/inputnumber';
@@ -96,6 +97,37 @@ const ProdutoImportadoCard = ({ item, index, categorias, depositos, onChangeItem
                   aria-label="Tipo do Produto"
                 />
               </div>
+
+              {item.tipo === 'PEDIDO' && (
+                <div className="field col-12 md:col-4 align-items-center">
+                  <label className="block text-xs font-medium mb-1">&nbsp;</label>
+                  <div className="flex align-items-center">
+                    <input
+                      type="checkbox"
+                      id={`enviar_fabrica_${index}`}
+                      checked={item.enviar_fabrica || false}
+                      onChange={(e) => onChangeItem(index, 'enviar_fabrica', e.target.checked)}
+                      className="mr-2"
+                    />
+                    <label htmlFor={`enviar_fabrica_${index}`} className="text-sm">
+                      Solicitar produção na fábrica
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {item.tipo === 'PEDIDO' && item.enviar_fabrica && (
+                <div className="field col-12 md:col-4">
+                  <label className="block text-xs font-medium mb-1">Previsão de Entrega (fábrica)</label>
+                  <Calendar
+                    value={item.previsao_fabrica ? new Date(item.previsao_fabrica) : null}
+                    onChange={(e) => onChangeItem(index, 'previsao_fabrica', e.value?.toISOString().split('T')[0] ?? null)}
+                    dateFormat="dd/mm/yy"
+                    showIcon
+                    className="w-full p-inputtext-sm"
+                  />
+                </div>
+              )}
 
               <div className="field col-12 md:col-4">
                 <label className="block text-xs font-medium mb-1">Depósito</label>
@@ -224,6 +256,11 @@ const ProdutoImportadoCard = ({ item, index, categorias, depositos, onChangeItem
                 <Tag severity="danger" value="Categoria obrigatória" />
               </div>
             )}
+
+            {item.enviar_fabrica && (
+              <Tag severity="info" value="Encomenda para fábrica" className="mt-2" />
+            )}
+
           </div>
         </div>
       </div>

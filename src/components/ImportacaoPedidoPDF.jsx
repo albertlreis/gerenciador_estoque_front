@@ -83,6 +83,7 @@ const ImportacaoPedidoPDF = () => {
 
   const confirmarImportacao = async () => {
     const semCategoria = itens.filter(item => !item.id_categoria);
+    const itensFabrica = itens.filter(i => i.enviar_fabrica);
 
     if (semCategoria.length > 0) {
       toast.current?.show({
@@ -94,8 +95,19 @@ const ImportacaoPedidoPDF = () => {
       return;
     }
 
+    const incompletos = itensFabrica.filter(i => !i.id_variacao || !i.quantidade || !i.id_deposito);
+    if (incompletos.length > 0) {
+      toast.current?.show({
+        severity: 'warn',
+        summary: 'Campos obrigatórios faltando',
+        detail: 'Todos os produtos enviados para a fábrica devem ter variação, quantidade e depósito preenchidos.',
+        life: 4000
+      });
+      return;
+    }
+
     try {
-      await apiEstoque.post('/pedidos/importar-pdf/confirmar', {
+      const response = await apiEstoque.post('/pedidos/importar-pdf/confirmar', {
         cliente,
         pedido,
         itens: itens.map(item => ({
@@ -107,6 +119,22 @@ const ImportacaoPedidoPDF = () => {
           id_categoria: item.id_categoria ?? null,
         })),
       });
+
+      if (itensFabrica.length > 0) {
+        const payloadFabrica = {
+          data_previsao_entrega: null,
+          observacoes: `Gerado automaticamente a partir do pedido ${pedido.numero_externo ?? ''}`,
+          itens: itensFabrica.map(i => ({
+            produto_variacao_id: i.id_variacao,
+            quantidade: i.quantidade,
+            deposito_id: i.id_deposito ?? null,
+            pedido_venda_id: response.data?.id ?? null,
+            observacoes: i.observacoes || '',
+          }))
+        };
+
+        await apiEstoque.post('/pedidos-fabrica', payloadFabrica);
+      }
 
       toast.current?.show({
         severity: 'success',
