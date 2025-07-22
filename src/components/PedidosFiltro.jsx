@@ -1,67 +1,66 @@
 import React, { useState } from 'react';
-import { Calendar } from 'primereact/calendar';
+import CalendarBR from './CalendarBR';
 import { Dropdown } from 'primereact/dropdown';
 import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
 import { Accordion, AccordionTab } from 'primereact/accordion';
-
-const statusOptions = [
-  { label: 'Todos', value: null },
-  { label: 'Pendente', value: 'pendente' },
-  { label: 'Em andamento', value: 'andamento' },
-  { label: 'Concluído', value: 'concluido' },
-  { label: 'Cancelado', value: 'cancelado' },
-];
-
-const tipoBuscaOptions = [
-  { label: 'Todos', value: 'todos' },
-  { label: 'Cliente', value: 'cliente' },
-  { label: 'Parceiro', value: 'parceiro' },
-  { label: 'Vendedor', value: 'vendedor' },
-];
+import { OPCOES_STATUS } from '../constants/statusPedido';
 
 export default function PedidosFiltro({ filtros, setFiltros, onBuscar }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
+
+  // Status ordenados alfabeticamente
+  const statusOrdenados = [
+    { label: 'Todos', value: null },
+    ...OPCOES_STATUS.sort((a, b) => a.label.localeCompare(b.label))
+  ];
 
   const limparFiltros = () => {
-    setFiltros({ texto: '', status: null, tipo: 'todos', periodo: null });
+    setFiltros({ texto: '', status: null, periodo: null });
+    onBuscar();
   };
 
   return (
     <Accordion className="w-full mb-3" activeIndex={expanded ? 0 : null} onTabChange={(e) => setExpanded(e.index !== null)}>
       <AccordionTab header="Filtros de Pesquisa">
-        <div className="flex flex-wrap md:flex-nowrap gap-2 mb-2 items-end">
-          <Calendar
-            value={filtros.periodo}
-            onChange={(e) => setFiltros({ ...filtros, periodo: e.value })}
-            selectionMode="range"
-            placeholder="Período"
-            locale="pt-BR"
-            dateFormat="dd/mm/yy"
-            showIcon
-            className="w-full md:w-1/5"
-          />
-          <Dropdown
-            value={filtros.status}
-            options={statusOptions}
-            onChange={(e) => setFiltros({ ...filtros, status: e.value })}
-            placeholder="Status"
-            className="w-full md:w-1/5"
-          />
-          <Dropdown
-            value={filtros.tipo}
-            options={tipoBuscaOptions}
-            onChange={(e) => setFiltros({ ...filtros, tipo: e.value })}
-            placeholder="Buscar em"
-            className="w-full md:w-1/5"
-          />
-          <InputText
-            value={filtros.texto}
-            onChange={(e) => setFiltros({ ...filtros, texto: e.target.value })}
-            placeholder="Buscar..."
-            className="w-full md:w-2/5"
-          />
-          <div className="flex gap-2">
+        <div className="flex flex-wrap md:flex-nowrap gap-3 mb-3 items-end">
+
+          <div className="flex flex-column w-full md:w-1/4">
+            <label htmlFor="filtro-periodo" className="mb-1">Período</label>
+            <CalendarBR
+              id="filtro-periodo"
+              value={filtros.periodo}
+              onChange={(e) => setFiltros({ ...filtros, periodo: e.value })}
+              selectionMode="range"
+              placeholder="Selecione um intervalo"
+            />
+          </div>
+
+          <div className="flex flex-column w-full md:w-1/4">
+            <label htmlFor="filtro-status" className="mb-1">Status do Pedido</label>
+            <Dropdown
+              id="filtro-status"
+              value={filtros.status}
+              options={statusOrdenados}
+              onChange={(e) => setFiltros({ ...filtros, status: e.value })}
+              placeholder="Selecione o status"
+              filter
+              filterBy="label"
+              showClear
+            />
+          </div>
+
+          <div className="flex flex-column w-full md:w-2/4">
+            <label htmlFor="filtro-texto" className="mb-1">Busca por cliente, parceiro, vendedor ou nº do pedido</label>
+            <InputText
+              id="filtro-texto"
+              value={filtros.texto}
+              onChange={(e) => setFiltros({ ...filtros, texto: e.target.value })}
+              placeholder="Ex: João Silva, Pedido 1234..."
+            />
+          </div>
+
+          <div className="flex gap-2 mt-3 md:mt-auto">
             <Button
               label="Buscar"
               icon="pi pi-search"

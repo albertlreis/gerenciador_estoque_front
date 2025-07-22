@@ -57,6 +57,7 @@ const menuItems = (navigate, has) => {
 
     has([
       PERMISSOES.PRODUTOS.VISUALIZAR,
+      PERMISSOES.PRODUTOS.GERENCIAR,
       PERMISSOES.PRODUTOS.IMPORTAR,
       PERMISSOES.PRODUTOS.CATALOGO
     ]) && {
@@ -70,7 +71,7 @@ const menuItems = (navigate, has) => {
           icon: 'pi pi-undo',
           command: () => navigate('/catalogo')
         },
-        has(PERMISSOES.PRODUTOS.VISUALIZAR) && {
+        has(PERMISSOES.PRODUTOS.GERENCIAR) && {
           label: 'Gerenciar Produtos',
           key: 'produtos-gerenciar',
           icon: 'pi pi-fw pi-pencil',

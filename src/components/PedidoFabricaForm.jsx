@@ -8,6 +8,7 @@ import { Dropdown } from 'primereact/dropdown';
 import { Toast } from 'primereact/toast';
 import { AutoComplete } from 'primereact/autocomplete';
 import apiEstoque from '../services/apiEstoque';
+import CalendarBR from "./CalendarBR";
 
 const PedidoFabricaForm = ({ visible, onHide, onSave, pedidoEditavel = null, itensIniciais = [] }) => {
   const toast = useRef(null);
@@ -190,7 +191,10 @@ const PedidoFabricaForm = ({ visible, onHide, onSave, pedidoEditavel = null, ite
                 <i className="pi pi-calendar text-xl text-primary" />
                 <label className="font-bold">Previsão de Entrega</label>
               </div>
-              <Calendar value={dataPrevisao} onChange={(e) => setDataPrevisao(e.value)} dateFormat="dd/mm/yy" showIcon className="w-full" />
+              <CalendarBR
+                value={dataPrevisao}
+                onChange={(e) => setDataPrevisao(e.value)}
+              />
             </div>
 
             <div className="p-fluid mb-4">
