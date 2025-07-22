@@ -44,6 +44,7 @@ const MovimentacoesEstoque = () => {
     deposito: null,
     produto: '',
     periodo: null,
+    zerados: false,
   });
 
   const tipos = [
@@ -80,10 +81,10 @@ const MovimentacoesEstoque = () => {
       const formatDate = (d) => d instanceof Date ? d.toISOString().split('T')[0] : null;
       const filtroParams = {
         ...filtros,
-        periodo:
-          filtros.periodo?.length === 2 && filtros.periodo[1]
-            ? [formatDate(filtros.periodo[0]), formatDate(filtros.periodo[1])]
-            : null,
+        zerados: filtros.zerados ? 1 : 0,
+        periodo: filtros.periodo?.length === 2 && filtros.periodo[1]
+          ? [formatDate(filtros.periodo[0]), formatDate(filtros.periodo[1])]
+          : null,
         page: paginaEstoque,
         per_page: 10,
       };
