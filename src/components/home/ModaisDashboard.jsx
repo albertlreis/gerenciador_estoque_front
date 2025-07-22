@@ -28,31 +28,9 @@ const ModaisDashboard = ({
             onHide={() => setExibirModalEstoque(false)}
           >
             <DataTable value={estoqueCritico} responsiveLayout="scroll" emptyMessage="Nenhum produto em falta.">
-              <Column field="produto" header="Produto" />
-              <Column field="variacao" header="Variação" />
-              <Column field="deposito" header="Depósito" />
-              <Column
-                header="Qtd."
-                style={{ width: '100px' }}
-                body={(row) => (
-                  <div className="flex align-items-center gap-2">
-                    <span
-                      className={isEstoqueZerado(row) ? 'text-red-600 font-bold' : ''}
-                      title={isEstoqueZerado(row) ? 'Produto com estoque zerado!' : ''}
-                    >
-                      {row.quantidade}
-                    </span>
-                    {isEstoqueZerado(row) && (
-                      <i className="pi pi-exclamation-triangle text-orange-500" title="Estoque zerado"></i>
-                    )}
-                  </div>
-                )}
-              />
-              <Column
-                field="preco"
-                header="Preço"
-                body={(rowData) => `R$ ${Number(rowData.preco).toFixed(2).replace('.', ',')}`}
-              />
+              <Column field="nome" header="Produto" />
+              <Column field="estoque_minimo" header="Estoque Mínimo" />
+              <Column field="estoque_atual" header="Quantidade" />
             </DataTable>
           </Dialog>
 
