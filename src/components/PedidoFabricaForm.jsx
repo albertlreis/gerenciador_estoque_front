@@ -9,7 +9,7 @@ import { Toast } from 'primereact/toast';
 import { AutoComplete } from 'primereact/autocomplete';
 import apiEstoque from '../services/apiEstoque';
 
-const PedidoFabricaForm = ({ visible, onHide, onSave, pedidoEditavel = null }) => {
+const PedidoFabricaForm = ({ visible, onHide, onSave, pedidoEditavel = null, itensIniciais = [] }) => {
   const toast = useRef(null);
 
   const [dataPrevisao, setDataPrevisao] = useState(null);
@@ -31,7 +31,7 @@ const PedidoFabricaForm = ({ visible, onHide, onSave, pedidoEditavel = null }) =
       // novo pedido
       setDataPrevisao(null);
       setObservacoes('');
-      setItens([]);
+      setItens(itensIniciais);
       setSugestoes([]);
     }
   }, [visible]);
@@ -50,6 +50,8 @@ const PedidoFabricaForm = ({ visible, onHide, onSave, pedidoEditavel = null }) =
           `${i.variacao.produto?.nome} - ${i.variacao.atributos?.map(a => a.valor).join(', ')}`,
       }));
       setSugestoes(sugestoesVariacoes);
+
+      console.log(data)
 
       setItens(data.itens.map(i => ({
         produto_variacao_id: i.produto_variacao_id,
@@ -108,7 +110,7 @@ const PedidoFabricaForm = ({ visible, onHide, onSave, pedidoEditavel = null }) =
       console.log(data)
 
       const pedidos = data?.original?.data || [];
-      
+
       return pedidos.map(p => ({
         id: p.id,
         label: `Pedido #${p.numero_externo || p.id} - ${p.cliente?.nome ?? 'Sem cliente'}`

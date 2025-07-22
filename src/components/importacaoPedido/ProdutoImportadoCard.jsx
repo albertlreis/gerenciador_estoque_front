@@ -1,12 +1,12 @@
 import React from 'react';
 import { Card } from 'primereact/card';
-import { Calendar } from 'primereact/calendar';
 import { Dropdown } from 'primereact/dropdown';
 import { InputText } from 'primereact/inputtext';
 import { InputNumber } from 'primereact/inputnumber';
 import { InputTextarea } from 'primereact/inputtextarea';
 import { Tag } from 'primereact/tag';
 import { Accordion, AccordionTab } from 'primereact/accordion';
+import { Button } from 'primereact/button';
 
 const ProdutoImportadoCard = ({ item, index, categorias, depositos, onChangeItem }) => {
   const quantidade = Number(item.quantidade) || 0;
@@ -33,14 +33,45 @@ const ProdutoImportadoCard = ({ item, index, categorias, depositos, onChangeItem
     onChangeItem(index, 'atributos', atualizados);
   };
 
+  const handleRenomearAtributo = (grupo, campoAntigo, novoNome) => {
+    if (!novoNome || novoNome === campoAntigo) return;
+
+    const grupoAtual = { ...item.atributos?.[grupo] };
+    const valor = grupoAtual[campoAntigo];
+    delete grupoAtual[campoAntigo];
+    grupoAtual[novoNome] = valor;
+
+    onChangeItem(index, 'atributos', {
+      ...item.atributos,
+      [grupo]: grupoAtual
+    });
+  };
+
+  const handleAdicionarAtributo = (grupo) => {
+    const grupoAtual = { ...item.atributos?.[grupo] } || {};
+    const novoNome = `atributo_${Object.keys(grupoAtual).length + 1}`;
+    grupoAtual[novoNome] = '';
+    onChangeItem(index, 'atributos', {
+      ...item.atributos,
+      [grupo]: grupoAtual
+    });
+  };
+
+  const handleRemoverAtributo = (grupo, campo) => {
+    const grupoAtual = { ...item.atributos?.[grupo] };
+    delete grupoAtual[campo];
+    onChangeItem(index, 'atributos', {
+      ...item.atributos,
+      [grupo]: grupoAtual
+    });
+  };
+
   return (
     <Card
       title={`Produto ${index + 1}: ${item.nome || item.descricao?.slice(0, 50)}`}
       className={`mb-3 border-left-4 shadow-sm ${
         item.tipo === 'PRONTA ENTREGA' ? 'bg-blue-50' : 'bg-pink-50'
-      } ${
-        !item.id_categoria || !item.id_variacao ? 'border-red-300' : 'border-green-300'
-      }`}
+      } ${!item.id_categoria || !item.id_variacao ? 'border-red-300' : 'border-green-300'}`}
     >
       <div className="flex flex-column md:flex-row justify-between gap-4 p-3">
         <div className="flex-1">
@@ -113,19 +144,6 @@ const ProdutoImportadoCard = ({ item, index, categorias, depositos, onChangeItem
                       Solicitar produção na fábrica
                     </label>
                   </div>
-                </div>
-              )}
-
-              {item.tipo === 'PEDIDO' && item.enviar_fabrica && (
-                <div className="field col-12 md:col-4">
-                  <label className="block text-xs font-medium mb-1">Previsão de Entrega (fábrica)</label>
-                  <Calendar
-                    value={item.previsao_fabrica ? new Date(item.previsao_fabrica) : null}
-                    onChange={(e) => onChangeItem(index, 'previsao_fabrica', e.value?.toISOString().split('T')[0] ?? null)}
-                    dateFormat="dd/mm/yy"
-                    showIcon
-                    className="w-full p-inputtext-sm"
-                  />
                 </div>
               )}
 
@@ -202,37 +220,55 @@ const ProdutoImportadoCard = ({ item, index, categorias, depositos, onChangeItem
                   >
                     <div className="formgrid grid">
                       {Object.entries(item.atributos[grupo]).map(([campo, valor]) => (
-                        <div
-                          key={`${grupo}-${campo}`}
-                          className={`field ${
-                            grupo === 'observacoes' ? 'col-12' : 'col-12 md:col-4'
-                          }`}
-                        >
-                          <label className="block text-xs font-medium mb-1">
-                            {campo.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
-                          </label>
-                          {grupo === 'observacoes' ? (
-                            <InputTextarea
-                              value={valor}
-                              onChange={(e) =>
-                                handleAtributoChange(grupo, campo, e.target.value)
-                              }
-                              className="w-full p-inputtextarea-sm"
-                              rows={3}
-                              aria-label={`${grupo} - ${campo}`}
+                        <div key={`${grupo}-${campo}`} className="field col-12 md:col-6">
+                          <div className="p-2 border-1 surface-border border-round relative">
+                            <Button
+                              icon="pi pi-times"
+                              className="p-button-rounded p-button-sm p-button-text absolute top-0 right-0"
+                              onClick={() => handleRemoverAtributo(grupo, campo)}
+                              tooltip="Remover atributo"
+                              tooltipOptions={{ position: 'top' }}
                             />
-                          ) : (
+                            <label className="block text-xs font-medium mb-1">Nome do Atributo</label>
                             <InputText
-                              value={valor}
+                              value={campo}
                               onChange={(e) =>
-                                handleAtributoChange(grupo, campo, e.target.value)
+                                handleRenomearAtributo(grupo, campo, e.target.value)
                               }
-                              className="w-full p-inputtext-sm"
-                              aria-label={`${grupo} - ${campo}`}
+                              className="w-full p-inputtext-sm mb-2"
+                              placeholder="Ex: cor_inox"
                             />
-                          )}
+                            <label className="block text-xs font-medium mb-1">Valor</label>
+                            {grupo === 'observacoes' ? (
+                              <InputTextarea
+                                value={valor}
+                                onChange={(e) =>
+                                  handleAtributoChange(grupo, campo, e.target.value)
+                                }
+                                className="w-full p-inputtextarea-sm"
+                                rows={2}
+                              />
+                            ) : (
+                              <InputText
+                                value={valor}
+                                onChange={(e) =>
+                                  handleAtributoChange(grupo, campo, e.target.value)
+                                }
+                                className="w-full p-inputtext-sm"
+                                placeholder="Ex: azul"
+                              />
+                            )}
+                          </div>
                         </div>
                       ))}
+                    </div>
+                    <div className="mt-2">
+                      <Button
+                        icon="pi pi-plus"
+                        label="Adicionar atributo"
+                        className="p-button-sm p-button-text"
+                        onClick={() => handleAdicionarAtributo(grupo)}
+                      />
                     </div>
                   </AccordionTab>
                 ) : null
@@ -256,11 +292,9 @@ const ProdutoImportadoCard = ({ item, index, categorias, depositos, onChangeItem
                 <Tag severity="danger" value="Categoria obrigatória" />
               </div>
             )}
-
             {item.enviar_fabrica && (
               <Tag severity="info" value="Encomenda para fábrica" className="mt-2" />
             )}
-
           </div>
         </div>
       </div>

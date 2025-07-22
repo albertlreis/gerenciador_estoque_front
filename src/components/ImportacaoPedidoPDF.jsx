@@ -4,6 +4,8 @@ import { Toast } from 'primereact/toast';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { Button } from 'primereact/button';
 import { Card } from 'primereact/card';
+import { Tag } from 'primereact/tag';
+import { confirmDialog, ConfirmDialog } from 'primereact/confirmdialog';
 
 import apiEstoque from '../services/apiEstoque';
 import apiAuth from "../services/apiAuth";
@@ -12,6 +14,7 @@ import ProdutoImportadoCard from './importacaoPedido/ProdutoImportadoCard';
 import FormularioCliente from './importacaoPedido/FormularioCliente';
 import FormularioPedido from './importacaoPedido/FormularioPedido';
 import TabelaParcelas from './importacaoPedido/TabelaParcelas';
+import PedidoFabricaForm from './PedidoFabricaForm';
 
 const ImportacaoPedidoPDF = () => {
   const [dados, setDados] = useState(null);
@@ -23,6 +26,10 @@ const ImportacaoPedidoPDF = () => {
   const [parceiros, setParceiros] = useState([]);
   const [vendedores, setVendedores] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState(null);
+  const [abrirPedidoFabrica, setAbrirPedidoFabrica] = useState(false);
+  const [itensParaFabrica, setItensParaFabrica] = useState([]);
+  const [pedidoSalvoId, setPedidoSalvoId] = useState(null);
   const toast = useRef();
   const fileUploadRef = useRef();
 
@@ -38,6 +45,8 @@ const ImportacaoPedidoPDF = () => {
     formData.append('arquivo', files[0]);
 
     setLoading(true);
+    setUploadStatus('uploading');
+
     try {
       const response = await apiEstoque.post('/pedidos/importar-pdf', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
@@ -47,9 +56,11 @@ const ImportacaoPedidoPDF = () => {
       setCliente(response.data.cliente || {});
       setPedido(response.data.pedido || {});
       setItens(response.data.itens || []);
+      setUploadStatus('done');
 
       toast.current?.show({ severity: 'success', summary: 'Sucesso', detail: 'PDF importado com sucesso.' });
     } catch (err) {
+      setUploadStatus('error');
       toast.current?.show({
         severity: 'error',
         summary: 'Erro',
@@ -81,26 +92,37 @@ const ImportacaoPedidoPDF = () => {
     });
   };
 
+  const confirmarRemocaoArquivo = () => {
+    confirmDialog({
+      message: 'Tem certeza de que deseja remover este arquivo e importar um novo?',
+      header: 'Confirmar Remoção',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sim',
+      rejectLabel: 'Cancelar',
+      accept: resetarFormulario
+    });
+  };
+
+  const resetarFormulario = () => {
+    fileUploadRef.current?.clear();
+    setUploadStatus(null);
+    setDados(null);
+    setCliente({});
+    setPedido({});
+    setItens([]);
+    setPedidoSalvoId(null);
+    setItensParaFabrica([]);
+    setAbrirPedidoFabrica(false);
+  };
+
   const confirmarImportacao = async () => {
     const semCategoria = itens.filter(item => !item.id_categoria);
-    const itensFabrica = itens.filter(i => i.enviar_fabrica);
 
     if (semCategoria.length > 0) {
       toast.current?.show({
         severity: 'warn',
         summary: 'Categoria obrigatória',
         detail: `Todos os produtos devem ter uma categoria. Preencha os campos destacados.`,
-        life: 4000
-      });
-      return;
-    }
-
-    const incompletos = itensFabrica.filter(i => !i.id_variacao || !i.quantidade || !i.id_deposito);
-    if (incompletos.length > 0) {
-      toast.current?.show({
-        severity: 'warn',
-        summary: 'Campos obrigatórios faltando',
-        detail: 'Todos os produtos enviados para a fábrica devem ter variação, quantidade e depósito preenchidos.',
         life: 4000
       });
       return;
@@ -120,22 +142,6 @@ const ImportacaoPedidoPDF = () => {
         })),
       });
 
-      if (itensFabrica.length > 0) {
-        const payloadFabrica = {
-          data_previsao_entrega: null,
-          observacoes: `Gerado automaticamente a partir do pedido ${pedido.numero_externo ?? ''}`,
-          itens: itensFabrica.map(i => ({
-            produto_variacao_id: i.id_variacao,
-            quantidade: i.quantidade,
-            deposito_id: i.id_deposito ?? null,
-            pedido_venda_id: response.data?.id ?? null,
-            observacoes: i.observacoes || '',
-          }))
-        };
-
-        await apiEstoque.post('/pedidos-fabrica', payloadFabrica);
-      }
-
       toast.current?.show({
         severity: 'success',
         summary: 'Pedido Confirmado',
@@ -143,11 +149,36 @@ const ImportacaoPedidoPDF = () => {
         life: 3000
       });
 
-      setDados(null);
-      setCliente({});
-      setPedido({});
-      setItens([]);
-      fileUploadRef.current?.clear();
+      const pedidoId = response.data?.id;
+      const variacoesConfirmadas = response.data?.itens ?? [];
+
+      const fabrica = itens
+        .filter(i => i.enviar_fabrica)
+        .map(item => {
+          const encontrado = variacoesConfirmadas.find(
+            v => v.referencia === item.ref && v.nome_produto === item.nome
+          );
+
+          return {
+            produto_variacao_id: encontrado?.id_variacao,
+            produto_variacao_nome: encontrado?.nome_completo || '',
+            quantidade: item.quantidade,
+            deposito_id: item.id_deposito ?? null,
+            pedido_venda_id: pedidoId,
+            pedido_venda_label: pedido.numero_externo ? `Pedido #${pedido.numero_externo}` : `Pedido #${pedidoId}`,
+            observacoes: item.observacoes || '',
+          };
+        });
+
+      setPedidoSalvoId(pedidoId);
+
+      if (fabrica.length > 0) {
+        setItensParaFabrica(fabrica);
+        setAbrirPedidoFabrica(true);
+      } else {
+        resetarFormulario();
+      }
+
     } catch (err) {
       const fieldErrors = err.response?.data?.errors;
       const erroNumeroExterno = fieldErrors?.['pedido.numero_externo']?.[0];
@@ -169,22 +200,10 @@ const ImportacaoPedidoPDF = () => {
   return (
     <div className="p-fluid p-4">
       <Toast ref={toast} />
+      <ConfirmDialog />
 
       {loading && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(255,255,255,0.8)',
-            zIndex: 1000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
+        <div className="fixed top-0 left-0 w-full h-full flex justify-content-center align-items-center z-5" style={{ backgroundColor: 'rgba(255,255,255,0.8)' }}>
           <ProgressSpinner style={{ width: '60px', height: '60px' }} />
         </div>
       )}
@@ -211,8 +230,24 @@ const ImportacaoPedidoPDF = () => {
               className: 'p-button-primary',
               'aria-label': 'Selecionar arquivo PDF para importação'
             }}
-            uploadLabel="Enviar"
-            cancelLabel="Cancelar"
+            itemTemplate={(file, props) => (
+              <div className="flex align-items-center justify-content-between w-full px-3 py-2 border-bottom-1 surface-border">
+                <div className="flex align-items-center gap-3">
+                  <i className="pi pi-file-pdf text-2xl text-blue-500" />
+                  <span className="font-medium text-sm">{file.name}</span>
+                  <small className="text-muted">{(file.size / 1024).toFixed(1)} KB</small>
+                  {uploadStatus === 'done' && <Tag value="Carregado" severity="success" />}
+                  {uploadStatus === 'error' && <Tag value="Erro" severity="danger" />}
+                  {uploadStatus === 'uploading' && <Tag value="Carregando..." severity="warning" />}
+                </div>
+                <Button
+                  type="button"
+                  icon="pi pi-times"
+                  className="p-button-text p-button-danger"
+                  onClick={confirmarRemocaoArquivo}
+                />
+              </div>
+            )}
           />
           <small className="text-muted text-center">
             Dica: envie arquivos gerados por sistemas compatíveis, com layout estruturado.<br />
@@ -262,6 +297,32 @@ const ImportacaoPedidoPDF = () => {
           </div>
         </>
       )}
+
+      <PedidoFabricaForm
+        visible={abrirPedidoFabrica}
+        onHide={resetarFormulario}
+        pedidoEditavel={null}
+        itensIniciais={itensParaFabrica}
+        onSave={async (dados) => {
+          await apiEstoque.post('/pedidos-fabrica', {
+            ...dados,
+            itens: dados.itens.map((item, idx) => ({
+              ...item,
+              pedido_venda_id: pedidoSalvoId,
+              observacoes: itensParaFabrica[idx]?.observacoes || '',
+            })),
+          });
+
+          toast.current?.show({
+            severity: 'success',
+            summary: 'Pedido para Fábrica',
+            detail: 'Pedido para fábrica gerado com sucesso!',
+            life: 4000
+          });
+
+          resetarFormulario();
+        }}
+      />
     </div>
   );
 };
