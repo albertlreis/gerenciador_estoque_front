@@ -11,7 +11,7 @@ import { Divider } from 'primereact/divider';
 
 import SakaiLayout from '../layouts/SakaiLayout';
 import apiEstoque from '../services/apiEstoque';
-import ProdutoForm from '../components/ProdutoForm';
+import ProdutoForm from '../components/produto/ProdutoForm';
 import TableActions from '../components/TableActions';
 
 const Produtos = () => {
@@ -164,8 +164,9 @@ const Produtos = () => {
       formData.append('largura', produtoData.largura || '');
       formData.append('profundidade', produtoData.profundidade || '');
       formData.append('peso', produtoData.peso || '');
-
-      console.log(produtoData)
+      formData.append('ativo', produtoData.ativo ?? 1);
+      formData.append('motivo_desativacao', produtoData.motivo_desativacao || '');
+      formData.append('estoque_minimo', produtoData.estoque_minimo || '');
 
       if (produtoData.manualArquivo instanceof File) {
         if (produtoData.manualArquivo instanceof File) {
@@ -212,7 +213,6 @@ const Produtos = () => {
       }
 
       await fetchProdutos();
-      // setShowDialog(false);
       return response;
     } catch (error) {
       if (error.response?.data?.errors) {

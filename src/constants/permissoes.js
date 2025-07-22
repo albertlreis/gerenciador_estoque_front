@@ -52,6 +52,7 @@ export const PERMISSOES = {
   // Produtos
   PRODUTOS: {
     VISUALIZAR: 'produtos.visualizar',
+    GERENCIAR: 'produtos.gerenciar',
     CRIAR: 'produtos.criar',
     EDITAR: 'produtos.editar',
     EXCLUIR: 'produtos.excluir',

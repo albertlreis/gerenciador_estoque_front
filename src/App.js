@@ -19,7 +19,6 @@ import ImportacaoPage from './pages/ImportacaoProdutos';
 import Perfis from './pages/Perfis';
 import Permissoes from './pages/Permissoes';
 import Pedidos from './pages/Pedidos';
-import ProdutoVariacoes from './pages/ProdutoVariacoes';
 import Produtos from './pages/Produtos';
 import ProdutosOutlet from './pages/ProdutosOutlet';
 import Usuarios from './pages/Usuarios';
@@ -87,8 +86,6 @@ const App = () => {
       />
       <Route path="/perfis" element={renderProtectedRoute(<Perfis/>, PERMISSOES.PERFIS.VISUALIZAR)}/>
       <Route path="/permissoes" element={renderProtectedRoute(<Permissoes/>, PERMISSOES.PERMISSOES.VISUALIZAR)}/>
-      <Route path="/produto-variacoes"
-             element={renderProtectedRoute(<ProdutoVariacoes/>, PERMISSOES.PRODUTOS.VARIACOES)}/>
       <Route path="/produtos" element={renderProtectedRoute(<Produtos/>, PERMISSOES.PRODUTOS.VISUALIZAR)}/>
       <Route path="/produtos/importar" element={renderProtectedRoute(<ImportacaoPage/>, PERMISSOES.PRODUTOS.IMPORTAR)}/>
       <Route path="/produtos-outlet" element={renderProtectedRoute(<ProdutosOutlet/>, PERMISSOES.PRODUTOS.OUTLET)}/>

@@ -8,12 +8,12 @@ import { confirmDialog } from 'primereact/confirmdialog';
 import { Panel } from 'primereact/panel';
 import isEqual from 'lodash/isEqual';
 
-import { useProdutoForm } from '../hooks/useProdutoForm';
-import ProdutoVariacoes from './produto/ProdutoVariacoes';
-import ProdutoImagens from './produto/ProdutoImagens';
-import OutletFormDialog from './OutletFormDialog';
-import apiEstoque from '../services/apiEstoque';
-import ProdutoManualConservacao from "./produto/ProdutoManualConservacao";
+import { useProdutoForm } from '../../hooks/useProdutoForm';
+import ProdutoVariacoes from './ProdutoVariacoes';
+import ProdutoImagens from './ProdutoImagens';
+import OutletFormDialog from '../OutletFormDialog';
+import apiEstoque from '../../services/apiEstoque';
+import ProdutoManualConservacao from "./ProdutoManualConservacao";
 
 const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
   const [produto, setProduto] = useState(initialData);
@@ -49,8 +49,17 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
       setLargura(initialData.largura || '');
       setProfundidade(initialData.profundidade || '');
       setPeso(initialData.peso || '');
+
+      // Garantir que os campos existam
+      setProduto(prev => ({
+        ...prev,
+        ativo: initialData.ativo ?? 1,
+        motivo_desativacao: initialData.motivo_desativacao || '',
+        estoque_minimo: initialData.estoque_minimo || '',
+      }));
     }
   }, [initialData]);
+
 
   const abrirDialogOutlet = (variacao, outlet = null) => {
     setVariacaoSelecionada(variacao);
@@ -118,8 +127,6 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
     e.preventDefault();
     setLoading(true);
 
-    console.log(produto)
-
     try {
       const payload = {
         nome,
@@ -131,6 +138,9 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
         profundidade,
         peso,
         manualArquivo,
+        ativo: produto.ativo,
+        motivo_desativacao: produto.motivo_desativacao,
+        estoque_minimo: produto.estoque_minimo,
       };
 
       await onSubmit(payload);
@@ -234,6 +244,53 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
               <label htmlFor="peso" className="font-bold">Peso (kg)</label>
               <InputText id="peso" value={peso} onChange={(e) => setPeso(e.target.value)}/>
             </div>
+
+            {/* Estoque Mínimo */}
+            <div className="field col-12 md:col-4">
+              <label htmlFor="estoqueMinimo" className="font-bold">Estoque Mínimo</label>
+              <InputText
+                id="estoqueMinimo"
+                value={produto.estoque_minimo || ''}
+                onChange={(e) =>
+                  setProduto((prev) => ({ ...prev, estoque_minimo: e.target.value }))
+                }
+                keyfilter="pint"
+                placeholder="0"
+              />
+            </div>
+
+            {/* Ativo + Motivo desativação */}
+            <div className="field col-12 md:col-4">
+              <label htmlFor="ativo" className="font-bold">Produto Ativo?</label>
+              <Dropdown
+                id="ativo"
+                value={produto.ativo}
+                options={[
+                  { label: 'Sim', value: 1 },
+                  { label: 'Não', value: 0 }
+                ]}
+                onChange={(e) =>
+                  setProduto((prev) => ({ ...prev, ativo: e.value }))
+                }
+                placeholder="Selecione"
+              />
+            </div>
+
+            {produto.ativo === 0 && (
+              <div className="field col-12 md:col-8">
+                <label htmlFor="motivo" className="font-bold">Motivo da Desativação</label>
+                <InputTextarea
+                  id="motivo"
+                  value={produto.motivo_desativacao || ''}
+                  onChange={(e) =>
+                    setProduto((prev) => ({ ...prev, motivo_desativacao: e.target.value }))
+                  }
+                  rows={2}
+                  autoResize
+                  placeholder="Ex: Produto fora de linha"
+                />
+              </div>
+            )}
 
             <ProdutoManualConservacao
               produto={produto}
