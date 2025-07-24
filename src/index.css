@@ -412,3 +412,8 @@ textarea.p-inputtextarea {
   border-left: 4px solid #dc3545;
   background-color: #fff9f9;
 }
+
+.p-accordion .p-accordion-tab {
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { Accordion, AccordionTab } from 'primereact/accordion';
 import { Toast } from 'primereact/toast';
 import { Card } from 'primereact/card';
 import { Dialog } from 'primereact/dialog';
@@ -252,29 +253,34 @@ const MovimentacoesEstoque = () => {
           </div>
         </div>
 
-        <EstoqueAtual
-          data={estoqueAtual}
-          loading={loadingEstoque}
-          total={totalEstoque}
-          first={firstEstoque}
-          onPage={(e) => {
-            setPaginaEstoque(e.page + 1);
-            setFirstEstoque(e.first);
-          }}
-          onEditLocalizacao={(estoqueId, localizacaoId) => abrirDialogLocalizacao(estoqueId, localizacaoId)}
-          verMovimentacoes={verMovimentacoes}
-        />
-
-        <EstoqueMovimentacoes
-          data={movimentacoes}
-          loading={loadingMovs}
-          total={totalMovs}
-          first={firstMovs}
-          onPage={(e) => {
-            setPaginaMovs(e.page + 1);
-            setFirstMovs(e.first);
-          }}
-        />
+        <Accordion multiple>
+          <AccordionTab header="Estoque Atual por Produto e Depósito">
+            <EstoqueAtual
+              data={estoqueAtual}
+              loading={loadingEstoque}
+              total={totalEstoque}
+              first={firstEstoque}
+              onPage={(e) => {
+                setPaginaEstoque(e.page + 1);
+                setFirstEstoque(e.first);
+              }}
+              onEditLocalizacao={(estoqueId, localizacaoId) => abrirDialogLocalizacao(estoqueId, localizacaoId)}
+              verMovimentacoes={verMovimentacoes}
+            />
+          </AccordionTab>
+          <AccordionTab header="Movimentações Recentes">
+            <EstoqueMovimentacoes
+              data={movimentacoes}
+              loading={loadingMovs}
+              total={totalMovs}
+              first={firstMovs}
+              onPage={(e) => {
+                setPaginaMovs(e.page + 1);
+                setFirstMovs(e.first);
+              }}
+            />
+          </AccordionTab>
+        </Accordion>
 
         <Dialog
           header={`Movimentações – ${produtoSelecionado?.produto_nome || 'Produto'}`}
