@@ -59,8 +59,9 @@ export const PERMISSOES = {
     IMPORTAR: 'produtos.importar',
     CATALOGO: 'produtos.catalogo',
     OUTLET: 'produtos.outlet',
-    CONFIGURAR_OUTLET: 'produtos.configurar_outlet',
-    VARIACOES: 'produtos.variacoes',
+    OUTLET_CADASTRAR: 'produtos.outlet.cadastrar',
+    OUTLET_EDITAR: 'produtos.outlet.editar',
+    OUTLET_EXCLUIR: 'produtos.outlet.excluir',
   },
 
   // Pedidos

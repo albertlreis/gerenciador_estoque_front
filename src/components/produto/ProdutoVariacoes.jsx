@@ -7,6 +7,8 @@ import { Tooltip } from 'primereact/tooltip';
 import { formatarMotivo } from './helpers';
 import ProdutoAtributos from "../ProdutoAtributos";
 import apiEstoque from '../../services/apiEstoque';
+import usePermissions from "../../hooks/usePermissions";
+import { PERMISSOES } from '../../constants/permissoes';
 
 const ProdutoVariacoes = ({
                             produtoId,
@@ -18,6 +20,8 @@ const ProdutoVariacoes = ({
                             loading,
                             setLoading
                           }) => {
+  const { has } = usePermissions();
+
   const updateVariacao = (index, field, value) => {
     const novas = [...variacoes];
     novas[index] = { ...novas[index], [field]: value };
@@ -225,10 +229,14 @@ const ProdutoVariacoes = ({
                             {`${o.quantidade} unid • ${o.percentual_desconto}% • ${formatarMotivo(o.motivo)}`}
                           </span>
                           <div className="flex gap-2">
-                            <Button icon="pi pi-pencil" className="p-button-rounded p-button-text" type="button"
+                            {has(PERMISSOES.PRODUTOS.OUTLET_EDITAR) && (
+                              <Button icon="pi pi-pencil" className="p-button-rounded p-button-text" type="button"
                                     onClick={() => abrirDialogOutlet(v, o)} />
-                            <Button icon="pi pi-trash" className="p-button-rounded p-button-text" type="button"
+                            )}
+                            {has(PERMISSOES.PRODUTOS.OUTLET_EXCLUIR) && (
+                              <Button icon="pi pi-trash" className="p-button-rounded p-button-text" type="button"
                                     onClick={() => confirmarExcluirOutlet(v, o)} />
+                            )}
                           </div>
                         </div>
                       </div>
@@ -237,7 +245,7 @@ const ProdutoVariacoes = ({
                 </>
               )}
 
-              {v.id && (
+              {v.id && has(PERMISSOES.PRODUTOS.OUTLET_CADASTRAR) && (
                 <Button
                   label="Adicionar Outlet"
                   icon="pi pi-plus"

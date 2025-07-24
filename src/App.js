@@ -11,7 +11,6 @@ import NotFoundPage from './pages/NotFoundPage';
 import HomePage from './pages/HomePage';
 import Categorias from './pages/Categorias';
 import Clientes from './pages/Clientes';
-import ConfiguracaoOutlet from './pages/ConfiguracaoOutlet';
 import Depositos from './pages/Depositos';
 import MovimentacoesEstoque from './pages/MovimentacoesEstoque';
 import FinalizarPedido from './pages/FinalizarPedido';
@@ -59,8 +58,6 @@ const App = () => {
 
       <Route path="/categorias" element={renderProtectedRoute(<Categorias/>, PERMISSOES.CATEGORIAS.VISUALIZAR)}/>
       <Route path="/clientes" element={renderProtectedRoute(<Clientes/>, PERMISSOES.CLIENTES.VISUALIZAR)}/>
-      <Route path="/configuracao-outlet"
-             element={renderProtectedRoute(<ConfiguracaoOutlet/>, PERMISSOES.PRODUTOS.CONFIGURAR_OUTLET)}/>
       <Route path="/depositos" element={renderProtectedRoute(<Depositos/>, PERMISSOES.DEPOSITOS.VISUALIZAR)}/>
       <Route path="/movimentacoes-estoque"
              element={renderProtectedRoute(<MovimentacoesEstoque/>, PERMISSOES.ESTOQUE.MOVIMENTACAO)}/>
