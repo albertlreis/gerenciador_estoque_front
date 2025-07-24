@@ -72,7 +72,7 @@ const EstoqueAtual = ({ data, loading, total, first, onPage, onEditLocalizacao, 
               icon="pi pi-eye"
               tooltip="Ver movimentações"
               className="p-button-sm"
-              onClick={() => verMovimentacoes(rowData.produto_id)}
+              onClick={() => verMovimentacoes(rowData)}
             />
           )}
         />

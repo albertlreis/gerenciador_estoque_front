@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Toast } from 'primereact/toast';
 import { Card } from 'primereact/card';
+import { Dialog } from 'primereact/dialog';
 import apiEstoque from '../services/apiEstoque';
 import SakaiLayout from '../layouts/SakaiLayout';
 import LocalizacaoEstoqueDialog from '../components/LocalizacaoEstoqueDialog';
@@ -32,6 +33,11 @@ const MovimentacoesEstoque = () => {
 
   const [showLocalizacaoDialog, setShowLocalizacaoDialog] = useState(false);
   const [estoqueSelecionado, setEstoqueSelecionado] = useState(null);
+
+  const [showMovDialog, setShowMovDialog] = useState(false);
+  const [produtoSelecionado, setProdutoSelecionado] = useState(null);
+  const [movsProduto, setMovsProduto] = useState([]);
+  const [loadingDialog, setLoadingDialog] = useState(false);
 
   const [resumo, setResumo] = useState({
     totalProdutos: 0,
@@ -170,8 +176,27 @@ const MovimentacoesEstoque = () => {
     localStorage.removeItem(LOCAL_STORAGE_KEY);
   };
 
-  const verMovimentacoes = (produtoId) => {
-    window.location.href = `/produtos/${produtoId}/movimentacoes`;
+  const verMovimentacoes = async (rowData) => {
+    try {
+      setShowMovDialog(true);
+      setProdutoSelecionado(rowData);
+      setLoadingDialog(true);
+
+      const res = await apiEstoque.get('/estoque/movimentacoes', {
+        params: { variacao: rowData.variacao_id, page: 1, per_page: 10 }
+      });
+
+      setMovsProduto(res.data.data);
+    } catch (err) {
+      toast.current.show({
+        severity: 'error',
+        summary: 'Erro',
+        detail: 'Erro ao carregar movimentações da variação',
+        life: 3000,
+      });
+    } finally {
+      setLoadingDialog(false);
+    }
   };
 
   const abrirDialogLocalizacao = (estoqueId, localizacaoId = null) => {
@@ -250,6 +275,23 @@ const MovimentacoesEstoque = () => {
             setFirstMovs(e.first);
           }}
         />
+
+        <Dialog
+          header={`Movimentações – ${produtoSelecionado?.produto_nome || 'Produto'}`}
+          visible={showMovDialog}
+          onHide={() => setShowMovDialog(false)}
+          style={{ width: '80vw' }}
+          modal
+        >
+          <EstoqueMovimentacoes
+            data={movsProduto}
+            loading={loadingDialog}
+            total={movsProduto.length}
+            first={0}
+            onPage={() => {}}
+          />
+        </Dialog>
+
       </div>
     </SakaiLayout>
   );
