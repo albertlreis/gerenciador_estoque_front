@@ -11,9 +11,9 @@ import isEqual from 'lodash/isEqual';
 import { useProdutoForm } from '../../hooks/useProdutoForm';
 import ProdutoVariacoes from './ProdutoVariacoes';
 import ProdutoImagens from './ProdutoImagens';
-import OutletFormDialog from '../OutletFormDialog';
 import apiEstoque from '../../services/apiEstoque';
 import ProdutoManualConservacao from "./ProdutoManualConservacao";
+import DialogOutlet from "./DialogOutlet";
 
 const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
   const [produto, setProduto] = useState(initialData);
@@ -160,6 +160,21 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const salvarOutlet = async (dados) => {
+    try {
+      await apiEstoque.post(`/variacoes/${variacaoSelecionada.id}/outlet`, dados);
+      toastRef.current?.show({ severity: 'success', summary: 'Outlet registrado com sucesso' });
+      await atualizarProduto(true);
+    } catch (error) {
+      toastRef.current?.show({
+        severity: 'error',
+        summary: 'Erro ao registrar outlet',
+        detail: error?.response?.data?.message || 'Erro desconhecido',
+        life: 4000
+      });
     }
   };
 
@@ -342,11 +357,12 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
         )}
       </form>
 
-      <OutletFormDialog
+      <DialogOutlet
         visible={showOutletDialog}
         onHide={fecharDialogOutlet}
+        onSalvar={salvarOutlet}
         variacao={variacaoSelecionada}
-        outlet={outletSelecionado}
+        outletEdicao={outletSelecionado}
         onSuccess={() => atualizarProduto(true)}
       />
     </>

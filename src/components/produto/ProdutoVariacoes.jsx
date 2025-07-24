@@ -64,7 +64,6 @@ const ProdutoVariacoes = ({
 
   const salvarVariacoes = async () => {
     if (!produtoId) return;
-
     setLoading(true);
 
     try {
@@ -77,20 +76,12 @@ const ProdutoVariacoes = ({
           atributos: (v.atributos || []).filter(a => a.atributo && a.valor)
         };
 
-        if (v.id) {
-          existentes.push(data);
-        } else {
-          novas.push(data);
-        }
+        if (v.id) existentes.push(data);
+        else novas.push(data);
       }
 
-      if (existentes.length) {
-        await apiEstoque.put(`/produtos/${produtoId}/variacoes`, existentes);
-      }
-
-      for (const nova of novas) {
-        await apiEstoque.post(`/produtos/${produtoId}/variacoes`, nova);
-      }
+      if (existentes.length) await apiEstoque.put(`/produtos/${produtoId}/variacoes`, existentes);
+      for (const nova of novas) await apiEstoque.post(`/produtos/${produtoId}/variacoes`, nova);
 
       await carregarVariacoes();
 
@@ -101,14 +92,10 @@ const ProdutoVariacoes = ({
         life: 3000
       });
     } catch (error) {
-      console.error('Erro ao salvar variações:', error);
-
-      const mensagem = error?.response?.data?.message || 'Erro ao salvar variações';
-
       toastRef.current?.show({
         severity: 'error',
         summary: 'Erro',
-        detail: mensagem,
+        detail: error?.response?.data?.message || 'Erro ao salvar variações',
         life: 4000
       });
     } finally {
@@ -123,14 +110,10 @@ const ProdutoVariacoes = ({
       const { data } = await apiEstoque.get(`/produtos/${produtoId}/variacoes`);
       setVariacoes(data);
     } catch (error) {
-      console.error('Erro ao carregar variações:', error);
-
-      const mensagem = error?.response?.data?.message || 'Erro ao carregar variações do produto';
-
       toastRef.current?.show({
         severity: 'error',
         summary: 'Erro',
-        detail: mensagem,
+        detail: error?.response?.data?.message || 'Erro ao carregar variações do produto',
         life: 4000
       });
     }
@@ -141,7 +124,6 @@ const ProdutoVariacoes = ({
   const renderHeader = (v, i) => {
     const invalido = !v.preco || !v.referencia;
     const tooltipId = `tooltip-var-${i}`;
-
     return (
       <div className="flex align-items-center justify-content-between w-full gap-2">
         <span className="flex align-items-center gap-2">
@@ -224,18 +206,26 @@ const ProdutoVariacoes = ({
                   <div className="formgrid grid">
                     {v.outlets.map((o, j) => (
                       <div key={j} className="col-12 md:col-6">
-                        <div className="flex justify-content-between align-items-center gap-2 px-3 py-2 surface-100 border-round border-1 border-warning">
-                          <span className="text-sm font-semibold text-yellow-900">
-                            {`${o.quantidade} unid • ${o.percentual_desconto}% • ${formatarMotivo(o.motivo)}`}
-                          </span>
-                          <div className="flex gap-2">
+                        <div className="px-3 py-2 surface-100 border-round border-1 border-warning">
+                          <div className="mb-1 text-sm font-semibold text-yellow-900">
+                            {`${o.quantidade} unid • ${formatarMotivo(o.motivo)}`}
+                          </div>
+                          <ul className="pl-3 mb-2">
+                            {o.formas_pagamento?.map((fp, k) => (
+                              <li key={k} className="text-sm">
+                                {fp.forma_pagamento.toUpperCase()}: {fp.percentual_desconto}%
+                                {fp.max_parcelas && ` • até ${fp.max_parcelas}x`}
+                              </li>
+                            ))}
+                          </ul>
+                          <div className="flex gap-2 justify-content-end">
                             {has(PERMISSOES.PRODUTOS.OUTLET_EDITAR) && (
                               <Button icon="pi pi-pencil" className="p-button-rounded p-button-text" type="button"
-                                    onClick={() => abrirDialogOutlet(v, o)} />
+                                      onClick={() => abrirDialogOutlet(v, o)} />
                             )}
                             {has(PERMISSOES.PRODUTOS.OUTLET_EXCLUIR) && (
                               <Button icon="pi pi-trash" className="p-button-rounded p-button-text" type="button"
-                                    onClick={() => confirmarExcluirOutlet(v, o)} />
+                                      onClick={() => confirmarExcluirOutlet(v, o)} />
                             )}
                           </div>
                         </div>
@@ -268,8 +258,7 @@ const ProdutoVariacoes = ({
 
       <div className="mt-3 flex justify-content-end gap-2">
         <Button type="button" label="Adicionar Variação" icon="pi pi-plus" className="p-button-secondary"
-                onClick={addVariacao}/>
-
+                onClick={addVariacao} />
         <Button
           type="button"
           label="Salvar Variações"
@@ -285,7 +274,6 @@ const ProdutoVariacoes = ({
               });
               return;
             }
-
             salvarVariacoes();
           }}
           disabled={loading}
