@@ -1,10 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Tooltip } from 'primereact/tooltip';
 
 const EstoqueAtual = ({ data, loading, total, first, onPage, onEditLocalizacao, verMovimentacoes }) => {
+  const [sortField, setSortField] = useState('produto_nome');
+  const [sortOrder, setSortOrder] = useState(1);
+  const [rows, setRows] = useState(10);
+
   const quantidadeTemplate = (rowData) => (
     <span className={rowData.quantidade <= 5 ? 'text-red-500 font-bold' : ''}>
       {rowData.quantidade}
@@ -28,11 +32,31 @@ const EstoqueAtual = ({ data, loading, total, first, onPage, onEditLocalizacao, 
     );
   };
 
+  const handlePage = (e) => {
+    setRows(e.rows);
+    onPage({
+      ...e,
+      sortField,
+      sortOrder,
+      rows: e.rows
+    });
+  };
+
+  const handleSort = (e) => {
+    setSortField(e.sortField);
+    setSortOrder(e.sortOrder);
+    onPage({
+      first,
+      rows,
+      sortField: e.sortField,
+      sortOrder: e.sortOrder
+    });
+  };
+
   return (
     <div className="mb-5">
       <h3 className="mb-3">Estoque Atual por Produto e Depósito</h3>
 
-      {/* Tooltip para a coluna de localização */}
       <Tooltip target="#tooltip-localizacao" content="Corredor, Prateleira, Coluna e Nível" position="top" />
 
       <DataTable
@@ -40,18 +64,20 @@ const EstoqueAtual = ({ data, loading, total, first, onPage, onEditLocalizacao, 
         loading={loading}
         paginator
         first={first}
-        rows={10}
+        rows={rows}
+        rowsPerPageOptions={[10, 20, 50]}
         totalRecords={total}
-        onPage={onPage}
+        onPage={handlePage}
+        onSort={handleSort}
+        sortField={sortField}
+        sortOrder={sortOrder}
         lazy
         responsiveLayout="scroll"
         emptyMessage="Nenhum item em estoque"
-        sortField="produto_nome"
-        sortOrder={1}
       >
-        <Column field="produto_nome" header="Produto" />
-        <Column field="deposito_nome" header="Depósito" />
-        <Column field="quantidade" header="Quantidade" body={quantidadeTemplate} />
+        <Column field="produto_nome" header="Produto" sortable />
+        <Column field="deposito_nome" header="Depósito" sortable />
+        <Column field="quantidade" header="Quantidade" body={quantidadeTemplate} sortable />
         <Column
           header={
             <span>

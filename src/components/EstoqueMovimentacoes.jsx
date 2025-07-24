@@ -1,11 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Tag } from 'primereact/tag';
 import { format } from 'date-fns';
 
 const EstoqueMovimentacoes = ({ data, loading, total, first, onPage }) => {
-  // Remove movimentações que não representam alterações físicas de estoque
+  const [sortField, setSortField] = useState(null);
+  const [sortOrder, setSortOrder] = useState(null);
+  const [rows, setRows] = useState(10);
+
   const dataFiltrada = data.filter((row) => row.tipo !== 'consignacao_compra');
 
   const tipoTemplate = (tipo) => {
@@ -84,6 +87,27 @@ const EstoqueMovimentacoes = ({ data, loading, total, first, onPage }) => {
       ? format(new Date(rowData.data_movimentacao), 'dd/MM/yyyy')
       : '—';
 
+  const handlePage = (e) => {
+    setRows(e.rows);
+    onPage({
+      ...e,
+      sortField,
+      sortOrder,
+      rows: e.rows
+    });
+  };
+
+  const handleSort = (e) => {
+    setSortField(e.sortField);
+    setSortOrder(e.sortOrder);
+    onPage({
+      first,
+      rows,
+      sortField: e.sortField,
+      sortOrder: e.sortOrder
+    });
+  };
+
   return (
     <div className="mb-6">
       <h3 className="mb-3">Movimentações Recentes</h3>
@@ -91,19 +115,36 @@ const EstoqueMovimentacoes = ({ data, loading, total, first, onPage }) => {
         value={dataFiltrada}
         loading={loading}
         paginator
-        rows={10}
+        rows={rows}
+        rowsPerPageOptions={[10, 20, 50]}
         first={first}
         totalRecords={total}
-        onPage={onPage}
+        onPage={handlePage}
+        onSort={handleSort}
+        sortField={sortField}
+        sortOrder={sortOrder}
         lazy
         responsiveLayout="scroll"
         emptyMessage="Nenhuma movimentação encontrada"
       >
-        <Column header="Data" body={dataTemplate} />
-        <Column field="produto_nome" header="Produto" />
+        <Column header="Data" body={dataTemplate} sortable field="data_movimentacao" />
+        <Column
+          field="produto_nome"
+          header="Produto"
+          sortable
+          body={(rowData) => (
+            <div
+              title={rowData.produto_nome}
+              className="whitespace-nowrap overflow-hidden text-ellipsis"
+              style={{ maxWidth: '320px' }}
+            >
+              {rowData.produto_nome}
+            </div>
+          )}
+        />
         <Column header="Movimentação" body={movimentacaoTemplate} />
-        <Column header="Tipo" body={(row) => tipoTemplate(row.tipo)} />
-        <Column field="quantidade" header="Quantidade" />
+        <Column header="Tipo" body={(row) => tipoTemplate(row.tipo)} sortable field="tipo" />
+        <Column field="quantidade" header="Quantidade" sortable />
       </DataTable>
     </div>
   );

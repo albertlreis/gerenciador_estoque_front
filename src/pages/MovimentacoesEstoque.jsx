@@ -82,18 +82,26 @@ const MovimentacoesEstoque = () => {
     fetchMovimentacoes();
   }, [paginaMovs]);
 
-  const fetchEstoqueAtual = async () => {
+  const fetchEstoqueAtual = async ({
+                                     first = 0,
+                                     rows = 10,
+                                     sortField = null,
+                                     sortOrder = null
+                                   } = {}) => {
     setLoadingEstoque(true);
     try {
       const formatDate = (d) => d instanceof Date ? d.toISOString().split('T')[0] : null;
+
       const filtroParams = {
         ...filtros,
         zerados: filtros.zerados ? 1 : 0,
         periodo: filtros.periodo?.length === 2 && filtros.periodo[1]
           ? [formatDate(filtros.periodo[0]), formatDate(filtros.periodo[1])]
           : null,
-        page: paginaEstoque,
-        per_page: 10,
+        page: Math.floor(first / rows) + 1,
+        per_page: rows,
+        sort_field: sortField,
+        sort_order: sortOrder === 1 ? 'asc' : sortOrder === -1 ? 'desc' : undefined
       };
 
       const [estoqueRes, resumoRes] = await Promise.all([
@@ -116,18 +124,26 @@ const MovimentacoesEstoque = () => {
     }
   };
 
-  const fetchMovimentacoes = async () => {
+  const fetchMovimentacoes = async ({
+                                      first = 0,
+                                      rows = 10,
+                                      sortField = null,
+                                      sortOrder = null
+                                    } = {}) => {
     setLoadingMovs(true);
     try {
       const formatDate = (d) => d instanceof Date ? d.toISOString().split('T')[0] : null;
+
       const filtroParams = {
         ...filtros,
         periodo:
           filtros.periodo?.length === 2 && filtros.periodo[1]
             ? [formatDate(filtros.periodo[0]), formatDate(filtros.periodo[1])]
             : null,
-        page: paginaMovs,
-        per_page: 10,
+        page: Math.floor(first / rows) + 1,
+        per_page: rows,
+        sort_field: sortField,
+        sort_order: sortOrder === 1 ? 'asc' : sortOrder === -1 ? 'desc' : undefined
       };
 
       const movsRes = await apiEstoque.get('/estoque/movimentacoes', {
@@ -263,6 +279,12 @@ const MovimentacoesEstoque = () => {
               onPage={(e) => {
                 setPaginaEstoque(e.page + 1);
                 setFirstEstoque(e.first);
+                fetchEstoqueAtual({
+                  first: e.first,
+                  rows: e.rows,
+                  sortField: e.sortField,
+                  sortOrder: e.sortOrder
+                });
               }}
               onEditLocalizacao={(estoqueId, localizacaoId) => abrirDialogLocalizacao(estoqueId, localizacaoId)}
               verMovimentacoes={verMovimentacoes}
@@ -277,6 +299,12 @@ const MovimentacoesEstoque = () => {
               onPage={(e) => {
                 setPaginaMovs(e.page + 1);
                 setFirstMovs(e.first);
+                fetchMovimentacoes({
+                  first: e.first,
+                  rows: e.rows,
+                  sortField: e.sortField,
+                  sortOrder: e.sortOrder
+                });
               }}
             />
           </AccordionTab>
