@@ -1,8 +1,10 @@
-version: '3.9'
+name: sierra
 
 services:
   sierra:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: sierra_react
     restart: always
     networks:
@@ -12,6 +14,7 @@ services:
       - "traefik.http.routers.sierra.rule=Host(`sierra.acadsoft.com.br`)"
       - "traefik.http.routers.sierra.entrypoints=websecure"
       - "traefik.http.routers.sierra.tls.certresolver=letsencrypt"
+      - "traefik.http.services.sierra.loadbalancer.server.port=80"
 
 networks:
   traefik-network:

@@ -4,7 +4,8 @@ const apiAuth = axios.create({
   baseURL: `${process.env.REACT_APP_BASE_URL_AUTH}/api/v1`,
   timeout: Number(process.env.REACT_APP_TIMEOUT),
   headers: {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
   }
 });
 
