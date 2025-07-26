@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiMail, FiLock } from 'react-icons/fi';
+import apiAuth from '../services/apiAuth';
 import apiEstoque from '../services/apiEstoque';
 import { isTokenValid } from '../helper';
 import { useAuth } from '../context/AuthContext';
 import '../Login.css';
 import InputWithIcon from '../components/InputWithIcon';
-import AuthService from "../services/AuthService";
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -30,13 +30,19 @@ const Login = () => {
     setErro('');
 
     try {
-      const userData = await AuthService.login({ email, senha });
-      login(userData);
+      const response = await apiAuth.post('/login', { email, senha });
+      const { access_token, expires_in, user } = response.data;
 
-      apiEstoque.defaults.headers.common['X-Permissoes'] = JSON.stringify(userData.permissoes || []);
+      if (!access_token || !user) return setErro('Credenciais inválidas');
+      if (!user.ativo) return setErro('Usuário inativo, contate o administrador');
+
+      const expiresAt = new Date().getTime() + expires_in * 1000;
+      login({ token: access_token, expiresAt, ...user });
+
+      apiEstoque.defaults.headers.common['X-Permissoes'] = JSON.stringify(user.permissoes || []);
       navigate('/');
     } catch (err) {
-      setErro(err.toString());
+      setErro('E-mail ou senha inválidos');
     } finally {
       setLoading(false);
     }
