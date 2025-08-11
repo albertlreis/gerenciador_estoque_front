@@ -81,6 +81,23 @@ const ConsignacaoModal = ({ id, visible, onHide, onAtualizar }) => {
       });
   };
 
+  const confirmarCompra = async (consignacao) => {
+    setSaving(true);
+    try {
+      await api.patch(`/consignacoes/${consignacao.id}`, {
+        status: 'comprado',
+      });
+      toastRef.current.show({ severity: 'success', summary: 'Sucesso', detail: 'Compra confirmada com sucesso.' });
+      await carregar();
+      onAtualizar?.();
+    } catch (err) {
+      toastRef.current.show({ severity: 'error', summary: 'Erro', detail: 'Não foi possível confirmar a compra.' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+
   return (
     <>
       <Toast ref={toastRef} />
@@ -179,7 +196,7 @@ const ConsignacaoModal = ({ id, visible, onHide, onAtualizar }) => {
                     icon="pi pi-check"
                     severity="success"
                     disabled={saving || !['pendente', 'vencido'].includes(c.status)}
-                    onClick={() => toastRef.current.show({ summary: 'Ação futura', detail: 'Funcionalidade não implementada' })}
+                    onClick={() => confirmarCompra(c)}
                   />
                 </div>
               </div>
