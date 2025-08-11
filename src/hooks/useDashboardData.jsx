@@ -11,6 +11,7 @@ const useDashboardData = () => {
     totalConfirmado: 0,
     totalCancelado: 0,
     totalRascunho: 0,
+    outletSugeridos: 0,
   });
 
   const [ultimosPedidos, setUltimosPedidos] = useState([]);
@@ -21,6 +22,9 @@ const useDashboardData = () => {
   const [pedidosMes, setPedidosMes] = useState([]);
   const [clientesMes, setClientesMes] = useState([]);
 
+  const [sugestoesOutlet, setSugestoesOutlet] = useState([]);
+  const [diasLimiteOutlet, setDiasLimiteOutlet] = useState(null);
+
   const [modalKpi, setModalKpi] = useState(null);
   const [exibirModalEstoque, setExibirModalEstoque] = useState(false);
 
@@ -29,6 +33,7 @@ const useDashboardData = () => {
   const [loadingEstatisticas, setLoadingEstatisticas] = useState(true);
   const [loadingEstoqueBaixo, setLoadingEstoqueBaixo] = useState(true);
   const [loadingConsignacoes, setLoadingConsignacoes] = useState(true);
+  const [loadingSugestoesOutlet, setLoadingSugestoesOutlet] = useState(true);
 
   const [periodo, setPeriodo] = useState(6);
   const [tipoGrafico, setTipoGrafico] = useState('bar');
@@ -52,6 +57,7 @@ const useDashboardData = () => {
         fetchEstatisticas(),
         fetchEstoqueBaixo(),
         carregarConsignacoesVencendo(),
+        fetchSugestoesOutlet(),
       ]);
     } catch (error) {
       console.error('Erro ao carregar dados do dashboard:', error);
@@ -91,9 +97,11 @@ const useDashboardData = () => {
       statusGrafico,
       pedidosMes,
       clientesMes,
+      outletSugeridos,
     } = data;
 
-    setKpis({
+    setKpis(prev => ({
+      ...prev,
       pedidosMes: dadosKpi.pedidosMes,
       valorMes: dadosKpi.valorMes.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
       clientesUnicos: dadosKpi.clientesUnicos,
@@ -102,7 +110,8 @@ const useDashboardData = () => {
       totalCancelado: dadosKpi.totalCancelado,
       totalRascunho: dadosKpi.totalRascunho,
       estoqueBaixo: kpis.estoqueBaixo,
-    });
+      outletSugeridos: outletSugeridos ?? prev.outletSugeridos,
+    }));
 
     setUltimosPedidos(ultimosPedidos);
     setGraficoStatus({
@@ -142,6 +151,25 @@ const useDashboardData = () => {
       setKpis(prev => ({ ...prev, estoqueBaixo: res.data.length }));
     } catch (err) {
       console.error('Erro ao carregar estoque baixo', err);
+    }
+  };
+
+  const fetchSugestoesOutlet = async () => {
+    try {
+      const { data } = await apiEstoque.get('/produtos/sugestoes-outlet', { params: { limite: 5 } });
+      // Estrutura esperada:
+      // data = { itens: [...], dias_limite: número }  OU  data = [...]
+      const itens = Array.isArray(data) ? data : (data.itens ?? []);
+      const diasLimite = Array.isArray(data) ? null : (data.dias_limite ?? null);
+
+      setSugestoesOutlet(itens);
+      if (diasLimite !== null) setDiasLimiteOutlet(diasLimite);
+
+      setKpis(prev => ({ ...prev, outletSugeridos: itens.length }));
+    } catch (err) {
+      console.error('Erro ao carregar sugestões de outlet', err);
+      setSugestoesOutlet([]);
+      setKpis(prev => ({ ...prev, outletSugeridos: 0 }));
     }
   };
 
@@ -190,6 +218,9 @@ const useDashboardData = () => {
     loadingEstoqueBaixo,
     consignacoesVencendo,
     loadingConsignacoes,
+    sugestoesOutlet,
+    diasLimiteOutlet,
+    loadingSugestoesOutlet,
     fetchResumoDashboard,
   };
 };

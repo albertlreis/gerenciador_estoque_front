@@ -56,6 +56,13 @@ const KpiCards = ({ kpis, perfil = PERFIS.VENDEDOR.slug, setModalKpi, setExibirM
       color: 'orange',
       onClick: () => setExibirModalEstoque?.(true)
     },
+    isAdmin && {
+      title: 'Sugestões de outlet',
+      value: kpis.outletSugeridos ?? 0,
+      icon: 'pi pi-tag',
+      color: 'pink',
+      onClick: () => setModalKpi?.('sugestoesOutlet')
+    },
     {
       title: 'Ticket médio',
       value: kpis.ticketMedio,
@@ -73,12 +80,6 @@ const KpiCards = ({ kpis, perfil = PERFIS.VENDEDOR.slug, setModalKpi, setExibirM
       value: kpis.totalCancelado,
       icon: 'pi pi-ban',
       color: 'red'
-    },
-    isAdmin && {
-      title: 'Rascunhos',
-      value: kpis.totalRascunho,
-      icon: 'pi pi-pencil',
-      color: 'yellow'
     }
   ].filter(Boolean);
 

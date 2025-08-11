@@ -24,7 +24,8 @@ const HomeAdminView = () => {
     setModalKpi, setExibirModalEstoque, setPeriodo, setTipoGrafico,
     handleAtualizarGrafico,
     loadingKpis, loadingPedidos, loadingEstatisticas,
-    consignacoesVencendo, loadingConsignacoes, fetchResumoDashboard
+    consignacoesVencendo, loadingConsignacoes, fetchResumoDashboard,
+    sugestoesOutlet, diasLimiteOutlet, loadingSugestoesOutlet,
   } = useDashboardData();
 
   return (
