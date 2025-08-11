@@ -7,9 +7,9 @@ import { InputTextarea } from 'primereact/inputtextarea';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { Toast } from 'primereact/toast';
 import { ConfirmDialog } from 'primereact/confirmdialog';
+import { Dropdown } from 'primereact/dropdown';
 import { STATUS_CONSIGNACAO } from '../../constants/statusConsignacao';
 import api from '../../services/apiEstoque';
-
 
 const statusTag = (status) => {
   const info = STATUS_CONSIGNACAO[status] || { label: status, color: 'secondary' };
@@ -26,6 +26,8 @@ const ConsignacaoModal = ({ id, visible, onHide, onAtualizar }) => {
   const [consignacaoParaDevolver, setConsignacaoParaDevolver] = useState(null);
   const [qtdDevolver, setQtdDevolver] = useState(null);
   const [obsDevolver, setObsDevolver] = useState('');
+  const [depositos, setDepositos] = useState([]);
+  const [depositoId, setDepositoId] = useState(null);
 
   useEffect(() => {
     if (visible && id) carregar();
@@ -43,17 +45,19 @@ const ConsignacaoModal = ({ id, visible, onHide, onAtualizar }) => {
   };
 
   const registrarDevolucaoParcial = async () => {
-    if (!qtdDevolver || qtdDevolver <= 0 || !consignacaoParaDevolver) return;
+    if (!qtdDevolver || qtdDevolver <= 0 || !consignacaoParaDevolver || !depositoId) return;
     setSaving(true);
     try {
       await api.post(`/consignacoes/${consignacaoParaDevolver.id}/devolucao`, {
         quantidade: qtdDevolver,
-        observacoes: obsDevolver
+        observacoes: obsDevolver,
+        deposito_id: depositoId,
       });
       toastRef.current.show({ severity: 'success', summary: 'Sucesso', detail: 'Devolução registrada com sucesso' });
       setConsignacaoParaDevolver(null);
       setQtdDevolver(null);
       setObsDevolver('');
+      setDepositoId(null);
       await carregar();
       onAtualizar?.();
     } catch (e) {
@@ -67,6 +71,14 @@ const ConsignacaoModal = ({ id, visible, onHide, onAtualizar }) => {
     setConsignacaoParaDevolver(consignacao);
     setQtdDevolver(null);
     setObsDevolver('');
+    setDepositoId(null);
+    api.get('/depositos')
+      .then(({ data }) => {
+        setDepositos(data.map((d) => ({ label: d.nome, value: d.id })));
+      })
+      .catch(() => {
+        toastRef.current.show({ severity: 'warn', summary: 'Erro', detail: 'Erro ao carregar depósitos' });
+      });
   };
 
   return (
@@ -185,6 +197,7 @@ const ConsignacaoModal = ({ id, visible, onHide, onAtualizar }) => {
           setConsignacaoParaDevolver(null);
           setQtdDevolver(null);
           setObsDevolver('');
+          setDepositoId(null);
         }}
         footer={
           <div className="flex justify-content-end gap-2">
@@ -196,12 +209,13 @@ const ConsignacaoModal = ({ id, visible, onHide, onAtualizar }) => {
                 setConsignacaoParaDevolver(null);
                 setQtdDevolver(null);
                 setObsDevolver('');
+                setDepositoId(null);
               }}
             />
             <Button
               label="Confirmar"
               icon="pi pi-check"
-              disabled={saving || !qtdDevolver || qtdDevolver <= 0}
+              disabled={saving || !qtdDevolver || qtdDevolver <= 0 || !depositoId}
               onClick={registrarDevolucaoParcial}
             />
           </div>
@@ -222,6 +236,22 @@ const ConsignacaoModal = ({ id, visible, onHide, onAtualizar }) => {
                 inputClassName="w-full py-2"
                 className="w-full"
                 placeholder={`Máximo: ${consignacaoParaDevolver.quantidade_disponivel || consignacaoParaDevolver.quantidade}`}
+              />
+            </div>
+
+            <div className="mb-3">
+              <label htmlFor="deposito" className="block text-600 mb-1">
+                Depósito de destino
+              </label>
+              <Dropdown
+                id="deposito"
+                options={depositos}
+                value={depositoId}
+                onChange={(e) => setDepositoId(e.value)}
+                className="w-full"
+                placeholder="Selecione"
+                filter
+                showClear
               />
             </div>
 
