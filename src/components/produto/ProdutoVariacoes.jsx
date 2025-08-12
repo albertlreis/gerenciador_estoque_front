@@ -4,7 +4,6 @@ import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { InputNumber } from 'primereact/inputnumber';
 import { Tooltip } from 'primereact/tooltip';
-import { formatarMotivo } from './helpers';
 import ProdutoAtributos from "../ProdutoAtributos";
 import apiEstoque from '../../services/apiEstoque';
 import usePermissions from "../../hooks/usePermissions";
@@ -208,24 +207,34 @@ const ProdutoVariacoes = ({
                       <div key={j} className="col-12 md:col-6">
                         <div className="px-3 py-2 surface-100 border-round border-1 border-warning">
                           <div className="mb-1 text-sm font-semibold text-yellow-900">
-                            {`${o.quantidade} unid • ${formatarMotivo(o.motivo)}`}
+                            {`${o.quantidade} unid • Motivo #${o.motivo?.nome}`}
                           </div>
-                          <ul className="pl-3 mb-2">
-                            {o.formas_pagamento?.map((fp, k) => (
-                              <li key={k} className="text-sm">
-                                {fp.forma_pagamento.toUpperCase()}: {fp.percentual_desconto}%
-                                {fp.max_parcelas && ` • até ${fp.max_parcelas}x`}
-                              </li>
-                            ))}
-                          </ul>
+                          {o.formas_pagamento?.length > 0 && (
+                            <ul className="pl-3 mb-2">
+                              {o.formas_pagamento.map((fp, k) => (
+                                <li key={k} className="text-sm">
+                                  {`Forma #${fp.forma_pagamento?.nome}`}: {fp.percentual_desconto}%
+                                  {fp.max_parcelas && ` • até ${fp.max_parcelas}x`}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
                           <div className="flex gap-2 justify-content-end">
                             {has(PERMISSOES.PRODUTOS.OUTLET_EDITAR) && (
-                              <Button icon="pi pi-pencil" className="p-button-rounded p-button-text" type="button"
-                                      onClick={() => abrirDialogOutlet(v, o)} />
+                              <Button
+                                icon="pi pi-pencil"
+                                className="p-button-rounded p-button-text"
+                                type="button"
+                                onClick={() => abrirDialogOutlet(v, o)}
+                              />
                             )}
                             {has(PERMISSOES.PRODUTOS.OUTLET_EXCLUIR) && (
-                              <Button icon="pi pi-trash" className="p-button-rounded p-button-text" type="button"
-                                      onClick={() => confirmarExcluirOutlet(v, o)} />
+                              <Button
+                                icon="pi pi-trash"
+                                className="p-button-rounded p-button-text"
+                                type="button"
+                                onClick={() => confirmarExcluirOutlet(v, o)}
+                              />
                             )}
                           </div>
                         </div>

@@ -61,7 +61,27 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
   }, [initialData]);
 
 
+  const calcularDisponivelOutlet = (variacao) => {
+    const estoqueTotal = variacao?.estoque_total ?? variacao?.estoque?.quantidade ?? 0;
+    const totalOutlets = (variacao?.outlets ?? []).reduce((acc, o) => acc + (o.quantidade ?? 0), 0);
+    return Math.max(0, estoqueTotal - totalOutlets);
+  };
+
   const abrirDialogOutlet = (variacao, outlet = null) => {
+    // Bloqueia apenas para NOVO cadastro; edição continua liberada
+    if (!outlet) {
+      const disponivel = calcularDisponivelOutlet(variacao);
+      if (disponivel <= 0) {
+        toastRef.current?.show({
+          severity: 'warn',
+          summary: 'Sem disponibilidade',
+          detail: 'Não há quantidade disponível para cadastrar outlet nesta variação.',
+          life: 3500
+        });
+        return; // não abre o diálogo
+      }
+    }
+
     setVariacaoSelecionada(variacao);
     setOutletSelecionado(outlet);
     setShowOutletDialog(true);
@@ -95,8 +115,6 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
     try {
       const response = await apiEstoque.get(`/produtos/${produto.id}`);
       const produtoAtualizado = response.data?.data || response.data;
-
-      console.log("produtoAtualizado: ", produtoAtualizado)
 
       atualizarDados(produtoAtualizado);
       setProduto(produtoAtualizado);
@@ -163,18 +181,29 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
     }
   };
 
-  const salvarOutlet = async (dados) => {
+  const salvarOutlet = async (dados, outletEdicaoParam = null) => {
     try {
-      await apiEstoque.post(`/variacoes/${variacaoSelecionada.id}/outlet`, dados);
-      toastRef.current?.show({ severity: 'success', summary: 'Outlet registrado com sucesso' });
+      if (outletEdicaoParam?.id) {
+        await apiEstoque.put(
+          `/variacoes/${variacaoSelecionada.id}/outlet/${outletEdicaoParam.id}`,
+          dados
+        );
+        toastRef.current?.show({ severity: 'success', summary: 'Outlet atualizado com sucesso' });
+      } else {
+        await apiEstoque.post(`/variacoes/${variacaoSelecionada.id}/outlet`, dados);
+        toastRef.current?.show({ severity: 'success', summary: 'Outlet registrado com sucesso' });
+      }
+
       await atualizarProduto(true);
+      return true;
     } catch (error) {
       toastRef.current?.show({
         severity: 'error',
-        summary: 'Erro ao registrar outlet',
+        summary: 'Erro ao salvar outlet',
         detail: error?.response?.data?.message || 'Erro desconhecido',
         life: 4000
       });
+      return false;
     }
   };
 
