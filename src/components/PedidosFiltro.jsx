@@ -16,8 +16,9 @@ export default function PedidosFiltro({ filtros, setFiltros, onBuscar }) {
   ];
 
   const limparFiltros = () => {
-    setFiltros({ texto: '', status: null, periodo: null });
-    onBuscar();
+    const base = { ...filtros, texto: '', status: null, periodo: null };
+    setFiltros(base);
+    onBuscar(base);
   };
 
   return (
@@ -65,7 +66,7 @@ export default function PedidosFiltro({ filtros, setFiltros, onBuscar }) {
               label="Buscar"
               icon="pi pi-search"
               className="p-button-primary"
-              onClick={onBuscar}
+              onClick={() => onBuscar()}
             />
             <Button
               label="Limpar"

@@ -1,11 +1,11 @@
 import React from 'react';
 import { Dropdown } from 'primereact/dropdown';
-import { Calendar } from 'primereact/calendar';
 import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
 import { InputSwitch } from 'primereact/inputswitch';
 import { Tooltip } from 'primereact/tooltip';
 import { motion } from 'framer-motion';
+import CalendarBR from "./CalendarBR";
 
 const EstoqueFiltro = ({ filtros, setFiltros, depositos, tipos, onBuscar, onLimpar }) => {
   return (
@@ -64,15 +64,10 @@ const EstoqueFiltro = ({ filtros, setFiltros, depositos, tipos, onBuscar, onLimp
           <label htmlFor="periodo" className="font-medium mb-2 block">
             Período <i className="pi pi-info-circle text-500 ml-1" data-pr-tooltip="Filtra os produtos com movimentações no intervalo" />
           </label>
-          <Calendar
-            id="periodo"
+          <CalendarBR
             value={filtros.periodo}
             onChange={(e) => setFiltros({ ...filtros, periodo: e.value })}
-            selectionMode="range"
             placeholder="Selecionar intervalo"
-            showIcon
-            readOnlyInput
-            className="w-full"
           />
         </div>
 

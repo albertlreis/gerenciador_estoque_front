@@ -62,7 +62,10 @@ export default function PedidosListagem() {
 
   const [colunasVisiveis, setColunasVisiveis] = useState(colunasDisponiveis);
 
-  useEffect(() => { fetchPedidos(1); }, []);
+  useEffect(() => {
+    fetchPedidos(1, filtros).catch(r => console.log("Erro: ", r));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const listener = (e) => setPedidoParaDevolucao(e.detail);
@@ -73,7 +76,13 @@ export default function PedidosListagem() {
   const onPageChange = (e) => {
     const novaPagina = Math.floor(e.first / 10) + 1;
     setPaginaAtual(novaPagina);
-    fetchPedidos(novaPagina);
+    fetchPedidos(novaPagina).catch(r => console.log("Erro: ", r));
+  };
+
+  const handleBuscar = (override) => {
+    const efetivos = override ?? filtros;
+    setPaginaAtual(1);
+    fetchPedidos(1, efetivos).catch(r => console.log("Erro: ", r));
   };
 
   const statusTemplate = (rowData) => {
@@ -159,7 +168,12 @@ export default function PedidosListagem() {
 
       <div className="p-4">
         <div className="flex flex-wrap gap-4 justify-content-between align-items-end mb-3">
-          <PedidosFiltro filtros={filtros} setFiltros={setFiltros} onBuscar={() => fetchPedidos(1)}/>
+          <PedidosFiltro
+            filtros={filtros}
+            setFiltros={setFiltros}
+            onBuscar={handleBuscar}
+          />
+
           <PedidosExportar toast={toast} loading={loading}/>
         </div>
 
