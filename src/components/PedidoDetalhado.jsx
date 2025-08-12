@@ -6,12 +6,45 @@ import { Button } from 'primereact/button';
 import { formatarReal } from '../utils/formatters';
 import { STATUS_MAP } from '../constants/statusPedido';
 
+const severityEntrega = (diasUteisRestantes, atrasado) => {
+  if (atrasado) return 'danger';
+  if (diasUteisRestantes === 0) return 'warning';
+  if (diasUteisRestantes <= 7) return 'info';
+  return 'success';
+};
+
+const isEstadoFinal = (status) =>
+  ['entrega_cliente','finalizado','consignado','devolucao_consignacao'].includes(status ?? '');
+
 const PedidoDetalhado = ({ visible, onHide, pedido }) => {
   if (!pedido) return null;
 
   const status = STATUS_MAP[pedido.status] ?? { label: pedido.status };
   const dataPedido = pedido.data_pedido ? new Date(pedido.data_pedido).toLocaleDateString('pt-BR') : '—';
   const numeroExterno = pedido.numero ? `#${pedido.numero}` : `ID ${pedido.id}`;
+
+  const entregaPrevista = pedido.data_limite_entrega
+    ? new Date(pedido.data_limite_entrega).toLocaleDateString('pt-BR')
+    : '—';
+
+  const diasUteisRestantes = typeof pedido.dias_uteis_restantes === 'number'
+    ? pedido.dias_uteis_restantes
+    : null;
+
+  const atrasadoEntrega = !!pedido.atrasado_entrega;
+  const estadoFinal = isEstadoFinal(pedido.status);
+
+  const badgeEstadoFinal = () => {
+    const map = {
+      entrega_cliente: { label: 'Entregue', severity: 'success', icon: 'pi pi-check-circle' },
+      finalizado: { label: 'Finalizado', severity: 'success', icon: 'pi pi-verified' },
+      consignado: { label: 'Consignado', severity: 'info', icon: 'pi pi-inbox' },
+      devolucao_consignacao: { label: 'Devolução', severity: 'warning', icon: 'pi pi-undo' },
+    };
+    const cfg = map[pedido.status] ?? null;
+    if (!cfg) return null;
+    return <Tag value={cfg.label} icon={cfg.icon} severity={cfg.severity} rounded />;
+  };
 
   return (
     <Dialog
@@ -49,10 +82,36 @@ const PedidoDetalhado = ({ visible, onHide, pedido }) => {
           <div><i className="pi pi-bookmark mr-1" /> <strong>Parceiro:</strong> {pedido.parceiro?.nome ?? '—'}</div>
           <div><i className="pi pi-calendar mr-1" /> <strong>Data:</strong> {dataPedido}</div>
           <div><i className="pi pi-dollar mr-1" /> <strong>Valor Total:</strong> {formatarReal(pedido.valor_total)}</div>
-          <div className="flex align-items-center gap-2 mt-1">
+
+          {/* Bloco de Entrega */}
+          <div className="mt-2 flex flex-wrap align-items-center gap-3">
+            <div className="text-sm">
+              <i className="pi pi-send mr-1" />
+              <strong>Entrega prevista:</strong> {estadoFinal ? '—' : entregaPrevista}
+            </div>
+
+            {/* Quando o prazo não conta, mostra badge do estado final */}
+            {estadoFinal && badgeEstadoFinal()}
+
+            {/* Se ainda conta prazo e houver contador */}
+            {!estadoFinal && diasUteisRestantes !== null && (
+              <Tag
+                value={
+                  atrasadoEntrega
+                    ? `${Math.abs(diasUteisRestantes)} dia(s) úteis em atraso`
+                    : `${diasUteisRestantes} dia(s) úteis restantes`
+                }
+                severity={severityEntrega(diasUteisRestantes, atrasadoEntrega)}
+                rounded
+              />
+            )}
+          </div>
+
+          <div className="flex align-items-center gap-2 mt-2">
             <strong>Status:</strong>
             <Tag value={status.label} severity={status.color} icon={status.icon} />
           </div>
+
           {pedido.observacoes && (
             <div className="mt-2 text-sm text-gray-600">
               📝 <strong>Observações:</strong> {pedido.observacoes}
@@ -156,7 +215,6 @@ const PedidoDetalhado = ({ visible, onHide, pedido }) => {
       )) : (
         <div className="text-sm text-gray-500">Nenhuma devolução registrada.</div>
       )}
-
 
       {pedido.historico?.length > 0 && (
         <>

@@ -15,10 +15,9 @@ import { usePedidos } from '../hooks/usePedidos';
 import { formatarReal } from '../utils/formatters';
 import { STATUS_MAP } from '../constants/statusPedido';
 import api from '../services/apiEstoque';
-import {formatarDataIsoParaBR} from "../utils/formatarData";
+import { formatarDataIsoParaBR } from "../utils/formatarData";
 import ColumnSelector from "../components/ColumnSelector";
 import DialogDevolucao from "../components/DialogDevolucao";
-
 
 addLocale('pt-BR', {
   firstDayOfWeek: 0,
@@ -49,6 +48,58 @@ export default function PedidosListagem() {
 
   const { pedidos, total, paginaAtual, loading, fetchPedidos, setPaginaAtual } = usePedidos(filtros);
 
+  const isEstadoFinal = (status) => (
+    ['entrega_cliente','finalizado','consignado','devolucao_consignacao'].includes(status ?? '')
+  );
+
+  const severidadeEntrega = (diasUteisRestantes, atrasadoEntrega) => {
+    if (atrasadoEntrega) return 'danger';
+    if (diasUteisRestantes === 0) return 'warning';
+    if (diasUteisRestantes <= 7) return 'info';
+    return 'success';
+  };
+
+  const situacaoEntregaBody = (row) => {
+    // Se o backend considerar que não conta prazo, virá null/false; render tratada aqui
+    const d = row.dias_uteis_restantes;
+    const atrasado = row.atrasado_entrega;
+    const status = row.status;
+
+    // Estados finais/que não contam prazo: mostra um badge estático
+    if (isEstadoFinal(status)) {
+      const map = {
+        entrega_cliente: { label: 'Entregue', severity: 'success', icon: 'pi pi-check-circle' },
+        finalizado: { label: 'Finalizado', severity: 'success', icon: 'pi pi-verified' },
+        consignado: { label: 'Consignado', severity: 'info', icon: 'pi pi-inbox' },
+        devolucao_consignacao: { label: 'Devolução', severity: 'warning', icon: 'pi pi-undo' },
+      };
+      const cfg = map[status] ?? { label: '—', severity: 'secondary' };
+      return <Tag value={cfg.label} icon={cfg.icon} severity={cfg.severity} className="text-xs" rounded />;
+    }
+
+    // Quando ainda conta prazo mas backend não mandou data limite
+    if (d === null || d === undefined) {
+      return <span className="text-500 text-xs">—</span>;
+    }
+
+    // Contador normal
+    const texto = atrasado ? `${Math.abs(d)} dia(s) úteis em atraso` : `${d} dia(s) úteis`;
+    return (
+      <Tag
+        value={texto}
+        severity={severidadeEntrega(d, atrasado)}
+        rounded
+        className="text-xs"
+        title={atrasado ? 'Entrega atrasada' : 'Dias úteis restantes até a entrega prevista'}
+      />
+    );
+  };
+
+  const entregaPrevistaBody = (row) =>
+    row.data_limite_entrega ? formatarDataIsoParaBR(row.data_limite_entrega) : (isEstadoFinal(row.status) ? '—' : '—');
+
+  const prazoBody = (row) => row.prazo_dias_uteis ?? 60;
+
   const colunasDisponiveis = useMemo(() => [
     { field: 'numero', header: 'Nº Pedido', body: (row) => row.numero_externo || row.id },
     { field: 'data', header: 'Data', body: (row) => row.data ? formatarDataIsoParaBR(row.data) : '-' },
@@ -58,7 +109,11 @@ export default function PedidosListagem() {
     { field: 'valor_total', header: 'Total', body: (row) => formatarReal(row.valor_total) },
     { field: 'status', header: 'Status', body: (row) => statusTemplate(row) },
     { field: 'data_ultimo_status', header: 'Última Atualização', body: (row) => dataStatusBody(row) },
-  ], []);
+    // NOVO: Prazo/Entrega
+    { field: 'prazo_dias_uteis', header: 'Prazo (úteis)', body: prazoBody },
+    { field: 'data_limite_entrega', header: 'Entrega prevista', body: entregaPrevistaBody },
+    { field: 'dias_uteis_restantes', header: 'Situação da entrega', body: situacaoEntregaBody },
+  ], []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [colunasVisiveis, setColunasVisiveis] = useState(colunasDisponiveis);
 
@@ -129,16 +184,14 @@ export default function PedidosListagem() {
             className="text-500 text-sm"
             title={`Previsão de ${row.proximo_status_label ?? 'próximo status'}: ${previsao}`}
           >
-          <i className="pi pi-clock" />
-        </span>
+            <i className="pi pi-clock" />
+          </span>
         )}
         {row.atrasado && (
-          <>
-            <i
-              className="pi pi-exclamation-triangle text-red-500"
-              title="Pedido em atraso"
-            />
-          </>
+          <i
+            className="pi pi-exclamation-triangle text-red-500"
+            title="Pedido em atraso no fluxo"
+          />
         )}
       </div>
     );
@@ -198,7 +251,7 @@ export default function PedidosListagem() {
           emptyMessage="Nenhum pedido encontrado."
           scrollable
           responsiveLayout="scroll"
-          rowClassName={(row) => row.atrasado ? 'linha-atrasada' : ''}
+          rowClassName={(row) => (row.dias_uteis_restantes !== null && row.atrasado_entrega) ? 'linha-atrasada' : ''}
           className="text-sm"
           size="small"
         >
@@ -208,9 +261,10 @@ export default function PedidosListagem() {
               field={col.field}
               header={col.header}
               body={col.body}
-              style={{minWidth: '120px'}}
+              style={{minWidth: '140px'}}
             />
           ))}
+
           <Column
             header=""
             body={(row) => {
