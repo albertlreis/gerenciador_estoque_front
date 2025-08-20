@@ -13,11 +13,13 @@ const EstoqueMovimentacoes = ({ data, loading, total, first, onPage }) => {
 
   const tipoTemplate = (tipo) => {
     const map = {
-      entrada: { label: 'Entrada', icon: 'pi pi-arrow-down', severity: 'success' },
-      saida: { label: 'Saída', icon: 'pi pi-arrow-up', severity: 'danger' },
-      transferencia: { label: 'Transferência', icon: 'pi pi-refresh', severity: 'info' },
-      consignacao_envio: { label: 'Consig. Envio', icon: 'pi pi-send', severity: 'primary' },
-      consignacao_devolucao: { label: 'Consig. Devolução', icon: 'pi pi-upload', severity: 'primary' },
+      entrada:               { label: 'Entrada',            icon: 'pi pi-arrow-down',  severity: 'success' },
+      saida:                 { label: 'Saída',              icon: 'pi pi-arrow-up',    severity: 'danger' },
+      transferencia:         { label: 'Transferência',      icon: 'pi pi-refresh',     severity: 'info' },
+      consignacao_envio:     { label: 'Consig. Envio',      icon: 'pi pi-send',        severity: 'primary' },
+      consignacao_devolucao: { label: 'Consig. Devolução',  icon: 'pi pi-upload',      severity: 'primary' },
+      assistencia_envio:     { label: 'Assist. Envio',      icon: 'pi pi-truck',       severity: 'warning' },
+      assistencia_retorno:   { label: 'Assist. Retorno',    icon: 'pi pi-reply',       severity: 'success' },
     };
 
     const info = map[tipo] || { label: tipo, icon: '', severity: 'secondary' };

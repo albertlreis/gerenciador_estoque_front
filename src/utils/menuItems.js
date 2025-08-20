@@ -155,6 +155,26 @@ const menuItems = (navigate, has) => {
       command: () => navigate('/relatorios')
     },
 
+    has(PERMISSOES.ASSISTENCIAS?.VISUALIZAR) && {
+      label: 'Assistências',
+      key: 'assistencias',
+      icon: 'pi pi-fw pi-wrench',
+      items: [
+        {
+          label: 'Chamados',
+          key: 'assistencias-chamados',
+          icon: 'pi pi-fw pi-list',
+          command: () => navigate('/assistencias')
+        },
+        has(PERMISSOES.ASSISTENCIAS?.GERENCIAR) && {
+          label: 'Autorizadas',
+          key: 'assistencias-autorizadas',
+          icon: 'pi pi-fw pi-verified',
+          command: () => navigate('/assistencias/autorizadas')
+        },
+      ].filter(Boolean)
+    },
+
     {
       label: 'Monitoramento',
       key: 'monitoramento',

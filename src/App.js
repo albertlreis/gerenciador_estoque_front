@@ -32,6 +32,8 @@ import useCheckVersion from "./hooks/useCheckVersion";
 import Reservas from "./pages/Reservas";
 import PedidosFabrica from "./pages/PedidosFabrica";
 import Relatorios from "./pages/Relatorios";
+import Assistencias from "./pages/Assistencias";
+import AssistenciasAutorizadas from "./pages/AssistenciasAutorizadas";
 
 const renderProtectedRoute = (element, permissoes) => (
   <PrivateRoute element={<PermissaoRoute element={element} permissoes={permissoes}/>}/>
@@ -105,6 +107,8 @@ const App = () => {
         path="/relatorios"
         element={renderProtectedRoute(<Relatorios />, PERMISSOES.RELATORIOS.VISUALIZAR)}
       />
+      <Route path="/assistencias" element={renderProtectedRoute(<Assistencias/>, PERMISSOES.ASSISTENCIAS.VISUALIZAR)}/>
+      <Route path="/assistencias/autorizadas" element={renderProtectedRoute(<AssistenciasAutorizadas/>, PERMISSOES.ASSISTENCIAS.GERENCIAR)}/>
     </Routes>
   );
 };

@@ -115,4 +115,10 @@ export const PERMISSOES = {
   MONITORAMENTO: {
     VISUALIZAR: 'monitoramento.visualizar'
   },
+
+  ASSISTENCIAS: {
+    VISUALIZAR: 'assistencias.visualizar',
+    GERENCIAR: 'assistencias.gerenciar',
+  }
+
 };
