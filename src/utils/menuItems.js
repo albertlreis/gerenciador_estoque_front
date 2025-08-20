@@ -15,33 +15,44 @@ const menuItems = (navigate, has) => {
       command: () => navigate('/')
     },
 
-    has(PERMISSOES.PEDIDOS.VISUALIZAR) && {
-      label: 'Vendas',
-      key: 'vendas',
+    // Agrupa tudo de pedidos (cliente, consignação, importação e fábrica)
+    (has(PERMISSOES.PEDIDOS?.VISUALIZAR) ||
+      has(PERMISSOES.CONSIGNACOES?.VISUALIZAR) ||
+      has(PERMISSOES.PEDIDOS?.IMPORTAR) ||
+      has(PERMISSOES.PEDIDOS_FABRICA?.VISUALIZAR)
+    ) && {
+      label: 'Pedidos',
+      key: 'pedidos',
       icon: 'pi pi-fw pi-shopping-cart',
       items: [
-        {
+        has(PERMISSOES.PEDIDOS?.VISUALIZAR) && {
           label: 'Pedidos',
-          key: 'vendas-pedidos',
+          key: 'pedidos-lista',
           icon: 'pi pi-fw pi-list',
           command: () => navigate('/pedidos')
         },
-        has(PERMISSOES.CONSIGNACOES.VISUALIZAR) && {
+        has(PERMISSOES.CONSIGNACOES?.VISUALIZAR) && {
           label: 'Consignações',
-          key: 'vendas-consignacoes',
+          key: 'pedidos-consignacoes',
           icon: 'pi pi-undo',
           command: () => navigate('/consignacoes')
         },
-        has(PERMISSOES.PEDIDOS.IMPORTAR) && {
+        has(PERMISSOES.PEDIDOS?.IMPORTAR) && {
           label: 'Importar Pedido',
-          key: 'vendas-importar-pedido',
+          key: 'pedidos-importar',
           icon: 'pi pi-fw pi-upload',
           command: () => navigate('/pedidos/importar')
+        },
+        has(PERMISSOES.PEDIDOS_FABRICA?.VISUALIZAR) && {
+          label: 'Pedidos Fábrica',
+          key: 'pedidos-fabrica',
+          icon: 'pi pi-fw pi-send',
+          command: () => navigate('/pedidos-fabrica')
         }
       ].filter(Boolean)
     },
 
-    has(PERMISSOES.CLIENTES.VISUALIZAR) && {
+    has(PERMISSOES.CLIENTES?.VISUALIZAR) && {
       label: 'Relacionamentos',
       key: 'relacionamentos',
       icon: 'pi pi-fw pi-users',
@@ -56,28 +67,28 @@ const menuItems = (navigate, has) => {
     },
 
     has([
-      PERMISSOES.PRODUTOS.VISUALIZAR,
-      PERMISSOES.PRODUTOS.GERENCIAR,
-      PERMISSOES.PRODUTOS.IMPORTAR,
-      PERMISSOES.PRODUTOS.CATALOGO
+      PERMISSOES.PRODUTOS?.VISUALIZAR,
+      PERMISSOES.PRODUTOS?.GERENCIAR,
+      PERMISSOES.PRODUTOS?.IMPORTAR,
+      PERMISSOES.PRODUTOS?.CATALOGO
     ]) && {
       label: 'Produtos',
       key: 'produtos',
       icon: 'pi pi-fw pi-tags',
       items: [
-        has(PERMISSOES.PRODUTOS.CATALOGO) && {
+        has(PERMISSOES.PRODUTOS?.CATALOGO) && {
           label: 'Catálogo',
           key: 'catalogo',
           icon: 'pi pi-undo',
           command: () => navigate('/catalogo')
         },
-        has(PERMISSOES.PRODUTOS.GERENCIAR) && {
+        has(PERMISSOES.PRODUTOS?.GERENCIAR) && {
           label: 'Gerenciar Produtos',
           key: 'produtos-gerenciar',
           icon: 'pi pi-fw pi-pencil',
           command: () => navigate('/produtos')
         },
-        has(PERMISSOES.PRODUTOS.IMPORTAR) && {
+        has(PERMISSOES.PRODUTOS?.IMPORTAR) && {
           label: 'Importar Produtos',
           key: 'produtos-importar',
           icon: 'pi pi-fw pi-upload',
@@ -86,7 +97,7 @@ const menuItems = (navigate, has) => {
       ].filter(Boolean)
     },
 
-    has(PERMISSOES.DEPOSITOS.VISUALIZAR) && {
+    has(PERMISSOES.DEPOSITOS?.VISUALIZAR) && {
       label: 'Estoque',
       key: 'estoque',
       icon: 'pi pi-fw pi-box',
@@ -108,47 +119,62 @@ const menuItems = (navigate, has) => {
           key: 'estoque-reservas',
           icon: 'pi pi-fw pi-clock',
           command: () => navigate('/reservas')
-        },
-        {
-          label: 'Pedidos Fábrica',
-          key: 'estoque-pedidos-fabrica',
-          icon: 'pi pi-fw pi-send',
-          command: () => navigate('/pedidos-fabrica')
         }
       ]
     },
 
     has([
-      PERMISSOES.USUARIOS.VISUALIZAR,
-      PERMISSOES.PERFIS.VISUALIZAR,
-      PERMISSOES.PERMISSOES.VISUALIZAR
+      PERMISSOES.USUARIOS?.VISUALIZAR,
+      PERMISSOES.PERFIS?.VISUALIZAR,
+      PERMISSOES.PERMISSOES?.VISUALIZAR,
+      PERMISSOES.CATEGORIAS?.VISUALIZAR,
+      PERMISSOES.FORNECEDORES?.VISUALIZAR,
+      PERMISSOES.PARCEIROS?.VISUALIZAR
     ]) && {
       label: 'Administração',
       key: 'administracao',
       icon: 'pi pi-fw pi-briefcase',
       items: [
-        has(PERMISSOES.USUARIOS.VISUALIZAR) && {
+        has(PERMISSOES.USUARIOS?.VISUALIZAR) && {
           label: 'Usuários',
           key: 'admin-usuarios',
           icon: 'pi pi-fw pi-users',
           command: () => navigate('/usuarios')
         },
-        has(PERMISSOES.PERFIS.VISUALIZAR) && {
+        has(PERMISSOES.PERFIS?.VISUALIZAR) && {
           label: 'Perfis',
           key: 'admin-perfis',
           icon: 'pi pi-fw pi-id-card',
           command: () => navigate('/perfis')
         },
-        has(PERMISSOES.PERMISSOES.VISUALIZAR) && {
+        has(PERMISSOES.PERMISSOES?.VISUALIZAR) && {
           label: 'Permissões',
           key: 'admin-permissoes',
           icon: 'pi pi-fw pi-lock',
           command: () => navigate('/permissoes')
+        },
+        has(PERMISSOES.CATEGORIAS?.VISUALIZAR) && {
+          label: 'Categorias',
+          key: 'admin-categorias',
+          icon: 'pi pi-fw pi-sitemap',
+          command: () => navigate('/categorias')
+        },
+        has(PERMISSOES.FORNECEDORES?.VISUALIZAR) && {
+          label: 'Fornecedores',
+          key: 'admin-fornecedores',
+          icon: 'pi pi-fw pi-truck',
+          command: () => navigate('/fornecedores')
+        },
+        has(PERMISSOES.PARCEIROS?.VISUALIZAR) && {
+          label: 'Parceiros',
+          key: 'admin-parceiros',
+          icon: 'pi pi-fw pi-briefcase',
+          command: () => navigate('/parceiros')
         }
       ].filter(Boolean)
     },
 
-    has(PERMISSOES.RELATORIOS.VISUALIZAR) && {
+    has(PERMISSOES.RELATORIOS?.VISUALIZAR) && {
       label: 'Relatórios',
       key: 'relatorios',
       icon: 'pi pi-fw pi-file',

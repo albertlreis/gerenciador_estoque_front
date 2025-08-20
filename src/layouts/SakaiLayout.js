@@ -17,27 +17,42 @@ const SakaiLayout = ({ children, defaultSidebarCollapsed = false }) => {
 
   const [expandedKeys, setExpandedKeys] = useState({});
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(defaultSidebarCollapsed);
+
   const userHasToggled = useRef(false);
 
   useEffect(() => {
-    if (!userHasToggled.current) {
-      if (
-        location.pathname.startsWith('/usuarios') ||
-        location.pathname.startsWith('/perfis') ||
-        location.pathname.startsWith('/permissoes')
-      ) {
-        setExpandedKeys({ administracao: true });
-      } else if (
-        location.pathname.startsWith('/catalogo') ||
-        location.pathname.startsWith('/produtos-outlet') ||
-        location.pathname.startsWith('/configuracao-outlet')
-      ) {
-        setExpandedKeys({ produtos: true });
-      } else if (location.pathname.startsWith('/pedidos')) {
-        setExpandedKeys({ vendas: true });
-      } else {
-        setExpandedKeys({});
-      }
+    if (userHasToggled.current) return;
+
+    const path = location.pathname;
+
+    if (
+      path.startsWith('/usuarios') ||
+      path.startsWith('/perfis') ||
+      path.startsWith('/permissoes') ||
+      path.startsWith('/categorias') ||
+      path.startsWith('/fornecedores') ||
+      path.startsWith('/parceiros')
+    ) {
+      setExpandedKeys({ administracao: true });
+    } else if (
+      path.startsWith('/catalogo') ||
+      path.startsWith('/produtos') // cobre /produtos, /produtos/importar etc.
+    ) {
+      setExpandedKeys({ produtos: true });
+    } else if (
+      path.startsWith('/depositos') ||
+      path.startsWith('/movimentacoes-estoque') ||
+      path.startsWith('/reservas')
+    ) {
+      setExpandedKeys({ estoque: true });
+    } else if (
+      path.startsWith('/pedidos') ||
+      path.startsWith('/consignacoes') ||
+      path.startsWith('/pedidos-fabrica')
+    ) {
+      setExpandedKeys({ pedidos: true }); // chave correta do menu
+    } else {
+      setExpandedKeys({});
     }
   }, [location]);
 
@@ -61,17 +76,15 @@ const SakaiLayout = ({ children, defaultSidebarCollapsed = false }) => {
         if (isSidebarCollapsed) document.body.classList.remove('sidebar-hover');
       }}
     >
-      <Topbar onToggleMenu={toggleSidebar} usuario={user} onLogout={handleLogout}/>
+      <Topbar onToggleMenu={toggleSidebar} usuario={user} onLogout={handleLogout} />
       <div className="layout-container">
-        <div
-          className={`layout-sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}
-        >
+        <div className={`layout-sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}>
           <PanelMenu
             model={sidebarItems}
-            style={{width: '100%'}}
+            style={{ width: '100%' }}
             expandedKeys={expandedKeys}
             onExpandedKeysChange={(e) => {
-              userHasToggled.current = true;
+              userHasToggled.current = true; // a partir daqui, não auto-reexpande
               setExpandedKeys(e.value);
             }}
             multiple
@@ -82,10 +95,12 @@ const SakaiLayout = ({ children, defaultSidebarCollapsed = false }) => {
                 tabIndex={options.tabIndex}
                 className={options.className}
                 title={isSidebarCollapsed ? item.label : undefined}
-                style={{ position: 'relative' }}
+                style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8 }}
               >
                 {item.icon && <i className={`${item.icon} p-menuitem-icon`} />}
                 <span className="p-menuitem-text">{item.label}</span>
+                {/* Exibe o caret quando há submenu, melhora a UX de expansão */}
+                {options.submenuIcon}
               </div>
             )}
           />
@@ -93,7 +108,6 @@ const SakaiLayout = ({ children, defaultSidebarCollapsed = false }) => {
         <div className="layout-content">{children}</div>
       </div>
     </div>
-
   );
 };
 

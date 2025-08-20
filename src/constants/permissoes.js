@@ -1,11 +1,8 @@
 export const PERMISSOES = {
-  // Dashboard
   DASHBOARD_ADMIN: 'dashboard.admin',
 
-  // Home
   HOME_VISUALIZAR: 'home.visualizar',
 
-  // Usuários
   USUARIOS: {
     VISUALIZAR: 'usuarios.visualizar',
     CRIAR: 'usuarios.criar',
@@ -15,7 +12,6 @@ export const PERMISSOES = {
     REMOVER_PERFIL: 'usuarios.remover_perfil',
   },
 
-  // Perfis
   PERFIS: {
     VISUALIZAR: 'perfis.visualizar',
     CRIAR: 'perfis.criar',
@@ -25,7 +21,6 @@ export const PERMISSOES = {
     REMOVER_PERMISSAO: 'perfis.remover_permissao',
   },
 
-  // Permissões
   PERMISSOES: {
     VISUALIZAR: 'permissoes.visualizar',
     CRIAR: 'permissoes.criar',
@@ -33,7 +28,6 @@ export const PERMISSOES = {
     EXCLUIR: 'permissoes.excluir',
   },
 
-  // Clientes
   CLIENTES: {
     VISUALIZAR: 'clientes.visualizar',
     CRIAR: 'clientes.criar',
@@ -41,7 +35,6 @@ export const PERMISSOES = {
     EXCLUIR: 'clientes.excluir',
   },
 
-  // Categorias
   CATEGORIAS: {
     VISUALIZAR: 'categorias.visualizar',
     CRIAR: 'categorias.criar',
@@ -49,7 +42,6 @@ export const PERMISSOES = {
     EXCLUIR: 'categorias.excluir',
   },
 
-  // Produtos
   PRODUTOS: {
     VISUALIZAR: 'produtos.visualizar',
     GERENCIAR: 'produtos.gerenciar',
@@ -64,7 +56,6 @@ export const PERMISSOES = {
     OUTLET_EXCLUIR: 'produtos.outlet.excluir',
   },
 
-  // Pedidos
   PEDIDOS: {
     VISUALIZAR: 'pedidos.visualizar',
     CRIAR: 'pedidos.criar',
@@ -75,7 +66,13 @@ export const PERMISSOES = {
     ENVIAR_WHATSAPP: 'pedidos.enviar_whatsapp',
   },
 
-  // Estoque / Depósitos
+  PEDIDOS_FABRICA: {
+    VISUALIZAR: 'pedidos_fabrica.visualizar',
+    CRIAR: 'pedidos_fabrica.criar',
+    EDITAR: 'pedidos_fabrica.editar',
+    EXCLUIR: 'pedidos_fabrica.excluir',
+  },
+
   DEPOSITOS: {
     VISUALIZAR: 'depositos.visualizar',
     CRIAR: 'depositos.criar',
@@ -87,31 +84,26 @@ export const PERMISSOES = {
     HISTORICO: 'estoque.historico',
   },
 
-  // Relatórios
   RELATORIOS: {
     VISUALIZAR: 'relatorios.visualizar',
     EXPORTAR_EXCEL: 'relatorios.exportar_excel',
     EXPORTAR_PDF: 'relatorios.exportar_pdf',
   },
 
-  // Configurações
   CONFIGURACOES: {
     VISUALIZAR: 'configuracoes.visualizar',
     EDITAR: 'configuracoes.editar',
   },
 
-  // Carrinhos
   CARRINHOS: {
     FINALIZAR: 'carrinhos.finalizar',
   },
 
-  // Consignações
   CONSIGNACOES: {
     VISUALIZAR: 'consignacoes.visualizar',
     GERENCIAR: 'consignacoes.gerenciar',
   },
 
-  // Monitoramento
   MONITORAMENTO: {
     VISUALIZAR: 'monitoramento.visualizar'
   },
@@ -119,6 +111,20 @@ export const PERMISSOES = {
   ASSISTENCIAS: {
     VISUALIZAR: 'assistencias.visualizar',
     GERENCIAR: 'assistencias.gerenciar',
-  }
+  },
+
+  FORNECEDORES: {
+    VISUALIZAR: 'fornecedores.visualizar',
+    CRIAR: 'fornecedores.criar',
+    EDITAR: 'fornecedores.editar',
+    EXCLUIR: 'fornecedores.excluir',
+  },
+
+  PARCEIROS: {
+    VISUALIZAR: 'parceiros.visualizar',
+    CRIAR: 'parceiros.criar',
+    EDITAR: 'parceiros.editar',
+    EXCLUIR: 'parceiros.excluir',
+  },
 
 };
