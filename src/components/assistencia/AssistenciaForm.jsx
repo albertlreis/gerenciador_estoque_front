@@ -12,14 +12,13 @@ const UFS = [
 ].map(uf => ({ label: uf, value: uf }));
 
 /**
- * Formulário reutilizável para criar/editar Assistência Autorizada.
- * Campos genéricos (ajuste conforme seu backend aceitar):
+ * Formulário para criar/editar Assistência Autorizada.
+ * Backend espera:
  * - nome* (string)
- * - documento (CNPJ/CPF)
- * - email
- * - telefone
- * - prazo_sla_dias (int)
- * - endereco_* (logradouro, numero, complemento, bairro, cidade, uf, cep)
+ * - cnpj (string|null)
+ * - email, telefone, contato
+ * - prazo_padrao_dias (int|null)
+ * - endereco_json (array/obj) => { logradouro, numero, complemento, bairro, cidade, uf, cep }
  * - observacoes
  */
 const AssistenciaForm = ({ initialData = {}, loading, onSubmit, onCancel }) => {
@@ -27,10 +26,11 @@ const AssistenciaForm = ({ initialData = {}, loading, onSubmit, onCancel }) => {
 
   const [form, setForm] = useState({
     nome: '',
-    documento: '',
+    cnpj: '',
+    contato: '',
     email: '',
     telefone: '',
-    prazo_sla_dias: '',
+    prazo_padrao_dias: '',
     endereco_logradouro: '',
     endereco_numero: '',
     endereco_complemento: '',
@@ -42,19 +42,21 @@ const AssistenciaForm = ({ initialData = {}, loading, onSubmit, onCancel }) => {
   });
 
   useEffect(() => {
+    const e = initialData?.endereco || {};
     setForm({
       nome: initialData.nome || '',
-      documento: initialData.documento || '',
+      cnpj: initialData.cnpj || '',
+      contato: initialData.contato || '',
       email: initialData.email || '',
       telefone: initialData.telefone || '',
-      prazo_sla_dias: initialData.prazo_sla_dias ?? '',
-      endereco_logradouro: initialData.endereco_logradouro || '',
-      endereco_numero: initialData.endereco_numero || '',
-      endereco_complemento: initialData.endereco_complemento || '',
-      endereco_bairro: initialData.endereco_bairro || '',
-      endereco_cidade: initialData.endereco_cidade || '',
-      endereco_uf: initialData.endereco_uf || '',
-      endereco_cep: initialData.endereco_cep || '',
+      prazo_padrao_dias: initialData.prazo_padrao_dias ?? '',
+      endereco_logradouro: e.logradouro || '',
+      endereco_numero: e.numero || '',
+      endereco_complemento: e.complemento || '',
+      endereco_bairro: e.bairro || '',
+      endereco_cidade: e.cidade || '',
+      endereco_uf: e.uf || '',
+      endereco_cep: e.cep || '',
       observacoes: initialData.observacoes || '',
     });
   }, [initialData]);
@@ -67,10 +69,29 @@ const AssistenciaForm = ({ initialData = {}, loading, onSubmit, onCancel }) => {
       toastRef.current?.show({ severity: 'warn', summary: 'Validação', detail: 'Informe o nome da assistência.', life: 3000 });
       return;
     }
-    const payload = {
-      ...form,
-      prazo_sla_dias: form.prazo_sla_dias === '' ? null : Number(form.prazo_sla_dias),
+
+    const endereco_json = {
+      logradouro: form.endereco_logradouro || null,
+      numero: form.endereco_numero || null,
+      complemento: form.endereco_complemento || null,
+      bairro: form.endereco_bairro || null,
+      cidade: form.endereco_cidade || null,
+      uf: form.endereco_uf || null,
+      cep: form.endereco_cep || null,
     };
+
+    const payload = {
+      nome: form.nome,
+      cnpj: form.cnpj || null,
+      contato: form.contato || null,
+      email: form.email || null,
+      telefone: form.telefone || null,
+      prazo_padrao_dias: form.prazo_padrao_dias === '' ? null : Number(form.prazo_padrao_dias),
+      endereco_json,
+      observacoes: form.observacoes || null,
+      // ativo pode ser tratado em outra UI; se quiser, inclua aqui.
+    };
+
     await onSubmit?.(payload);
   };
 
@@ -83,24 +104,29 @@ const AssistenciaForm = ({ initialData = {}, loading, onSubmit, onCancel }) => {
           <div className="formgrid grid">
             <div className="field col-12 md:col-8">
               <label className="font-bold">Nome *</label>
-              <InputText value={form.nome} onChange={(e) => handleChange('nome', e.target.value)} placeholder="Ex.: Assistência ABC"/>
+              <InputText value={form.nome} onChange={(e) => handleChange('nome', e.target.value)} placeholder="Ex.: Autorizada Norte Sul"/>
             </div>
             <div className="field col-12 md:col-4">
-              <label className="font-bold">Documento</label>
-              <InputText value={form.documento} onChange={(e) => handleChange('documento', e.target.value)} placeholder="CNPJ/CPF"/>
+              <label className="font-bold">CNPJ</label>
+              <InputText value={form.cnpj} onChange={(e) => handleChange('cnpj', e.target.value)} placeholder="11.111.111/0001-11"/>
             </div>
 
             <div className="field col-12 md:col-4">
               <label className="font-bold">E-mail</label>
-              <InputText value={form.email} onChange={(e) => handleChange('email', e.target.value)} placeholder="contato@exemplo.com"/>
+              <InputText value={form.email} onChange={(e) => handleChange('email', e.target.value)} placeholder="atendimento@exemplo.com"/>
             </div>
             <div className="field col-12 md:col-4">
               <label className="font-bold">Telefone</label>
-              <InputText value={form.telefone} onChange={(e) => handleChange('telefone', e.target.value)} placeholder="(00) 00000-0000"/>
+              <InputText value={form.telefone} onChange={(e) => handleChange('telefone', e.target.value)} placeholder="(00) 0000-0000"/>
             </div>
             <div className="field col-12 md:col-4">
-              <label className="font-bold">SLA (dias)</label>
-              <InputText keyfilter="int" value={form.prazo_sla_dias} onChange={(e) => handleChange('prazo_sla_dias', e.target.value)} placeholder="Ex.: 10"/>
+              <label className="font-bold">Contato</label>
+              <InputText value={form.contato} onChange={(e) => handleChange('contato', e.target.value)} placeholder="Nome do responsável"/>
+            </div>
+
+            <div className="field col-12 md:col-4">
+              <label className="font-bold">SLA padrão (dias)</label>
+              <InputText keyfilter="int" value={form.prazo_padrao_dias} onChange={(e) => handleChange('prazo_padrao_dias', e.target.value)} placeholder="Ex.: 35"/>
             </div>
 
             <div className="field col-12">

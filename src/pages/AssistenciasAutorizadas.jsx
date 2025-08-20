@@ -33,13 +33,13 @@ const AssistenciasAutorizadas = () => {
       const params = {
         page: lazy.page + 1,
         per_page: lazy.rows,
+        busca: filtroNome?.trim() || undefined,
       };
-      if (filtroNome?.trim()) params.nome = filtroNome.trim();
 
-      // REST padrão: /assistencias (autorizadas)
-      const resp = await apiEstoque.get('/assistencias', { params });
-      const { data, meta } = resp.data?.data ? resp.data : { data: resp.data, meta: { total: resp.data?.length || 0 } };
-      setItens(data);
+      const resp = await apiEstoque.get('/assistencias/autorizadas', { params });
+      // API no padrão Resource: { data: [], meta: {...} }
+      const { data, meta } = resp.data;
+      setItens(data || []);
       setTotalRecords(meta?.total || 0);
     } catch (e) {
       toast.current?.show({ severity: 'error', summary: 'Erro', detail: 'Falha ao carregar assistências', life: 3000 });
@@ -58,7 +58,7 @@ const AssistenciasAutorizadas = () => {
 
   const openEdit = async (row) => {
     try {
-      const resp = await apiEstoque.get(`/assistencias/${row.id}`);
+      const resp = await apiEstoque.get(`/assistencias/autorizadas/${row.id}`);
       setEditing(resp.data?.data || resp.data);
       setDialogTitle('Editar Assistência');
       setDialogVisible(true);
@@ -74,7 +74,7 @@ const AssistenciasAutorizadas = () => {
       icon: 'pi pi-exclamation-triangle',
       accept: async () => {
         try {
-          await apiEstoque.delete(`/assistencias/${row.id}`);
+          await apiEstoque.delete(`/assistencias/autorizadas/${row.id}`);
           await fetchLista();
           toast.current?.show({ severity: 'success', summary: 'Excluída', detail: 'Assistência removida', life: 2500 });
         } catch (e) {
@@ -88,16 +88,15 @@ const AssistenciasAutorizadas = () => {
   const handleSubmit = async (payload) => {
     try {
       if (editing?.id) {
-        await apiEstoque.put(`/assistencias/${editing.id}`, payload);
+        await apiEstoque.put(`/assistencias/autorizadas/${editing.id}`, payload);
         toast.current?.show({ severity: 'success', summary: 'Atualizada', detail: 'Assistência salva', life: 2500 });
       } else {
-        await apiEstoque.post('/assistencias', payload);
+        await apiEstoque.post('/assistencias/autorizadas', payload);
         toast.current?.show({ severity: 'success', summary: 'Cadastrada', detail: 'Assistência criada', life: 2500 });
       }
       setDialogVisible(false);
       await fetchLista();
     } catch (e) {
-      // mensagens de validação da API
       if (e?.response?.data?.errors) {
         const erros = Object.values(e.response.data.errors).flat().join('\n');
         toast.current?.show({ severity: 'error', summary: 'Validação', detail: erros, life: 6000 });
@@ -131,6 +130,18 @@ const AssistenciasAutorizadas = () => {
     </div>
   );
 
+  // --- TEMPLATE DE ENDEREÇO ---
+  const enderecoTemplate = (row) => {
+    const e = row?.endereco || {};
+    const partes = [
+      e.logradouro,
+      e.bairro,
+      [e.cidade, e.uf].filter(Boolean).join(' / '),
+      e.cep
+    ].filter(Boolean);
+    return partes.join(' • ');
+  };
+
   return (
     <SakaiLayout>
       <Toast ref={toast} position="top-center" />
@@ -156,10 +167,11 @@ const AssistenciasAutorizadas = () => {
         >
           <Column field="id" header="ID" />
           <Column field="nome" header="Nome" />
-          <Column field="documento" header="Documento" />
+          <Column field="cnpj" header="CNPJ" />
           <Column field="telefone" header="Telefone" />
           <Column field="email" header="E-mail" />
-          <Column field="prazo_sla_dias" header="SLA (dias)" />
+          <Column field="prazo_padrao_dias" header="SLA (dias)" />
+          <Column header="Endereço" body={enderecoTemplate} />
           <Column
             header="Ações"
             body={(row) => (
@@ -168,7 +180,7 @@ const AssistenciasAutorizadas = () => {
                 <Button icon="pi pi-trash" className="p-button-rounded p-button-text p-button-danger" onClick={() => handleDelete(row)} />
               </div>
             )}
-            style={{ width: 120, textAlign: 'center' }}
+            style={{ width: 140, textAlign: 'center' }}
           />
         </DataTable>
       </div>
