@@ -417,3 +417,13 @@ textarea.p-inputtextarea {
   border-radius: 8px;
   margin-bottom: 1rem;
 }
+
+/* Faz o grupo da direita ocupar metade para a direita e alinhar o conteúdo ao fim */
+.tb-assistencias .p-toolbar-group-right {
+  flex: 1 1 50%;
+  display: flex;
+  justify-content: flex-end;
+}
+.tb-assistencias .p-toolbar-group-left {
+  flex: 0 0 auto; /* botão fica só na esquerda */
+}

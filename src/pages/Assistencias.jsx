@@ -17,6 +17,7 @@ import { PRIORIDADES, STATUS_OPTIONS, statusSeverity } from '../utils/assistenci
 import SlaTag from '../components/assistencia/tags/SlaTag';
 import CriarChamadoDialog from '../components/assistencia/dialogs/CriarChamadoDialog';
 import ChamadoDetalhe from '../components/assistencia/ChamadoDetalhe';
+import EditarChamadoDialog from '../components/assistencia/dialogs/EditarChamadoDialog'; // <— NOVO
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -30,6 +31,10 @@ const Assistencias = () => {
   const [filters, setFilters] = useState({ busca: '', status: '', prioridade: '', assistencia_id: '' });
   const [dlgCriar, setDlgCriar] = useState(false);
   const [detalheId, setDetalheId] = useState(null);
+
+  // estado de edição
+  const [editarId, setEditarId] = useState(null);
+  const [dlgEditar, setDlgEditar] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -61,18 +66,42 @@ const Assistencias = () => {
 
   function rightToolbarTemplate() {
     return (
-      <div className="flex gap-2">
-        <span className="p-input-icon-left">
-          <i className="pi pi-search" />
-          <InputText value={filters.busca} onChange={(e) => setFilters((f) => ({ ...f, busca: e.target.value }))} placeholder="Buscar nº/observação/origem" />
-        </span>
-        <Dropdown value={filters.status} options={STATUS_OPTIONS} optionLabel="label" optionValue="value" onChange={(e) => setFilters((f) => ({ ...f, status: e.value }))} placeholder="Status" showClear />
-        <Dropdown value={filters.prioridade} options={PRIORIDADES} onChange={(e) => setFilters((f) => ({ ...f, prioridade: e.value }))} placeholder="Prioridade" showClear />
+      <div className="w-full flex items-center gap-2 justify-end">
+      <span className="p-input-icon-left flex-1 min-w-[320px]">
+        <InputText
+          className="w-full"
+          value={filters.busca}
+          onChange={(e) => setFilters((f) => ({ ...f, busca: e.target.value }))}
+          placeholder="Buscar nº/observação/origem"
+        />
+      </span>
+
+        <Dropdown value={filters.status} options={STATUS_OPTIONS} optionLabel="label" optionValue="value"
+                  onChange={(e) => setFilters((f) => ({ ...f, status: e.value }))} placeholder="Status" showClear />
+        <Dropdown value={filters.prioridade} options={PRIORIDADES}
+                  onChange={(e) => setFilters((f) => ({ ...f, prioridade: e.value }))} placeholder="Prioridade" showClear />
         <Button label="Filtrar" icon="pi pi-filter" outlined onClick={() => { setPage(0); load(); }} />
-        <Button label="Limpar" icon="pi pi-times" text onClick={() => { setFilters({ busca: '', status: '', prioridade: '', assistencia_id: '' }); setPage(0); load(); }} />
+        <Button label="Limpar" icon="pi pi-times" text onClick={() => {
+          setFilters({ busca: '', status: '', prioridade: '', assistencia_id: '' });
+          setPage(0); load();
+        }} />
       </div>
     );
   }
+
+
+  const acoesTemplate = (r) => (
+    <div className="flex gap-2">
+      <Button size="small" label="Ver" icon="pi pi-eye" text onClick={() => setDetalheId(r.id)} />
+      <Button
+        size="small"
+        label="Editar"
+        icon="pi pi-pencil"
+        outlined
+        onClick={() => { setEditarId(r.id); setDlgEditar(true); }}
+      />
+    </div>
+  );
 
   return (
     <SakaiLayout>
@@ -81,7 +110,11 @@ const Assistencias = () => {
 
       <div className="p-4">
         <div className="mb-3">
-          <Toolbar left={leftToolbarTemplate} right={rightToolbarTemplate} />
+          <Toolbar
+            className="tb-assistencias"
+            left={leftToolbarTemplate}
+            right={rightToolbarTemplate}
+          />
         </div>
 
         <DataTable
@@ -91,23 +124,28 @@ const Assistencias = () => {
           totalRecords={total}
           rows={perPage}
           first={page * perPage}
-          onPage={(e) => { setPage(Math.floor(e.first / e.rows)); setPerPage(e.rows); }}
+          onPage={(e) => {
+            setPage(Math.floor(e.first / e.rows));
+            setPerPage(e.rows);
+          }}
           rowsPerPageOptions={[10, 20, 30, 50]}
           responsiveLayout="scroll"
           emptyMessage="Nenhum chamado encontrado"
         >
-          <Column header="#" body={(r) => <Button text label={r.numero} onClick={() => setDetalheId(r.id)} />} />
-          <Column field="origem_tipo" header="Origem" />
-          <Column field="cliente_id" header="Cliente" />
-          <Column header="Assistência" body={(r) => r.assistencia?.nome || '—'} />
-          <Column header="Status" body={(r) => <Tag value={r.status} severity={statusSeverity(r.status)} />} />
-          <Column header="Prioridade" body={(r) => <Tag value={r.prioridade} />} />
-          <Column header="SLA" body={(r) => <SlaTag dateStr={r.sla_data_limite} />} />
-          <Column field="updated_at" header="Atualizado" body={(r) => new Date(r.updated_at).toLocaleString()} />
+          <Column header="#" body={(r) => <Button text label={r.numero} onClick={() => setDetalheId(r.id)}/>}/>
+          <Column field="origem_tipo" header="Origem"/>
+          <Column field="cliente_id" header="Cliente"/>
+          <Column header="Assistência" body={(r) => r.assistencia?.nome || '—'}/>
+          <Column header="Status" body={(r) => <Tag value={r.status} severity={statusSeverity(r.status)}/>}/>
+          <Column header="Prioridade" body={(r) => <Tag value={r.prioridade}/>}/>
+          <Column header="SLA" body={(r) => <SlaTag dateStr={r.sla_data_limite}/>}/>
+          <Column field="updated_at" header="Atualizado" body={(r) => new Date(r.updated_at).toLocaleString()}/>
+          <Column header="Ações" body={acoesTemplate} style={{width: 180}}/>
         </DataTable>
       </div>
 
-      <Dialog header="Detalhe do Chamado" visible={!!detalheId} style={{ width: '90vw', maxWidth: 1200 }} modal onHide={() => setDetalheId(null)}>
+      <Dialog header="Detalhe do Chamado" visible={!!detalheId} style={{width: '90vw', maxWidth: 1200}} modal
+              onHide={() => setDetalheId(null)}>
         {detalheId && <ChamadoDetalhe chamadoId={detalheId} onClose={() => setDetalheId(null)} />}
       </Dialog>
 
@@ -117,6 +155,17 @@ const Assistencias = () => {
           onHide={() => setDlgCriar(false)}
           onCreated={() => { setPage(0); load(); }}
         />
+      </Dialog>
+
+      {/* Dialog de Edição */}
+      <Dialog header="Editar Chamado" visible={dlgEditar} style={{ width: 780 }} modal onHide={() => setDlgEditar(false)}>
+        {editarId && (
+          <EditarChamadoDialog
+            chamadoId={editarId}
+            onHide={() => setDlgEditar(false)}
+            onSaved={() => { setDlgEditar(false); setPage(0); load(); }}
+          />
+        )}
       </Dialog>
     </SakaiLayout>
   );
