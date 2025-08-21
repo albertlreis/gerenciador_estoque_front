@@ -25,7 +25,7 @@ export default function DialogEnvio({ item, visible, onHide, onSuccess }) {
     setLoading(true);
     try {
       const payload = {
-        assistencia_id: assistencia?.id,
+        assistencia_id: assistencia,
         deposito_assistencia_id: depositoAssist?.id,
         rastreio_envio: form.rastreio_envio || null,
         data_envio: toYmd(form.data_envio),
