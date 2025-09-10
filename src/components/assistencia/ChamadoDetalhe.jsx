@@ -13,7 +13,7 @@ import apiEstoque from '../../services/apiEstoque';
 import PrazoTag from './tags/PrazoTag';
 import { statusSeverity, statusLabel } from '../../utils/assistencia';
 
-export default function ChamadoDetalhe({ chamadoId, onClose }) {
+export default function ChamadoDetalhe({ chamadoId, onClose, onChanged }) {
   const toast = useRef(null);
   const [chamado, setChamado] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -35,6 +35,11 @@ export default function ChamadoDetalhe({ chamadoId, onClose }) {
 
   const itens = chamado?.itens || [];
   const logs = chamado?.logs || [];
+
+  function handleAnyChange() {
+    load();
+    onChanged?.();
+  }
 
   return (
     <div className="surface-card p-3 border-round">
@@ -97,7 +102,7 @@ export default function ChamadoDetalhe({ chamadoId, onClose }) {
             item={r}
             chamadoStatus={chamado?.status}
             chamadoLocal={chamado?.local_reparo}
-            onChanged={() => load()}
+            onChanged={handleAnyChange}
           />
         )} style={{ width: 320 }} />
       </DataTable>

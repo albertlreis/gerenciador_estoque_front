@@ -173,7 +173,16 @@ const Assistencias = () => {
 
       <Dialog header="Detalhe do Chamado" visible={!!detalheId} style={{ width: '90vw', maxWidth: 1200 }} modal
               onHide={() => setDetalheId(null)}>
-        {detalheId && <ChamadoDetalhe chamadoId={detalheId} onClose={() => setDetalheId(null)} />}
+        {detalheId && (
+          <ChamadoDetalhe
+            chamadoId={detalheId}
+            onClose={() => setDetalheId(null)}
+            onChanged={() => {
+              setPage((p) => p);
+              load();
+            }}
+          />
+        )}
       </Dialog>
 
       <Dialog header="Novo Chamado" visible={dlgCriar} style={{ width: 780 }} modal onHide={() => setDlgCriar(false)}>
