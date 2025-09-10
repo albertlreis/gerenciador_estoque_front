@@ -272,7 +272,7 @@ const Produtos = () => {
                 id="filtro-nome"
                 value={filtros.nome}
                 onChange={(e) => setFiltros({...filtros, nome: e.target.value})}
-                placeholder="Filtrar por nome"
+                placeholder="Filtrar por nome, referência ou código de barras"
               />
             </div>
 
