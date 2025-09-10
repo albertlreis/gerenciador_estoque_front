@@ -7,26 +7,42 @@ export const PRIORIDADES = [
 
 export const STATUS_OPTIONS = [
   { label: "Aberto", value: "aberto" },
-  { label: "Em análise", value: "em_analise" },
-  { label: "Enviado assistência", value: "enviado_assistencia" },
-  { label: "Em orçamento", value: "em_orcamento" },
-  { label: "Em reparo", value: "em_reparo" },
-  { label: "Retornado", value: "retornado" },
-  { label: "Finalizado", value: "finalizado" },
+  { label: "Aguardando Resposta da Fábrica", value: "aguardando_resposta_fabrica" },
+  { label: "Aguardando Peça", value: "aguardando_peca" },
+  { label: "Enviado à Fábrica", value: "enviado_fabrica" },
+  { label: "Em Trânsito (Fábrica → Depósito)", value: "em_transito_retorno" },
+  { label: "Aguardando Reparo", value: "aguardando_reparo" },
+  { label: "Reparo Concluído", value: "reparo_concluido" },
+  { label: "Entregue", value: "entregue" },
   { label: "Cancelado", value: "cancelado" },
 ];
 
+/**
+ * Retorna o rótulo amigável do status (label) a partir do value armazenado.
+ * @param {string} status
+ * @returns {string}
+ */
+export function statusLabel(status) {
+  return STATUS_OPTIONS.find((s) => s.value === status)?.label ?? status ?? '—';
+}
+
+/**
+ * Sugere a severidade do Tag conforme o status.
+ * @param {string} status
+ * @returns {"info"|"warning"|"success"|"danger"|"secondary"}
+ */
 export function statusSeverity(status) {
   switch (status) {
     case "aberto":
-    case "em_analise":
       return "info";
-    case "enviado_assistencia":
-    case "em_orcamento":
-    case "em_reparo":
+    case "aguardando_resposta_fabrica":
+    case "aguardando_peca":
+    case "enviado_fabrica":
+    case "em_transito_retorno":
+    case "aguardando_reparo":
       return "warning";
-    case "retornado":
-    case "finalizado":
+    case "reparo_concluido":
+    case "entregue":
       return "success";
     case "cancelado":
       return "danger";
@@ -35,6 +51,22 @@ export function statusSeverity(status) {
   }
 }
 
+export const LOCAIS_REPARO = [
+  { label: "Depósito", value: "deposito" },
+  { label: "Envio para Fábrica", value: "fabrica" },
+  { label: "Casa do Cliente", value: "cliente" },
+];
+
+export const CUSTO_RESP = [
+  { label: "Cliente", value: "cliente" },
+  { label: "Loja", value: "loja" },
+];
+
+/**
+ * Converte Date para YYYY-MM-DD.
+ * @param {Date|null|undefined} date
+ * @returns {string|null}
+ */
 export function toYmd(date) {
   if (!date) return null;
   try {

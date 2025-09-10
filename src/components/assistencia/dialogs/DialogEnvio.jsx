@@ -18,22 +18,30 @@ export default function DialogEnvio({ item, visible, onHide, onSuccess }) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (visible) setAssistencia(item.assistencia_id ? { id: item.assistencia_id, label: String(item.assistencia_id) } : null);
+    if (visible) {
+      setAssistencia(item.assistencia_id ? { id: item.assistencia_id, label: String(item.assistencia_id) } : null);
+      setDepositoAssist(null);
+      setForm({ rastreio_envio: '', data_envio: null });
+    }
   }, [visible, item]);
+
+  function extractApiError(err) {
+    return err?.response?.data?.message || err?.message || 'Falha ao enviar item';
+  }
 
   async function submit() {
     setLoading(true);
     try {
       const payload = {
         assistencia_id: assistencia,
-        deposito_assistencia_id: depositoAssist?.id,
+        deposito_assistencia_id: depositoAssist?.id ?? null,
         rastreio_envio: form.rastreio_envio || null,
         data_envio: toYmd(form.data_envio),
       };
       const response = await apiEstoque.post(`/assistencias/itens/${item.id}/enviar`, payload);
       onSuccess?.(response.data?.data || response.data);
     } catch (e) {
-      toast.current?.show({ severity: 'error', summary: 'Erro', detail: 'Falha ao enviar item', life: 3000 });
+      toast.current?.show({ severity: 'error', summary: 'Erro', detail: extractApiError(e), life: 3000 });
     } finally {
       setLoading(false);
     }

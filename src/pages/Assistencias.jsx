@@ -13,11 +13,11 @@ import { Tag } from 'primereact/tag';
 import SakaiLayout from '../layouts/SakaiLayout';
 import apiEstoque from '../services/apiEstoque';
 
-import { PRIORIDADES, STATUS_OPTIONS, statusSeverity } from '../utils/assistencia';
-import SlaTag from '../components/assistencia/tags/SlaTag';
+import { PRIORIDADES, STATUS_OPTIONS, statusSeverity, statusLabel } from '../utils/assistencia';
+import PrazoTag from '../components/assistencia/tags/PrazoTag';
 import CriarChamadoDialog from '../components/assistencia/dialogs/CriarChamadoDialog';
 import ChamadoDetalhe from '../components/assistencia/ChamadoDetalhe';
-import EditarChamadoDialog from '../components/assistencia/dialogs/EditarChamadoDialog'; // <— NOVO
+import EditarChamadoDialog from '../components/assistencia/dialogs/EditarChamadoDialog';
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -67,41 +67,62 @@ const Assistencias = () => {
   function rightToolbarTemplate() {
     return (
       <div className="w-full flex items-center gap-2 justify-end">
-      <span className="p-input-icon-left flex-1 min-w-[320px]">
-        <InputText
-          className="w-full"
-          value={filters.busca}
-          onChange={(e) => setFilters((f) => ({ ...f, busca: e.target.value }))}
-          placeholder="Buscar nº/observação/origem"
-        />
-      </span>
+        <span className="p-input-icon-left flex-1 min-w-[320px]">
+          <InputText
+            className="w-full"
+            value={filters.busca}
+            onChange={(e) => setFilters((f) => ({ ...f, busca: e.target.value }))}
+            placeholder="Buscar nº do chamado/pedido ou nome do cliente"
+          />
+        </span>
 
-        <Dropdown value={filters.status} options={STATUS_OPTIONS} optionLabel="label" optionValue="value"
-                  onChange={(e) => setFilters((f) => ({ ...f, status: e.value }))} placeholder="Status" showClear />
-        <Dropdown value={filters.prioridade} options={PRIORIDADES}
-                  onChange={(e) => setFilters((f) => ({ ...f, prioridade: e.value }))} placeholder="Prioridade" showClear />
+        <Dropdown
+          value={filters.status}
+          options={STATUS_OPTIONS}
+          optionLabel="label"
+          optionValue="value"
+          onChange={(e) => setFilters((f) => ({ ...f, status: e.value }))}
+          placeholder="Status"
+          showClear
+        />
+        <Dropdown
+          value={filters.prioridade}
+          options={PRIORIDADES}
+          onChange={(e) => setFilters((f) => ({ ...f, prioridade: e.value }))}
+          placeholder="Prioridade"
+          showClear
+        />
         <Button label="Filtrar" icon="pi pi-filter" outlined onClick={() => { setPage(0); load(); }} />
-        <Button label="Limpar" icon="pi pi-times" text onClick={() => {
-          setFilters({ busca: '', status: '', prioridade: '', assistencia_id: '' });
-          setPage(0); load();
-        }} />
+        <Button
+          label="Limpar"
+          icon="pi pi-times"
+          text
+          onClick={() => {
+            setFilters({ busca: '', status: '', prioridade: '', assistencia_id: '' });
+            setPage(0); load();
+          }}
+        />
       </div>
     );
   }
 
+  const acoesTemplate = (r) => {
+    const isLocked = ['entregue','cancelado'].includes(String(r.status || '').toLowerCase());
+    return (
+      <div className="flex gap-2">
+        <Button size="small" label="Ver" icon="pi pi-eye" text onClick={() => setDetalheId(r.id)} />
+        <Button
+          size="small"
+          label="Editar"
+          icon="pi pi-pencil"
+          outlined
+          disabled={isLocked}
+          onClick={() => { if (!isLocked) { setEditarId(r.id); setDlgEditar(true); } }}
+        />
+      </div>
+    );
+  };
 
-  const acoesTemplate = (r) => (
-    <div className="flex gap-2">
-      <Button size="small" label="Ver" icon="pi pi-eye" text onClick={() => setDetalheId(r.id)} />
-      <Button
-        size="small"
-        label="Editar"
-        icon="pi pi-pencil"
-        outlined
-        onClick={() => { setEditarId(r.id); setDlgEditar(true); }}
-      />
-    </div>
-  );
 
   return (
     <SakaiLayout>
@@ -132,19 +153,25 @@ const Assistencias = () => {
           responsiveLayout="scroll"
           emptyMessage="Nenhum chamado encontrado"
         >
-          <Column header="#" body={(r) => <Button text label={r.numero} onClick={() => setDetalheId(r.id)}/>}/>
+          <Column header="#" body={(r) => <Button text label={r.numero} onClick={() => setDetalheId(r.id)} />}/>
           <Column field="origem_tipo" header="Origem"/>
-          <Column field="cliente_id" header="Cliente"/>
+          <Column header="Cliente" body={(r) => r.pedido?.cliente || '—'} />
           <Column header="Assistência" body={(r) => r.assistencia?.nome || '—'}/>
-          <Column header="Status" body={(r) => <Tag value={r.status} severity={statusSeverity(r.status)}/>}/>
-          <Column header="Prioridade" body={(r) => <Tag value={r.prioridade}/>}/>
-          <Column header="SLA" body={(r) => <SlaTag dateStr={r.sla_data_limite}/>}/>
-          <Column field="updated_at" header="Atualizado" body={(r) => new Date(r.updated_at).toLocaleString()}/>
-          <Column header="Ações" body={acoesTemplate} style={{width: 180}}/>
+          <Column
+            header="Status"
+            body={(r) => <Tag value={statusLabel(r.status)} severity={statusSeverity(r.status)} />}
+          />
+          <Column header="Prioridade" body={(r) => <Tag value={r.prioridade} />} />
+          <Column
+            header="Prazo"
+            body={(r) => <PrazoTag dateStr={r.prazo_max} status={r.status} />}
+          />
+          <Column field="updated_at" header="Atualizado" body={(r) => new Date(r.updated_at).toLocaleString()} />
+          <Column header="Ações" body={acoesTemplate} style={{ width: 180 }} />
         </DataTable>
       </div>
 
-      <Dialog header="Detalhe do Chamado" visible={!!detalheId} style={{width: '90vw', maxWidth: 1200}} modal
+      <Dialog header="Detalhe do Chamado" visible={!!detalheId} style={{ width: '90vw', maxWidth: 1200 }} modal
               onHide={() => setDetalheId(null)}>
         {detalheId && <ChamadoDetalhe chamadoId={detalheId} onClose={() => setDetalheId(null)} />}
       </Dialog>
@@ -157,7 +184,6 @@ const Assistencias = () => {
         />
       </Dialog>
 
-      {/* Dialog de Edição */}
       <Dialog header="Editar Chamado" visible={dlgEditar} style={{ width: 780 }} modal onHide={() => setDlgEditar(false)}>
         {editarId && (
           <EditarChamadoDialog

@@ -10,8 +10,8 @@ import { Toast } from 'primereact/toast';
 import ItemAcoes from './ItemAcoes';
 import DialogAdicionarItem from './dialogs/DialogAdicionarItem';
 import apiEstoque from '../../services/apiEstoque';
-import SlaTag from './tags/SlaTag';
-import { statusSeverity } from '../../utils/assistencia';
+import PrazoTag from './tags/PrazoTag';
+import { statusSeverity, statusLabel } from '../../utils/assistencia';
 
 export default function ChamadoDetalhe({ chamadoId, onClose }) {
   const toast = useRef(null);
@@ -43,13 +43,36 @@ export default function ChamadoDetalhe({ chamadoId, onClose }) {
         <div>
           <h3 className="m-0">Chamado {chamado?.numero}</h3>
           <div className="flex align-items-center gap-2 mt-2">
-            <Tag value={chamado?.status} severity={statusSeverity(chamado?.status)} />
+            <Tag value={statusLabel(chamado?.status)} severity={statusSeverity(chamado?.status)} />
             <Tag value={`Prioridade: ${chamado?.prioridade}`} />
-            <SlaTag dateStr={chamado?.sla_data_limite} />
+            <PrazoTag dateStr={chamado?.prazo_max} />
           </div>
           <div className="text-500 mt-2">
-            Origem: {chamado?.origem_tipo} #{chamado?.origem_id || '—'} · Cliente: {chamado?.cliente_id || '—'} · Assistência: {chamado?.assistencia?.nome || '—'}
+            Origem: {chamado?.origem_tipo} #{chamado?.origem_id || '—'}
+            · Cliente: {chamado?.cliente?.nome || '—'}
+            · Assistência: {chamado?.assistencia?.nome || '—'}
+            · Local do reparo: {chamado?.local_reparo || '—'}
+            · Custo por: {chamado?.custo_responsavel || '—'}
           </div>
+
+          {chamado?.pedido && (
+            <div className="mt-2 p-2 border-round surface-border surface-100">
+              <div><b>Pedido #</b>{chamado.pedido.numero} · <b>Data:</b> {new Date(chamado.pedido.data).toLocaleDateString()}</div>
+              <div><b>Cliente:</b> {chamado.pedido.cliente || '—'}</div>
+
+              {Array.isArray(chamado.pedido.pedidos_fabrica) && chamado.pedido.pedidos_fabrica.length > 0 && (
+                <div className="mt-1">
+                  {chamado.pedido.pedidos_fabrica.map((pf) => (
+                    <div key={pf.id}>
+                      <b>Pedido Fábrica:</b> #{pf.id}
+                      {' · '}<b>Status:</b> {pf.status}
+                      {' · '}<b>Previsto:</b> {pf.data_previsao_entrega ? new Date(pf.data_previsao_entrega).toLocaleDateString() : '—'}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <div className="flex gap-2">
           <Button label="Adicionar item" icon="pi pi-plus" onClick={() => setDlgAddItem(true)} outlined />
@@ -62,13 +85,21 @@ export default function ChamadoDetalhe({ chamadoId, onClose }) {
       <h4 className="mt-0">Itens</h4>
       <DataTable value={itens} loading={loading} paginator rows={5} responsiveLayout="scroll" emptyMessage="Sem itens">
         <Column field="id" header="#" style={{ width: 90 }} />
-        <Column field="produto_id" header="Produto" />
-        <Column field="variacao_id" header="Variação" />
-        <Column header="Defeito" body={(r) => r.defeito?.descricao || r.descricao_defeito_livre || '—'} />
-        <Column header="Status" body={(r) => <Tag value={r.status_item} severity={statusSeverity(r.status_item)} />} />
+        <Column header="Produto" body={(r) => r.variacao?.nome_completo || '—'} />
+        <Column header="Defeito" body={(r) => r.defeito?.descricao || '—'} />
+        <Column header="Nota" body={(r) => r.nota_numero || '—'} />
+        <Column header="Prazo" body={(r) => r.prazo_finalizacao ? new Date(r.prazo_finalizacao).toLocaleDateString() : '—'} />
+        <Column header="Status" body={(r) => <Tag value={statusLabel(chamado?.status)} severity={statusSeverity(chamado?.status)} />} />
         <Column header="Envio" body={(r) => (r.data_envio ? new Date(r.data_envio).toLocaleDateString() : '—')} />
         <Column header="Retorno" body={(r) => (r.data_retorno ? new Date(r.data_retorno).toLocaleDateString() : '—')} />
-        <Column header="Ações" body={(r) => <ItemAcoes item={r} onChanged={() => load()} />} style={{ width: 280 }} />
+        <Column header="Ações" body={(r) => (
+          <ItemAcoes
+            item={r}
+            chamadoStatus={chamado?.status}
+            chamadoLocal={chamado?.local_reparo}
+            onChanged={() => load()}
+          />
+        )} style={{ width: 320 }} />
       </DataTable>
 
       <Divider />
