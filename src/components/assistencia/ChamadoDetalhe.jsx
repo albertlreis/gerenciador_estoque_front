@@ -6,18 +6,31 @@ import { Tag } from 'primereact/tag';
 import { Timeline } from 'primereact/timeline';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
+import { Dialog } from 'primereact/dialog';
 
 import ItemAcoes from './ItemAcoes';
+import ArquivosChamado from './arquivos/ArquivosChamado';
+import ArquivosItem from './arquivos/ArquivosItem';
 import DialogAdicionarItem from './dialogs/DialogAdicionarItem';
 import apiEstoque from '../../services/apiEstoque';
 import PrazoTag from './tags/PrazoTag';
 import { statusSeverity, statusLabel } from '../../utils/assistencia';
 
+/**
+ * Detalhe de um Chamado de Assistência.
+ *
+ * Exibe cabeçalho, seção de fotos do chamado, itens (com ações e acesso às fotos por item)
+ * e timeline de logs. Recarrega dados ao detectar mudanças em itens/arquivos.
+ *
+ * @param {{ chamadoId: number|string, onClose?: () => void, onChanged?: () => void }} props
+ */
 export default function ChamadoDetalhe({ chamadoId, onClose, onChanged }) {
   const toast = useRef(null);
   const [chamado, setChamado] = useState(null);
   const [loading, setLoading] = useState(true);
+
   const [dlgAddItem, setDlgAddItem] = useState(false);
+  const [dlgItemFotos, setDlgItemFotos] = useState({ open: false, itemId: null, produto: '' });
 
   async function load() {
     setLoading(true);
@@ -25,7 +38,12 @@ export default function ChamadoDetalhe({ chamadoId, onClose, onChanged }) {
       const response = await apiEstoque.get(`/assistencias/chamados/${chamadoId}`);
       setChamado(response.data?.data || response.data);
     } catch (e) {
-      toast.current?.show({ severity: 'error', summary: 'Erro ao carregar', detail: 'Falha ao obter chamado', life: 3000 });
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Erro ao carregar',
+        detail: 'Falha ao obter chamado',
+        life: 3000
+      });
     } finally {
       setLoading(false);
     }
@@ -36,14 +54,30 @@ export default function ChamadoDetalhe({ chamadoId, onClose, onChanged }) {
   const itens = chamado?.itens || [];
   const logs = chamado?.logs || [];
 
+  /** Recarrega e propaga alteração para o pai. */
   function handleAnyChange() {
     load();
     onChanged?.();
   }
 
+  function openFotosItem(row) {
+    const produto =
+      row?.variacao?.nome_completo ||
+      row?.variacao?.nome ||
+      row?.produto_nome ||
+      `Item #${row?.id ?? ''}`;
+    setDlgItemFotos({ open: true, itemId: row?.id ?? null, produto });
+  }
+
+  function closeFotosItem() {
+    setDlgItemFotos({ open: false, itemId: null, produto: '' });
+  }
+
   return (
     <div className="surface-card p-3 border-round">
       <Toast ref={toast} />
+
+      {/* Header */}
       <div className="flex justify-content-between align-items-center mb-3">
         <div>
           <h3 className="m-0">Chamado {chamado?.numero}</h3>
@@ -62,7 +96,10 @@ export default function ChamadoDetalhe({ chamadoId, onClose, onChanged }) {
 
           {chamado?.pedido && (
             <div className="mt-2 p-2 border-round surface-border surface-100">
-              <div><b>Pedido #</b>{chamado.pedido.numero} · <b>Data:</b> {new Date(chamado.pedido.data).toLocaleDateString()}</div>
+              <div>
+                <b>Pedido #</b>{chamado.pedido.numero}
+                {' · '}<b>Data:</b> {chamado.pedido.data ? new Date(chamado.pedido.data).toLocaleDateString() : '—'}
+              </div>
               <div><b>Cliente:</b> {chamado.pedido.cliente || '—'}</div>
 
               {Array.isArray(chamado.pedido.pedidos_fabrica) && chamado.pedido.pedidos_fabrica.length > 0 && (
@@ -79,6 +116,7 @@ export default function ChamadoDetalhe({ chamadoId, onClose, onChanged }) {
             </div>
           )}
         </div>
+
         <div className="flex gap-2">
           <Button label="Adicionar item" icon="pi pi-plus" onClick={() => setDlgAddItem(true)} outlined />
           <Button label="Atualizar" icon="pi pi-refresh" onClick={load} outlined />
@@ -86,9 +124,21 @@ export default function ChamadoDetalhe({ chamadoId, onClose, onChanged }) {
         </div>
       </div>
 
+      {/* FOTOS DO CHAMADO */}
+      <ArquivosChamado chamadoId={chamadoId} onChanged={handleAnyChange} />
+
       <Divider />
+
+      {/* Itens */}
       <h4 className="mt-0">Itens</h4>
-      <DataTable value={itens} loading={loading} paginator rows={5} responsiveLayout="scroll" emptyMessage="Sem itens">
+      <DataTable
+        value={itens}
+        loading={loading}
+        paginator
+        rows={5}
+        responsiveLayout="scroll"
+        emptyMessage="Sem itens"
+      >
         <Column field="id" header="#" style={{ width: 90 }} />
         <Column header="Produto" body={(r) => r.variacao?.nome_completo || '—'} />
         <Column header="Defeito" body={(r) => r.defeito?.descricao || '—'} />
@@ -97,17 +147,32 @@ export default function ChamadoDetalhe({ chamadoId, onClose, onChanged }) {
         <Column header="Status" body={(r) => <Tag value={statusLabel(chamado?.status)} severity={statusSeverity(chamado?.status)} />} />
         <Column header="Envio" body={(r) => (r.data_envio ? new Date(r.data_envio).toLocaleDateString() : '—')} />
         <Column header="Retorno" body={(r) => (r.data_retorno ? new Date(r.data_retorno).toLocaleDateString() : '—')} />
-        <Column header="Ações" body={(r) => (
-          <ItemAcoes
-            item={r}
-            chamadoStatus={chamado?.status}
-            chamadoLocal={chamado?.local_reparo}
-            onChanged={handleAnyChange}
-          />
-        )} style={{ width: 320 }} />
+        <Column
+          header="Ações"
+          style={{ width: 420 }}
+          body={(r) => (
+            <div className="flex gap-2">
+              <ItemAcoes
+                item={r}
+                chamadoStatus={chamado?.status}
+                chamadoLocal={chamado?.local_reparo}
+                onChanged={handleAnyChange}
+              />
+              <Button
+                size="small"
+                label="Fotos"
+                icon="pi pi-images"
+                text
+                onClick={() => openFotosItem(r)} // passa a linha toda para usar o nome do produto
+              />
+            </div>
+          )}
+        />
       </DataTable>
 
       <Divider />
+
+      {/* Timeline */}
       <h4 className="mt-0">Timeline</h4>
       <Timeline
         value={logs}
@@ -120,11 +185,33 @@ export default function ChamadoDetalhe({ chamadoId, onClose, onChanged }) {
           </div>
         )}
         marker={(e) => (
-          <span className={`p-avatar p-component p-avatar-circle p-overlay-badge bg-${statusSeverity(e.status_para)}`} style={{ width: '1rem', height: '1rem' }} />
+          <span
+            className={`p-avatar p-component p-avatar-circle p-overlay-badge bg-${statusSeverity(e.status_para)}`}
+            style={{ width: '1rem', height: '1rem' }}
+          />
         )}
       />
 
-      <DialogAdicionarItem chamadoId={chamadoId} visible={dlgAddItem} onHide={() => setDlgAddItem(false)} onAdded={() => load()} />
+      {/* Dialog: adicionar item */}
+      <DialogAdicionarItem
+        chamadoId={chamadoId}
+        visible={dlgAddItem}
+        onHide={() => setDlgAddItem(false)}
+        onAdded={() => load()}
+      />
+
+      {/* Dialog: fotos do item */}
+      <Dialog
+        header={dlgItemFotos.produto ? `Fotos — ${dlgItemFotos.produto}` : `Fotos do Item #${dlgItemFotos.itemId ?? ''}`}
+        visible={dlgItemFotos.open}
+        style={{ width: '80vw', maxWidth: 1100 }}
+        modal
+        onHide={closeFotosItem}
+      >
+        {dlgItemFotos.itemId && (
+          <ArquivosItem itemId={dlgItemFotos.itemId} onChanged={handleAnyChange} />
+        )}
+      </Dialog>
     </div>
   );
 }
