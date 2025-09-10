@@ -11,7 +11,7 @@ import { PERMISSOES } from '../../constants/permissoes';
 
 const ProdutoVariacoes = ({
                             produtoId,
-                            variacoes,
+                            variacoes = [],            // <- default quando vier undefined
                             setVariacoes,
                             abrirDialogOutlet,
                             confirmarExcluirOutlet,
@@ -21,22 +21,25 @@ const ProdutoVariacoes = ({
                           }) => {
   const { has } = usePermissions();
 
+  // Fallback absoluto: se vier null/objeto, vira []
+  const lista = Array.isArray(variacoes) ? variacoes : [];
+
   const updateVariacao = (index, field, value) => {
-    const novas = [...variacoes];
+    const novas = [...lista];
     novas[index] = { ...novas[index], [field]: value };
     setVariacoes(novas);
   };
 
   const updateAtributo = (varIndex, attrIndex, field, value) => {
-    const novas = [...variacoes];
-    const atributos = [...novas[varIndex].atributos];
+    const novas = [...lista];
+    const atributos = [...(novas[varIndex].atributos || [])];
     atributos[attrIndex] = { ...atributos[attrIndex], [field]: value };
     novas[varIndex].atributos = atributos;
     setVariacoes(novas);
   };
 
   const addAtributo = (varIndex) => {
-    const novas = [...variacoes];
+    const novas = [...lista];
     const atributos = [...(novas[varIndex].atributos || [])];
     atributos.push({ atributo: '', valor: '' });
     novas[varIndex].atributos = atributos;
@@ -44,37 +47,77 @@ const ProdutoVariacoes = ({
   };
 
   const removeAtributo = (varIndex, attrIndex) => {
-    const novas = [...variacoes];
-    novas[varIndex].atributos = novas[varIndex].atributos.filter((_, i) => i !== attrIndex);
+    const novas = [...lista];
+    novas[varIndex].atributos = (novas[varIndex].atributos || []).filter((_, i) => i !== attrIndex);
     setVariacoes(novas);
   };
 
   const removeVariacao = (index) => {
-    const novas = variacoes.filter((_, i) => i !== index);
+    const novas = lista.filter((_, i) => i !== index);
     setVariacoes(novas);
   };
 
   const addVariacao = () => {
     setVariacoes([
-      ...variacoes,
+      ...lista,
       { preco: '', custo: '', referencia: '', codigo_barras: '', atributos: [] }
     ]);
   };
 
+  /** Verifica duplicidade de nomes de atributos por variação (case-insensitive). */
+  const variacaoTemDuplicidadeDeAtributos = (v) => {
+    const nomes = (v.atributos || [])
+      .map(a => (a.atributo || '').trim().toLowerCase())
+      .filter(Boolean);
+    const set = new Set();
+    for (const n of nomes) {
+      if (set.has(n)) return true;
+      set.add(n);
+    }
+    return false;
+  };
+
   const salvarVariacoes = async () => {
     if (!produtoId) return;
-    setLoading(true);
 
+    // Validação: campos obrigatórios + duplicidade de atributos
+    const invalidos = [];
+    const duplicidade = [];
+    lista.forEach((v, i) => {
+      if (!v.preco || !v.referencia) invalidos.push(i + 1);
+      if (variacaoTemDuplicidadeDeAtributos(v)) duplicidade.push(i + 1);
+    });
+
+    if (invalidos.length) {
+      toastRef.current?.show({
+        severity: 'warn',
+        summary: 'Variações incompletas',
+        detail: `Preencha preço e referência nas variações: ${invalidos.join(', ')}.`,
+        life: 4000
+      });
+      return;
+    }
+
+    if (duplicidade.length) {
+      toastRef.current?.show({
+        severity: 'warn',
+        summary: 'Atributos duplicados',
+        detail: `Remova atributos duplicados nas variações: ${duplicidade.join(', ')}.`,
+        life: 4000
+      });
+      return;
+    }
+
+    setLoading(true);
     try {
       const novas = [];
       const existentes = [];
 
-      for (const v of variacoes) {
+      for (const v of lista) {
         const data = {
           ...v,
-          atributos: (v.atributos || []).filter(a => a.atributo && a.valor)
+          atributos: (v.atributos || []).filter(a => (a.atributo || '').trim() && (a.valor || '').trim())
         };
-
         if (v.id) existentes.push(data);
         else novas.push(data);
       }
@@ -106,8 +149,9 @@ const ProdutoVariacoes = ({
     if (!produtoId) return;
 
     try {
-      const { data } = await apiEstoque.get(`/produtos/${produtoId}/variacoes`);
-      setVariacoes(data);
+      const resp = await apiEstoque.get(`/produtos/${produtoId}/variacoes`);
+      const arr = Array.isArray(resp.data?.data) ? resp.data.data : Array.isArray(resp.data) ? resp.data : [];
+      setVariacoes(arr);
     } catch (error) {
       toastRef.current?.show({
         severity: 'error',
@@ -118,7 +162,7 @@ const ProdutoVariacoes = ({
     }
   };
 
-  const variacoesIncompletas = variacoes.some(v => !v.preco || !v.referencia);
+  const variacoesIncompletas = lista.some(v => !v.preco || !v.referencia);
 
   const renderHeader = (v, i) => {
     const invalido = !v.preco || !v.referencia;
@@ -139,7 +183,7 @@ const ProdutoVariacoes = ({
     );
   };
 
-  const ordenadas = [...variacoes].sort((a, b) => {
+  const ordenadas = [...lista].sort((a, b) => {
     const aValido = a.preco && a.referencia;
     const bValido = b.preco && b.referencia;
     return aValido === bValido ? 0 : aValido ? 1 : -1;
@@ -153,7 +197,7 @@ const ProdutoVariacoes = ({
     <div className="field col-12">
       <Accordion multiple activeIndex={activeIndex}>
         {ordenadas.map((v, i) => {
-          const indexReal = variacoes.indexOf(v);
+          const indexReal = lista.indexOf(v);
           return (
             <AccordionTab key={indexReal} header={renderHeader(v, indexReal)}>
               <div className="formgrid grid">
@@ -255,7 +299,7 @@ const ProdutoVariacoes = ({
               )}
 
               <ProdutoAtributos
-                atributos={v.atributos}
+                atributos={v.atributos || []}
                 onChange={(j, campo, valor) => updateAtributo(indexReal, j, campo, valor)}
                 onAdd={() => addAtributo(indexReal)}
                 onRemove={(j) => removeAtributo(indexReal, j)}
