@@ -11,6 +11,13 @@ import EstoqueFiltro from '../components/EstoqueFiltro';
 import EstoqueAtual from '../components/EstoqueAtual';
 import EstoqueMovimentacoes from '../components/EstoqueMovimentacoes';
 
+/**
+ * Página de Estoque + Movimentações com editor de localização.
+ * - Mantém filtros em localStorage;
+ * - Exibe KPIs de resumo;
+ * - Lista Estoque Atual (com botão para editar Localização);
+ * - Lista Movimentações recentes.
+ */
 const MovimentacoesEstoque = () => {
   const LOCAL_STORAGE_KEY = 'filtros_movimentacoes_estoque';
 
@@ -61,10 +68,9 @@ const MovimentacoesEstoque = () => {
 
   useEffect(() => {
     const depositoId = searchParams.get('deposito');
-    const savedFilters = localStorage.getItem(LOCAL_STORAGE_KEY);
-
-    if (savedFilters) {
-      setFiltros(JSON.parse(savedFilters));
+    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (saved) {
+      setFiltros(JSON.parse(saved));
     } else if (depositoId) {
       setFiltros((prev) => ({ ...prev, deposito: parseInt(depositoId) }));
     }
@@ -113,7 +119,7 @@ const MovimentacoesEstoque = () => {
       setTotalEstoque(estoqueRes.data.meta?.total || 0);
       setResumo(resumoRes.data);
     } catch (err) {
-      toast.current.show({
+      toast.current?.show({
         severity: 'error',
         summary: 'Erro',
         detail: 'Erro ao carregar estoque atual',
@@ -146,14 +152,11 @@ const MovimentacoesEstoque = () => {
         sort_order: sortOrder === 1 ? 'asc' : sortOrder === -1 ? 'desc' : undefined
       };
 
-      const movsRes = await apiEstoque.get('/estoque/movimentacoes', {
-        params: filtroParams,
-      });
-
+      const movsRes = await apiEstoque.get('/estoque/movimentacoes', { params: filtroParams });
       setMovimentacoes(movsRes.data.data);
       setTotalMovs(movsRes.data.meta?.total || 0);
     } catch (err) {
-      toast.current.show({
+      toast.current?.show({
         severity: 'error',
         summary: 'Erro',
         detail: 'Erro ao carregar movimentações',
@@ -188,7 +191,7 @@ const MovimentacoesEstoque = () => {
     setEstoqueAtual([]);
     setResumo({ totalProdutos: 0, totalPecas: 0, totalDepositos: 0 });
     setPaginaEstoque(1);
-    const reset = { tipo: null, deposito: null, produto: '', periodo: null };
+    const reset = { tipo: null, deposito: null, produto: '', periodo: null, zerados: false };
     setFiltros(reset);
     localStorage.removeItem(LOCAL_STORAGE_KEY);
   };
@@ -205,7 +208,7 @@ const MovimentacoesEstoque = () => {
 
       setMovsProduto(res.data.data);
     } catch (err) {
-      toast.current.show({
+      toast.current?.show({
         severity: 'error',
         summary: 'Erro',
         detail: 'Erro ao carregar movimentações da variação',
@@ -325,7 +328,6 @@ const MovimentacoesEstoque = () => {
             onPage={() => {}}
           />
         </Dialog>
-
       </div>
     </SakaiLayout>
   );

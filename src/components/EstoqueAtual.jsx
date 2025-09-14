@@ -4,6 +4,10 @@ import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Tooltip } from 'primereact/tooltip';
 
+/**
+ * Tabela de Estoque Atual.
+ * Mostra localização no formato "6-B1 (Área)" quando disponível.
+ */
 const EstoqueAtual = ({ data, loading, total, first, onPage, onEditLocalizacao, verMovimentacoes }) => {
   const [sortField, setSortField] = useState('produto_nome');
   const [sortOrder, setSortOrder] = useState(1);
@@ -17,47 +21,52 @@ const EstoqueAtual = ({ data, loading, total, first, onPage, onEditLocalizacao, 
 
   const localizacaoTemplate = (rowData) => {
     const loc = rowData.localizacao;
-    if (!loc) return '—';
+    if (!loc) {
+      return (
+        <Button
+          icon="pi pi-plus"
+          label="Definir"
+          className="p-button-text p-0"
+          onClick={() => onEditLocalizacao(rowData.estoque_id, null)}
+        />
+      );
+    }
+
+    // Exibir OU código OU área
+    const codigo = loc.codigo_composto && loc.codigo_composto.trim() !== '' ? loc.codigo_composto : null;
+    const area = loc.area?.nome || null;
+
+    const display = codigo ?? area ?? '—';
 
     return (
       <span>
-        C:{loc.corredor || '-'} P:{loc.prateleira || '-'} L:{loc.coluna || '-'} N:{loc.nivel || '-'}
+      {display}
         <Button
           icon="pi pi-pencil"
           className="p-button-text p-0 ml-2"
           tooltip="Editar localização"
           onClick={() => onEditLocalizacao(rowData.estoque_id, rowData.localizacao?.id || null)}
         />
-      </span>
+    </span>
     );
   };
 
   const handlePage = (e) => {
     setRows(e.rows);
-    onPage({
-      ...e,
-      sortField,
-      sortOrder,
-      rows: e.rows
-    });
+    onPage({ ...e, sortField, sortOrder, rows: e.rows });
   };
 
   const handleSort = (e) => {
     setSortField(e.sortField);
     setSortOrder(e.sortOrder);
-    onPage({
-      first,
-      rows,
-      sortField: e.sortField,
-      sortOrder: e.sortOrder
-    });
+    onPage({ first, rows, sortField: e.sortField, sortOrder: e.sortOrder });
   };
 
   return (
     <div className="mb-5">
       <h3 className="mb-3">Estoque Atual por Produto e Depósito</h3>
 
-      <Tooltip target="#tooltip-localizacao" content="Corredor, Prateleira, Coluna e Nível" position="top" />
+      <Tooltip target="#tooltip-localizacao" content="Setor, Coluna e Nível. Áreas e dimensões são gerenciáveis." position="top" />
 
       <DataTable
         value={data}
@@ -82,11 +91,7 @@ const EstoqueAtual = ({ data, loading, total, first, onPage, onEditLocalizacao, 
           header={
             <span>
               Localização{' '}
-              <i
-                id="tooltip-localizacao"
-                className="pi pi-info-circle text-gray-500 ml-1"
-                style={{ cursor: 'pointer' }}
-              />
+              <i id="tooltip-localizacao" className="pi pi-info-circle text-gray-500 ml-1" style={{ cursor: 'pointer' }} />
             </span>
           }
           body={localizacaoTemplate}
