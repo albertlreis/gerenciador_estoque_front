@@ -16,7 +16,7 @@ const ProdutoImagens = ({
   const backendUrl = process.env.REACT_APP_BASE_URL_ESTOQUE;
 
   const getImageSrc = (url) =>
-    url.startsWith('http') ? url : `${backendUrl}/${IMAGES_FOLDER}/${url}`;
+    url.startsWith('http') ? url : `${backendUrl}/storage/${IMAGES_FOLDER}/${url}`;
 
   const confirmDelete = (img) => {
     confirmDialog({
@@ -127,7 +127,7 @@ const ProdutoImagens = ({
               style={{width: '100px', height: '100px'}}
             >
               <img
-                src={getImageSrc(img.url)}
+                src={img.url_completa}
                 alt="Imagem do produto"
                 className="w-full h-full object-cover border-round"
               />

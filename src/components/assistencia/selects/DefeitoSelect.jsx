@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AutoComplete } from 'primereact/autocomplete';
 import { Tag } from 'primereact/tag';
-import { Button } from 'primereact/button';
 import apiEstoque from '../../../services/apiEstoque';
 
 export default function DefeitoSelect({ value, onChange, placeholder = "Buscar defeito...", style }) {
@@ -14,7 +13,7 @@ export default function DefeitoSelect({ value, onChange, placeholder = "Buscar d
     const { data } = await apiEstoque.get('/assistencias/defeitos', { params: { busca: q, per_page: 20, page: 1 }});
     let list = (data?.data ?? data ?? []).map((d) => ({
       id: d.id,
-      label: `${d.codigo} — ${d.descricao}`,
+      label: d.descricao,
       critico: !!d.critico,
       isNew: false,
     }));

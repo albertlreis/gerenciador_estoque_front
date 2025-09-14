@@ -20,7 +20,7 @@ const ProdutoCard = ({ produto, onDetalhes, onAdicionar }) => {
 
       <img
         src={produto.imagem_principal
-          ? getImageSrc(produto.imagem_principal)
+          ? produto.imagem_principal
           : 'https://placehold.co/500x300?text=Sem+Imagem'}
         alt={produto.nome}
         className="w-full mb-2 border-round"
