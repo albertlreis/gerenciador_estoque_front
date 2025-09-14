@@ -6,7 +6,20 @@ import { Tooltip } from 'primereact/tooltip';
 
 /**
  * Tabela de Estoque Atual.
- * Mostra localização no formato "6-B1 (Área)" quando disponível.
+ * - Exibe a localização como:
+ *   • código composto (ex.: "6-B1") quando houver localização física; OU
+ *   • nome da área (ex.: "Assistência") quando estiver em área.
+ * - O ícone de edição permanece sempre ao lado do texto, sem quebra de linha.
+ * - RESTRIÇÃO: se quantidade === 0, não permite "Definir" localização (não exibe o botão).
+ *
+ * @param {Object}   props
+ * @param {Array}    props.data
+ * @param {boolean}  props.loading
+ * @param {number}   props.total
+ * @param {number}   props.first
+ * @param {Function} props.onPage
+ * @param {Function} props.onEditLocalizacao
+ * @param {Function} props.verMovimentacoes
  */
 const EstoqueAtual = ({ data, loading, total, first, onPage, onEditLocalizacao, verMovimentacoes }) => {
   const [sortField, setSortField] = useState('produto_nome');
@@ -19,9 +32,20 @@ const EstoqueAtual = ({ data, loading, total, first, onPage, onEditLocalizacao, 
     </span>
   );
 
+  /**
+   * Renderiza a coluna de Localização:
+   * - Se não houver localização e quantidade > 0: mostra botão "Definir".
+   * - Se não houver localização e quantidade === 0: mostra apenas um traço (—).
+   * - Se houver localização: mostra texto + ícone de edição, sempre lado a lado (sem quebra).
+   */
   const localizacaoTemplate = (rowData) => {
     const loc = rowData.localizacao;
+    const isZero = Number(rowData?.quantidade ?? 0) === 0;
+
     if (!loc) {
+      if (isZero) {
+        return <span className="text-500">—</span>;
+      }
       return (
         <Button
           icon="pi pi-plus"
@@ -32,22 +56,20 @@ const EstoqueAtual = ({ data, loading, total, first, onPage, onEditLocalizacao, 
       );
     }
 
-    // Exibir OU código OU área
     const codigo = loc.codigo_composto && loc.codigo_composto.trim() !== '' ? loc.codigo_composto : null;
     const area = loc.area?.nome || null;
-
     const display = codigo ?? area ?? '—';
 
     return (
-      <span>
-      {display}
+      <span className="inline-flex items-center whitespace-nowrap max-w-full" style={{ overflow: 'hidden' }}>
+        <span className="truncate">{display}</span>
         <Button
           icon="pi pi-pencil"
-          className="p-button-text p-0 ml-2"
+          className="p-button-text p-0 ml-2 flex-shrink-0"
           tooltip="Editar localização"
           onClick={() => onEditLocalizacao(rowData.estoque_id, rowData.localizacao?.id || null)}
         />
-    </span>
+      </span>
     );
   };
 
@@ -66,7 +88,11 @@ const EstoqueAtual = ({ data, loading, total, first, onPage, onEditLocalizacao, 
     <div className="mb-5">
       <h3 className="mb-3">Estoque Atual por Produto e Depósito</h3>
 
-      <Tooltip target="#tooltip-localizacao" content="Setor, Coluna e Nível. Áreas e dimensões são gerenciáveis." position="top" />
+      <Tooltip
+        target="#tooltip-localizacao"
+        content="Setor, Coluna e Nível. Áreas e dimensões são gerenciáveis."
+        position="top"
+      />
 
       <DataTable
         value={data}
