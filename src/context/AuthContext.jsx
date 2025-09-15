@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { isTokenValid } from '../helper/isTokenValid';
+import React, {createContext, useContext, useEffect, useMemo, useState} from 'react';
+import {useNavigate} from 'react-router-dom';
+import {isTokenValid} from '../helper/isTokenValid';
 import apiEstoque from '../services/apiEstoque';
 
 const AuthContext = createContext();
@@ -8,7 +8,7 @@ const AuthContext = createContext();
 /**
  * Provedor global de autenticação.
  */
-export const AuthProvider = ({ children }) => {
+export const AuthProvider = ({children}) => {
   const [user, setUser] = useState(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const navigate = useNavigate();
@@ -38,7 +38,18 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('user');
     setUser(null);
-    navigate('/login', { replace: true });
+    navigate('/login', {replace: true});
+  };
+
+  const permissionsSet = useMemo(() => {
+    const list = Array.isArray(user?.permissoes) ? user.permissoes : [];
+    return new Set(list);
+  }, [user]);
+
+  const has = (permissoes) => {
+    if (!permissionsSet.size || !permissoes) return false;
+    const lista = Array.isArray(permissoes) ? permissoes : [permissoes];
+    return lista.some((p) => !!p && permissionsSet.has(p));
   };
 
   return (
@@ -48,7 +59,8 @@ export const AuthProvider = ({ children }) => {
         login,
         logout,
         isAuthenticated: !!user,
-        isLoadingUser
+        isLoadingUser,
+        has
       }}
     >
       {children}
