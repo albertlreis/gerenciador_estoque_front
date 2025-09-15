@@ -1,3 +1,4 @@
+// src/components/produto/ProdutoForm.jsx
 import React, { useState, useEffect } from 'react';
 import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
@@ -12,8 +13,14 @@ import { useProdutoForm } from '../../hooks/useProdutoForm';
 import ProdutoVariacoes from './ProdutoVariacoes';
 import ProdutoImagens from './ProdutoImagens';
 import apiEstoque from '../../services/apiEstoque';
-import ProdutoManualConservacao from "./ProdutoManualConservacao";
-import DialogOutlet from "./DialogOutlet";
+import ProdutoManualConservacao from './ProdutoManualConservacao';
+import DialogOutlet from './DialogOutlet';
+
+const toNumberOrNull = (v) => {
+  if (v === undefined || v === null || v === '') return null;
+  const n = Number(v);
+  return Number.isNaN(n) ? null : n;
+};
 
 const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
   const [produto, setProduto] = useState(initialData);
@@ -42,24 +49,31 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
     atualizarDados,
   } = useProdutoForm(produto);
 
+  // Arrays "seguros" para os Dropdowns
+  const categoriasSafe = Array.isArray(categorias) ? categorias : [];
+  const fornecedoresSafe = Array.isArray(fornecedores) ? fornecedores : [];
+
   useEffect(() => {
     if (!isEqual(produto, initialData)) {
-      setProduto(initialData);
+      setProduto((prev) => ({
+        ...prev,
+        ...initialData,
+        ativo: initialData.ativo ?? 1,
+        motivo_desativacao: initialData.motivo_desativacao || '',
+        estoque_minimo: initialData.estoque_minimo || '',
+      }));
+
       setAltura(initialData.altura || '');
       setLargura(initialData.largura || '');
       setProfundidade(initialData.profundidade || '');
       setPeso(initialData.peso || '');
 
-      // Garantir que os campos existam
-      setProduto(prev => ({
-        ...prev,
-        ativo: initialData.ativo ?? 1,
-        motivo_desativacao: initialData.motivo_desativacao || '',
-        estoque_minimo: initialData.estoque_minimo || '',
-      }));
+      // normaliza os IDs para number|null para bater com optionValue="id"
+      setIdCategoria(toNumberOrNull(initialData?.id_categoria));
+      setIdFornecedor(toNumberOrNull(initialData?.id_fornecedor));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData]);
-
 
   const calcularDisponivelOutlet = (variacao) => {
     const estoqueTotal = variacao?.estoque_total ?? variacao?.estoque?.quantidade ?? 0;
@@ -78,7 +92,7 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
           detail: 'Não há quantidade disponível para cadastrar outlet nesta variação.',
           life: 3500
         });
-        return; // não abre o diálogo
+        return;
       }
     }
 
@@ -117,11 +131,19 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
       const produtoAtualizado = response.data?.data || response.data;
 
       atualizarDados(produtoAtualizado);
-      setProduto(produtoAtualizado);
+      setProduto((prev) => ({
+        ...prev,
+        ...produtoAtualizado,
+      }));
+
       setAltura(produtoAtualizado.altura || '');
       setLargura(produtoAtualizado.largura || '');
       setProfundidade(produtoAtualizado.profundidade || '');
       setPeso(produtoAtualizado.peso || '');
+
+      // re-normaliza IDs
+      setIdCategoria(toNumberOrNull(produtoAtualizado?.id_categoria));
+      setIdFornecedor(toNumberOrNull(produtoAtualizado?.id_fornecedor));
 
       if (!silent) {
         toastRef.current?.show({
@@ -149,14 +171,14 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
       const payload = {
         nome,
         descricao,
-        id_categoria: idCategoria,
-        id_fornecedor: idFornecedor,
+        id_categoria: toNumberOrNull(idCategoria),
+        id_fornecedor: toNumberOrNull(idFornecedor),
         altura,
         largura,
         profundidade,
         peso,
         manualArquivo,
-        ativo: produto.ativo,
+        ativo: Number(produto.ativo ?? 1),
         motivo_desativacao: produto.motivo_desativacao,
         estoque_minimo: produto.estoque_minimo,
       };
@@ -231,9 +253,9 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
               <label htmlFor="categoria" className="font-bold">Categoria *</label>
               <Dropdown
                 id="categoria"
-                value={idCategoria}
-                options={categorias}
-                onChange={(e) => setIdCategoria(e.value)}
+                value={idCategoria ?? null}
+                options={categoriasSafe}
+                onChange={(e) => setIdCategoria(toNumberOrNull(e.value))}
                 optionLabel="nome"
                 optionValue="id"
                 placeholder="Selecione uma categoria"
@@ -247,9 +269,9 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
               <label htmlFor="fornecedor" className="font-bold">Fornecedor *</label>
               <Dropdown
                 id="fornecedor"
-                value={idFornecedor}
-                options={fornecedores}
-                onChange={(e) => setIdFornecedor(e.value)}
+                value={idFornecedor ?? null}
+                options={fornecedoresSafe}
+                onChange={(e) => setIdFornecedor(toNumberOrNull(e.value))}
                 optionLabel="nome"
                 optionValue="id"
                 placeholder="Selecione um fornecedor"
@@ -274,19 +296,19 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
             {/* Dimensões e Peso */}
             <div className="field col-6 md:col-3">
               <label htmlFor="altura" className="font-bold">Altura (cm)</label>
-              <InputText id="altura" value={altura} onChange={(e) => setAltura(e.target.value)}/>
+              <InputText id="altura" value={altura} onChange={(e) => setAltura(e.target.value)} />
             </div>
             <div className="field col-6 md:col-3">
               <label htmlFor="largura" className="font-bold">Largura (cm)</label>
-              <InputText id="largura" value={largura} onChange={(e) => setLargura(e.target.value)}/>
+              <InputText id="largura" value={largura} onChange={(e) => setLargura(e.target.value)} />
             </div>
             <div className="field col-6 md:col-3">
               <label htmlFor="profundidade" className="font-bold">Profundidade (cm)</label>
-              <InputText id="profundidade" value={profundidade} onChange={(e) => setProfundidade(e.target.value)}/>
+              <InputText id="profundidade" value={profundidade} onChange={(e) => setProfundidade(e.target.value)} />
             </div>
             <div className="field col-6 md:col-3">
               <label htmlFor="peso" className="font-bold">Peso (kg)</label>
-              <InputText id="peso" value={peso} onChange={(e) => setPeso(e.target.value)}/>
+              <InputText id="peso" value={peso} onChange={(e) => setPeso(e.target.value)} />
             </div>
 
             {/* Estoque Mínimo */}
@@ -308,19 +330,19 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
               <label htmlFor="ativo" className="font-bold">Produto Ativo?</label>
               <Dropdown
                 id="ativo"
-                value={produto.ativo}
+                value={Number(produto.ativo ?? 1)}
                 options={[
                   { label: 'Sim', value: 1 },
                   { label: 'Não', value: 0 }
                 ]}
                 onChange={(e) =>
-                  setProduto((prev) => ({ ...prev, ativo: e.value }))
+                  setProduto((prev) => ({ ...prev, ativo: Number(e.value) }))
                 }
                 placeholder="Selecione"
               />
             </div>
 
-            {produto.ativo === 0 && (
+            {Number(produto.ativo) === 0 && (
               <div className="field col-12 md:col-8">
                 <label htmlFor="motivo" className="font-bold">Motivo da Desativação</label>
                 <InputTextarea
@@ -345,9 +367,14 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
           </div>
 
           <div className="mt-3 flex justify-content-end gap-2">
-            <Button label="Salvar Dados" type="submit" icon="pi pi-check" loading={loading}/>
-            <Button label="Cancelar" type="button" icon="pi pi-times" className="p-button-secondary"
-                    onClick={onCancel}/>
+            <Button label="Salvar Dados" type="submit" icon="pi pi-check" loading={loading} />
+            <Button
+              label="Cancelar"
+              type="button"
+              icon="pi pi-times"
+              className="p-button-secondary"
+              onClick={onCancel}
+            />
           </div>
         </Panel>
 
