@@ -75,10 +75,20 @@ const Produtos = () => {
     }
   };
 
+  const toArray = (res) => {
+    if (!res) return [];
+    if (Array.isArray(res)) return res;
+    if (Array.isArray(res?.data)) return res.data;
+    if (Array.isArray(res?.dados?.results)) return res.dados.results;
+    if (Array.isArray(res?.dados)) return res.dados;
+    if (Array.isArray(res?.results)) return res.results;
+    return [];
+  };
+
   const fetchCategorias = async () => {
     try {
       const response = await apiEstoque.get('/categorias');
-      setCategorias(response.data);
+      setCategorias(toArray(response.data));
     } catch {
       toast.current?.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao buscar categorias', life: 3000 });
     }
@@ -87,7 +97,7 @@ const Produtos = () => {
   const fetchFornecedores = async () => {
     try {
       const response = await apiEstoque.get('/fornecedores');
-      setFornecedores(response.data);
+      setFornecedores(toArray(response.data));
     } catch {
       toast.current?.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao buscar fornecedores', life: 3000 });
     }
@@ -169,19 +179,15 @@ const Produtos = () => {
       formData.append('estoque_minimo', produtoData.estoque_minimo || '');
 
       if (produtoData.manualArquivo instanceof File) {
-        if (produtoData.manualArquivo instanceof File) {
-          const allowedTypes = ['application/pdf'];
-          if (!allowedTypes.includes(produtoData.manualArquivo.type)) {
-            toast.current?.show({
-              severity: 'warn',
-              summary: 'Arquivo inválido',
-              detail: 'O manual deve ser um arquivo PDF.',
-              life: 4000,
-            });
-            return;
-          }
-
-          formData.append('manual_conservacao', produtoData.manualArquivo);
+        const allowedTypes = ['application/pdf'];
+        if (!allowedTypes.includes(produtoData.manualArquivo.type)) {
+          toast.current?.show({
+            severity: 'warn',
+            summary: 'Arquivo inválido',
+            detail: 'O manual deve ser um arquivo PDF.',
+            life: 4000,
+          });
+          return;
         }
 
         formData.append('manual_conservacao', produtoData.manualArquivo);
@@ -281,7 +287,7 @@ const Produtos = () => {
               <MultiSelect
                 id="filtro-categoria"
                 value={filtros.id_categoria}
-                options={categorias}
+                options={Array.isArray(categorias) ? categorias : []}
                 onChange={(e) => setFiltros({ ...filtros, id_categoria: e.value })}
                 optionLabel="nome"
                 optionValue="id"
@@ -297,10 +303,10 @@ const Produtos = () => {
               <MultiSelect
                 id="filtro-fornecedor"
                 value={filtros.fornecedor_id}
-                options={fornecedores}
+                options={Array.isArray(fornecedores) ? fornecedores : []}
                 optionLabel="nome"
                 optionValue="id"
-                onChange={(e) => setFiltros({...filtros, fornecedor_id: e.value})}
+                onChange={(e) => setFiltros({ ...filtros, fornecedor_id: e.value })}
                 placeholder="Todos"
                 display="chip"
                 filter

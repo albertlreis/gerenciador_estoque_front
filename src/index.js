@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import './config/primeLocale';
 import App from './App';
 
 import 'primereact/resources/themes/saga-blue/theme.css';
