@@ -114,13 +114,25 @@ const menuItems = (navigate, has) => {
           icon: 'pi pi-fw pi-sort-alt',
           command: () => navigate('/movimentacoes-estoque')
         },
+        has(PERMISSOES.ESTOQUE?.CAIXA) && {
+          label: 'Caixa (Leitor)',
+          key: 'estoque-caixa',
+          icon: 'pi pi-fw pi-barcode',
+          command: () => navigate('/estoque/caixa')
+        },
+        has(PERMISSOES.ESTOQUE?.TRANSFERIR) && {
+          label: 'Transferir entre Depósitos',
+          key: 'estoque-transferir',
+          icon: 'pi pi-fw pi-external-link',
+          command: () => navigate('/estoque/caixa?mode=transfer')
+        },
         {
           label: 'Reservas Pendentes',
           key: 'estoque-reservas',
           icon: 'pi pi-fw pi-clock',
           command: () => navigate('/reservas')
         }
-      ]
+      ].filter(Boolean)
     },
 
     has([

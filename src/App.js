@@ -34,6 +34,7 @@ import PedidosFabrica from "./pages/PedidosFabrica";
 import Relatorios from "./pages/Relatorios";
 import Assistencias from "./pages/Assistencias";
 import AssistenciasAutorizadas from "./pages/AssistenciasAutorizadas";
+import CaixaLeituraEstoque from "./pages/CaixaLeituraEstoque";
 
 const renderProtectedRoute = (element, permissoes) => (
   <PrivateRoute element={<PermissaoRoute element={element} permissoes={permissoes}/>}/>
@@ -109,6 +110,11 @@ const App = () => {
       />
       <Route path="/assistencias" element={renderProtectedRoute(<Assistencias/>, PERMISSOES.ASSISTENCIAS.VISUALIZAR)}/>
       <Route path="/assistencias/autorizadas" element={renderProtectedRoute(<AssistenciasAutorizadas/>, PERMISSOES.ASSISTENCIAS.GERENCIAR)}/>
+
+      <Route
+        path="/estoque/caixa"
+        element={renderProtectedRoute(<CaixaLeituraEstoque/>, [PERMISSOES.ESTOQUE.CAIXA])}
+      />
     </Routes>
   );
 };
