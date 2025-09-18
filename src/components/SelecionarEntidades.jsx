@@ -58,33 +58,33 @@ const SelecionarEntidades = ({
       />
     </div>
 
-    <div className="col-12 md:col-6">
-      <label className="block mb-1 font-medium">Parceiro</label>
-      <Dropdown
-        value={carrinhoAtual?.id_parceiro}
-        options={parceiros}
-        optionLabel="nome"
-        optionValue="id"
-        onChange={(e) => {
-          const novoId = e.value;
-          if (novoId === carrinhoAtual?.id_parceiro) return;
-          confirmDialog({
-            message: 'Deseja alterar o parceiro do carrinho?',
-            header: 'Alterar Parceiro',
-            icon: 'pi pi-exclamation-triangle',
-            acceptLabel: 'Sim',
-            rejectLabel: 'Cancelar',
-            accept: () => {
-              onAtualizarCarrinho(carrinhoAtual.id, { id_parceiro: novoId });
-              toast.current.show({ severity: 'success', summary: 'Parceiro alterado' });
-            },
-          });
-        }}
-        placeholder="Selecione o parceiro"
-        className="w-full"
-        filter
-      />
-    </div>
+    {/*<div className="col-12 md:col-6">*/}
+    {/*  <label className="block mb-1 font-medium">Parceiro</label>*/}
+    {/*  <Dropdown*/}
+    {/*    value={carrinhoAtual?.id_parceiro}*/}
+    {/*    options={parceiros}*/}
+    {/*    optionLabel="nome"*/}
+    {/*    optionValue="id"*/}
+    {/*    onChange={(e) => {*/}
+    {/*      const novoId = e.value;*/}
+    {/*      if (novoId === carrinhoAtual?.id_parceiro) return;*/}
+    {/*      confirmDialog({*/}
+    {/*        message: 'Deseja alterar o parceiro do carrinho?',*/}
+    {/*        header: 'Alterar Parceiro',*/}
+    {/*        icon: 'pi pi-exclamation-triangle',*/}
+    {/*        acceptLabel: 'Sim',*/}
+    {/*        rejectLabel: 'Cancelar',*/}
+    {/*        accept: () => {*/}
+    {/*          onAtualizarCarrinho(carrinhoAtual.id, { id_parceiro: novoId });*/}
+    {/*          toast.current.show({ severity: 'success', summary: 'Parceiro alterado' });*/}
+    {/*        },*/}
+    {/*      });*/}
+    {/*    }}*/}
+    {/*    placeholder="Selecione o parceiro"*/}
+    {/*    className="w-full"*/}
+    {/*    filter*/}
+    {/*  />*/}
+    {/*</div>*/}
   </div>
 );
 

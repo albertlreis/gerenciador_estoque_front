@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Divider } from 'primereact/divider';
 import { Toast } from 'primereact/toast';
 
@@ -49,12 +49,11 @@ const CatalogoProdutos = () => {
   const {
     produtos,
     loading,
-    sentinelaRef,
-    setPagina
+    sentinelaRef
   } = useCatalogoProdutos(filtros);
 
-  const handleAdicionarAoCarrinho = (produto) => {
-    if (!produto?.variacoes?.length || !carrinhoAtual) {
+  const handleAdicionarAoCarrinho = (produtoComVariacoesDoGrupo) => {
+    if (!produtoComVariacoesDoGrupo?.variacoes?.length || !carrinhoAtual) {
       toast.current.show({
         severity: 'warn',
         summary: 'Carrinho não selecionado',
@@ -63,7 +62,7 @@ const CatalogoProdutos = () => {
       return;
     }
 
-    setProdutoSelecionado(produto);
+    setProdutoSelecionado(produtoComVariacoesDoGrupo);
     setVariacaoSelecionada(null);
     setDialogVariacaoVisible(true);
   };

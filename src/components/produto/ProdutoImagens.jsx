@@ -83,7 +83,7 @@ const ProdutoImagens = ({
     for (const file of validFiles) {
       const formData = new FormData();
       formData.append('image', file);
-      formData.append('principal', false);
+      formData.append('principal', '0');
 
       try {
         const response = await apiEstoque.post(

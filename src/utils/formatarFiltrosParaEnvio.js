@@ -12,7 +12,9 @@ export const formatarFiltrosParaEnvio = (filtros) => {
   };
 
   Object.keys(obj).forEach((key) => {
-    if (obj[key] === null) delete obj[key];
+    if (obj[key] === null || obj[key] === '' || (Array.isArray(obj[key]) && obj[key].length === 0)) {
+      delete obj[key];
+    }
   });
 
   return obj;

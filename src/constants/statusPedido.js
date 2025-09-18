@@ -68,7 +68,12 @@ export const STATUS_MAP = {
     label: 'Finalizado',
     color: 'success',
     icon: 'pi pi-check-circle'
-  }
+  },
+  cancelado: {
+    label: 'Cancelar',
+    color: 'danger',
+    icon: 'pi pi-undo'
+  },
 };
 
 export const OPCOES_STATUS = Object.entries(STATUS_MAP).map(([value, { label }]) => ({

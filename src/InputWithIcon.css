@@ -9,11 +9,15 @@
     color: #333;
 }
 
+/* ====== WRAPPER ====== */
 .input-icon {
     position: relative;
     width: 100%;
+    display: flex;
+    align-items: center;
 }
 
+/* Ícone à esquerda */
 .input-icon .icon {
     position: absolute;
     top: 50%;
@@ -25,12 +29,56 @@
     z-index: 2;
 }
 
-.input-icon .with-icon {
-    padding-left: 40px !important;
+/* Inputs com ícones: reservar espaço à esquerda e à direita */
+.input-icon .with-icon,
+.p-inputtext.with-icon,
+.p-inputtextarea.with-icon {
+    padding-left: 40px !important;   /* espaço para a lupa à esquerda */
+    padding-right: 64px !important;  /* espaço para 2 botões à direita */
     width: 100%;
     box-sizing: border-box;
 }
 
+/* Container dos ícones à direita (pode conter 1 ou 2 botões) */
+.input-icon .right-icons {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+    display: flex;
+    gap: 6px;
+}
+
+/* Botão de ícone (clear/buscar) */
+.input-icon .icon-btn {
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.input-icon .icon-btn i {
+    font-size: 0.95rem;
+    color: #8c8c8c;
+}
+
+.input-icon .icon-btn:hover i {
+    color: #333;
+}
+
+.input-icon .icon-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+/* Erros/estados */
 .input-error {
     color: #dc3545;
     font-size: 0.85rem;
@@ -39,9 +87,18 @@
 }
 
 .has-error .with-icon {
-    border-color: #dc3545;
+    border-color: #dc3545 !important;
+}
+
+.has-error .right-icons .icon-btn i {
+    color: #dc3545;
 }
 
 .text-danger {
     color: #dc3545;
+}
+
+.is-disabled .pointer-none,
+.pointer-none {
+    pointer-events: none;
 }
