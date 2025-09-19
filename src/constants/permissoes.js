@@ -64,6 +64,7 @@ export const PERMISSOES = {
     EXPORTAR_PDF: 'pedidos.exportar_pdf',
     IMPORTAR: 'pedidos.importar_pdf',
     ENVIAR_WHATSAPP: 'pedidos.enviar_whatsapp',
+    SELECIONAR_VENDEDOR: 'pedidos.selecionar_vendedor',
   },
 
   PEDIDOS_FABRICA: {

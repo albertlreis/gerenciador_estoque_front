@@ -7,19 +7,20 @@ import { confirmDialog, ConfirmDialog } from 'primereact/confirmdialog';
 import SakaiLayout from '../layouts/SakaiLayout';
 import api from '../services/apiEstoque';
 import { useAuth } from '../context/AuthContext';
-import { PERFIS } from '../constants/perfis';
 import apiAuth from '../services/apiAuth';
 
 import ResumoPedidoCard from '../components/ResumoPedidoCard';
 import ItemPedidoCard from '../components/ItemPedidoCard';
 import SelecionarEntidades from '../components/SelecionarEntidades';
 import ConsignacaoSection from '../components/ConsignacaoSection';
+import LocalizacoesModal from '../components/LocalizacoesModal';
 import { formatarValor } from '../utils/formatters';
 import FinalizarPedidoSkeleton from "../components/skeletons/FinalizarPedidoSkeleton";
+import {PERMISSOES} from "../constants/permissoes";
 
 const FinalizarPedido = () => {
   const { user } = useAuth();
-  const isAdmin = user?.perfis?.includes(PERFIS.ADMINISTRADOR.slug);
+  const isAdmin = user?.permissoes?.includes(PERMISSOES.SELECIONAR_VENDEDOR);
 
   const { id } = useParams();
   const navigate = useNavigate();
@@ -45,6 +46,8 @@ const FinalizarPedido = () => {
   const [vendedores, setVendedores] = useState([]);
   const [idVendedorSelecionado, setIdVendedorSelecionado] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [mostrarLocModal, setMostrarLocModal] = useState(false);
+  const [itemLocSelecionado, setItemLocSelecionado] = useState(null);
 
   useEffect(() => {
     const carregarTudo = async () => {
@@ -100,10 +103,20 @@ const FinalizarPedido = () => {
     }
   };
 
+  const toArray = (payload) => {
+    if (Array.isArray(payload)) return payload;
+    if (payload == null) return [];
+    // tente formatos comuns: {data: [...]}, {results: [...]}, {dados: {results: [...]}}
+    if (Array.isArray(payload.data)) return payload.data;
+    if (Array.isArray(payload.results)) return payload.results;
+    if (payload.dados && Array.isArray(payload.dados.results)) return payload.dados.results;
+    return [];
+  };
+
   const fetchVendedores = async () => {
     try {
       const { data } = await apiAuth.get('/usuarios/vendedores');
-      setVendedores(Array.isArray(data) ? data : []);
+      setVendedores(toArray(data));
     } catch (error) {
       console.error('Erro ao buscar vendedores:', error);
       setVendedores([]);
@@ -111,13 +124,23 @@ const FinalizarPedido = () => {
   };
 
   const fetchClientes = async () => {
-    const { data } = await api.get('/clientes');
-    setClientes(data);
+    try {
+      const { data } = await api.get('/clientes');
+      setClientes(toArray(data));
+    } catch (e) {
+      console.error('Erro ao buscar clientes:', e);
+      setClientes([]);
+    }
   };
 
   const fetchParceiros = async () => {
-    const { data } = await api.get('/parceiros');
-    setParceiros(data);
+    try {
+      const { data } = await api.get('/parceiros');
+      setParceiros(toArray(data));
+    } catch (e) {
+      console.error('Erro ao buscar parceiros:', e);
+      setParceiros([]);
+    }
   };
 
   const verificarEstoqueInsuficiente = () => {
@@ -185,37 +208,70 @@ const FinalizarPedido = () => {
       }
     }
 
-    try {
-      const resultado = await finalizarPedido({
-        id_parceiro: carrinhoAtual?.id_parceiro,
-        observacoes,
-        modo_consignacao: modoConsignacao,
-        prazo_consignacao: prazoConsignacao,
-        id_usuario: isAdmin ? idVendedorSelecionado : carrinhoAtual?.id_usuario,
-        depositos_por_item: itens.map(item => ({
-          id_carrinho_item: item.id,
-          id_deposito: item.id_deposito || null
-        }))
-      });
+    const depositosPayload = itens.map(item => ({
+      id_carrinho_item: item.id,
+      id_deposito: item.id_deposito || null
+    }));
 
-      if (resultado?.success) {
-        toast.current.show({
-          severity: 'success',
-          summary: 'Pedido finalizado!',
-          detail: 'Pedido criado com sucesso.',
-        });
-        navigate('/pedidos');
-      } else {
-        toast.current.show({
-          severity: 'error',
-          summary: 'Erro ao finalizar pedido',
-          detail: resultado?.message || 'Não foi possível criar o pedido.',
-          life: 5000,
-        });
+    confirmDialog({
+      message: 'Deseja registrar a movimentação de estoque agora?',
+      header: 'Confirmar movimentação',
+      icon: 'pi pi-box',
+      acceptLabel: 'Sim, movimentar',
+      rejectLabel: 'Não, apenas reservar',
+      accept: async () => {
+        try {
+          const resultado = await finalizarPedido({
+            id_parceiro: carrinhoAtual?.id_parceiro,
+            observacoes,
+            modo_consignacao: modoConsignacao,
+            prazo_consignacao: prazoConsignacao,
+            id_usuario: isAdmin ? idVendedorSelecionado : carrinhoAtual?.id_usuario,
+            depositos_por_item: depositosPayload,
+            registrar_movimentacao: true,
+          });
+
+          if (resultado?.success) {
+            toast.current.show({ severity: 'success', summary: 'Pedido finalizado', detail: 'Movimentação registrada.' });
+            navigate('/pedidos');
+          } else {
+            toast.current.show({ severity: 'error', summary: 'Erro ao finalizar', detail: resultado?.message || 'Falha ao registrar movimentação.' });
+          }
+        } catch (err) {
+          showApiErrors(err);
+        }
+      },
+      reject: async () => {
+        try {
+          const resultado = await finalizarPedido({
+            id_parceiro: carrinhoAtual?.id_parceiro,
+            observacoes,
+            modo_consignacao: modoConsignacao,
+            prazo_consignacao: prazoConsignacao,
+            id_usuario: isAdmin ? idVendedorSelecionado : carrinhoAtual?.id_usuario,
+            depositos_por_item: depositosPayload,
+            registrar_movimentacao: false,
+          });
+
+          if (resultado?.success) {
+            toast.current.show({
+              severity: 'success',
+              summary: 'Pedido finalizado',
+              detail: 'Itens reservados no depósito selecionado.',
+            });
+
+            // Abre o modal de localizações do primeiro item (sugestão)
+            const primeiro = itens[0];
+            setItemLocSelecionado(primeiro);
+            setMostrarLocModal(true);
+          } else {
+            toast.current.show({ severity: 'error', summary: 'Erro ao finalizar', detail: resultado?.message || 'Falha ao reservar itens.' });
+          }
+        } catch (err) {
+          showApiErrors(err);
+        }
       }
-    } catch (err) {
-      toast.current.show({ severity: 'error', summary: 'Erro', detail: 'Falha ao finalizar pedido.' });
-    }
+    });
   };
 
   const handleSalvarAlteracoes = async () => {
@@ -237,10 +293,45 @@ const FinalizarPedido = () => {
 
   const total = formatarValor(itens.reduce((sum, item) => sum + Number(item.subtotal || 0), 0));
 
+  const showApiErrors = (err) => {
+    const errors = err?.response?.data?.errors;
+    const message = err?.response?.data?.message;
+    if (errors && typeof errors === 'object') {
+      const list = Object.values(errors).flat().filter(Boolean);
+      if (list.length) {
+        toast.current?.show({
+          severity: 'error',
+          summary: 'Não foi possível finalizar',
+          detail: list.slice(0, 3).join(' | '),
+          life: 7000,
+        });
+        return;
+      }
+    }
+    toast.current?.show({
+      severity: 'error',
+      summary: 'Erro',
+      detail: message || 'Falha ao finalizar pedido.',
+      life: 6000,
+    });
+  };
+
+  const abrirLocalizacoes = (item) => {
+    setItemLocSelecionado(item);
+    setMostrarLocModal(true);
+  };
+
   return (
     <SakaiLayout>
       <Toast ref={toast} />
       <ConfirmDialog />
+
+      <LocalizacoesModal
+        visible={mostrarLocModal}
+        onHide={() => setMostrarLocModal(false)}
+        item={itemLocSelecionado}
+        depositos={itemLocSelecionado ? (depositosPorItem[itemLocSelecionado.id] || []) : []}
+      />
 
       {loading ? (
         <FinalizarPedidoSkeleton />
@@ -296,6 +387,7 @@ const FinalizarPedido = () => {
                     onAtualizarQuantidade={handleAtualizarQuantidade}
                     onRemoverItem={removerItem}
                     onAtualizarDeposito={handleAtualizarDeposito}
+                    onVerLocalizacao={abrirLocalizacoes}
                   />
                 ))
               )}

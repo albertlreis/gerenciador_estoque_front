@@ -93,18 +93,41 @@ export const CarrinhoProvider = ({ children }) => {
     }
   };
 
-  const finalizarPedido = async ({ id_parceiro, observacoes, id_usuario }) => {
+  /**
+   * Agora aceitamos e repassamos:
+   * - modo_consignacao (boolean)
+   * - prazo_consignacao (int)
+   * - depositos_por_item: [{ id_carrinho_item, id_deposito|null }]
+   * - id_usuario (quando admin define o vendedor)
+   */
+  const finalizarPedido = async ({
+                                   id_parceiro,
+                                   observacoes,
+                                   modo_consignacao,
+                                   prazo_consignacao,
+                                   depositos_por_item,
+                                   id_usuario,
+                                   registrar_movimentacao
+                                 }) => {
     try {
-      const response = await api.post('/pedidos', {
+      const payload = {
         id_carrinho: carrinhoAtual.id,
         id_cliente: carrinhoAtual.id_cliente,
         id_parceiro,
         observacoes,
-        id_usuario
-      });
+        modo_consignacao: Boolean(modo_consignacao),
+        prazo_consignacao: modo_consignacao ? Number(prazo_consignacao) : undefined,
+        depositos_por_item: Array.isArray(depositos_por_item) ? depositos_por_item : undefined,
+        id_usuario,
+        registrar_movimentacao: Boolean(registrar_movimentacao),
+      };
+
+      const response = await api.post('/pedidos', payload);
+
       setCarrinhoAtual(null);
       setItens([]);
       await listarCarrinhos();
+
       return { success: true, data: response.data?.data || response.data };
     } catch (error) {
       console.error('Erro ao finalizar pedido', error);

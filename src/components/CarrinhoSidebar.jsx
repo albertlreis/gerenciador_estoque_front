@@ -6,9 +6,12 @@ import { confirmDialog } from 'primereact/confirmdialog';
 import { Tag } from 'primereact/tag';
 import { useCarrinho } from '../context/CarrinhoContext';
 import formatarPreco from '../utils/formatarPreco';
+import {useNavigate} from "react-router-dom";
 
 const CarrinhoSidebar = ({ visible, onHide }) => {
-  const { itens, removerItem, limparCarrinho, adicionarItem } = useCarrinho();
+  const navigate = useNavigate();
+
+  const { itens, removerItem, limparCarrinho, adicionarItem, carrinhoAtual } = useCarrinho();
   const [limpando, setLimpando] = useState(false);
 
   const total = itens.reduce((sum, item) => sum + Number(item.subtotal || 0), 0);
@@ -139,6 +142,7 @@ const CarrinhoSidebar = ({ visible, onHide }) => {
           loading={limpando}
           onClick={handleLimparCarrinho}
         />
+        <Button label="Finalizar" icon="pi pi-check" className="p-button-sm p-button-success" disabled={!carrinhoAtual} onClick={() => navigate(`/finalizar-pedido/${carrinhoAtual.id}`)} />
       </div>
 
       <ConfirmDialog />

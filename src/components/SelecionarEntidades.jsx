@@ -2,6 +2,8 @@ import React from 'react';
 import { Dropdown } from 'primereact/dropdown';
 import { confirmDialog } from 'primereact/confirmdialog';
 
+const asArray = (x) => (Array.isArray(x) ? x : []);
+
 const SelecionarEntidades = ({
                                isAdmin,
                                vendedores,
@@ -19,7 +21,7 @@ const SelecionarEntidades = ({
         <label className="block mb-1 font-medium">Vendedor</label>
         <Dropdown
           value={idVendedorSelecionado}
-          options={vendedores}
+          options={asArray(vendedores)}
           optionLabel="nome"
           optionValue="id"
           onChange={(e) => setIdVendedorSelecionado(e.value)}
@@ -33,8 +35,8 @@ const SelecionarEntidades = ({
     <div className="col-12 md:col-6">
       <label className="block mb-1 font-medium">Cliente</label>
       <Dropdown
-        value={carrinhoAtual?.id_cliente}
-        options={clientes}
+        value={carrinhoAtual?.id_cliente ?? null}
+        options={asArray(clientes)}
         optionLabel="nome"
         optionValue="id"
         onChange={(e) => {
@@ -48,7 +50,7 @@ const SelecionarEntidades = ({
             rejectLabel: 'Cancelar',
             accept: () => {
               onAtualizarCarrinho(carrinhoAtual.id, { id_cliente: novoId });
-              toast.current.show({ severity: 'success', summary: 'Cliente alterado' });
+              toast.current?.show({ severity: 'success', summary: 'Cliente alterado' });
             },
           });
         }}
@@ -58,33 +60,33 @@ const SelecionarEntidades = ({
       />
     </div>
 
-    {/*<div className="col-12 md:col-6">*/}
-    {/*  <label className="block mb-1 font-medium">Parceiro</label>*/}
-    {/*  <Dropdown*/}
-    {/*    value={carrinhoAtual?.id_parceiro}*/}
-    {/*    options={parceiros}*/}
-    {/*    optionLabel="nome"*/}
-    {/*    optionValue="id"*/}
-    {/*    onChange={(e) => {*/}
-    {/*      const novoId = e.value;*/}
-    {/*      if (novoId === carrinhoAtual?.id_parceiro) return;*/}
-    {/*      confirmDialog({*/}
-    {/*        message: 'Deseja alterar o parceiro do carrinho?',*/}
-    {/*        header: 'Alterar Parceiro',*/}
-    {/*        icon: 'pi pi-exclamation-triangle',*/}
-    {/*        acceptLabel: 'Sim',*/}
-    {/*        rejectLabel: 'Cancelar',*/}
-    {/*        accept: () => {*/}
-    {/*          onAtualizarCarrinho(carrinhoAtual.id, { id_parceiro: novoId });*/}
-    {/*          toast.current.show({ severity: 'success', summary: 'Parceiro alterado' });*/}
-    {/*        },*/}
-    {/*      });*/}
-    {/*    }}*/}
-    {/*    placeholder="Selecione o parceiro"*/}
-    {/*    className="w-full"*/}
-    {/*    filter*/}
-    {/*  />*/}
-    {/*</div>*/}
+    <div className="col-12 md:col-6">
+      <label className="block mb-1 font-medium">Parceiro</label>
+      <Dropdown
+        value={carrinhoAtual?.id_parceiro ?? null}
+        options={asArray(parceiros)}
+        optionLabel="nome"
+        optionValue="id"
+        onChange={(e) => {
+          const novoId = e.value;
+          if (novoId === carrinhoAtual?.id_parceiro) return;
+          confirmDialog({
+            message: 'Deseja alterar o parceiro do carrinho?',
+            header: 'Alterar Parceiro',
+            icon: 'pi pi-exclamation-triangle',
+            acceptLabel: 'Sim',
+            rejectLabel: 'Cancelar',
+            accept: () => {
+              onAtualizarCarrinho(carrinhoAtual.id, { id_parceiro: novoId });
+              toast.current?.show({ severity: 'success', summary: 'Parceiro alterado' });
+            },
+          });
+        }}
+        placeholder="Selecione o parceiro"
+        className="w-full"
+        filter
+      />
+    </div>
   </div>
 );
 

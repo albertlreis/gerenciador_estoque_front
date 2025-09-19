@@ -7,4 +7,8 @@ export const PERFIS = {
     slug: 'Vendedor',
     label: 'Vendedor',
   },
+  DESENVOLVEDOR: {
+    slug: 'Desenvolvedor',
+    label: 'Vendedor',
+  },
 };
