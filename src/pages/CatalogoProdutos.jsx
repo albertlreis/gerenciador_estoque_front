@@ -67,6 +67,10 @@ const CatalogoProdutos = () => {
     setDialogVariacaoVisible(true);
   };
 
+  const handleFiltrosChange = (patch) => {
+    setFiltros((prev) => ({ ...prev, ...patch }));
+  };
+
   const resetarFiltros = () => {
     setFiltros(filtrosIniciais);
   };
@@ -109,7 +113,7 @@ const CatalogoProdutos = () => {
 
       <div className="grid p-4">
         <div className="col-12 md:col-3">
-          <FiltroLateral filtros={filtros} onChange={setFiltros} disabled={loading} />
+          <FiltroLateral filtros={filtros} onChange={handleFiltrosChange} disabled={loading} />
         </div>
 
         <div className="col-12 md:col-9">
