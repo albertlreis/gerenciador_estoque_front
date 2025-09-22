@@ -57,7 +57,8 @@ const Clientes = () => {
           toast.current.show({ severity: 'success', summary: 'Sucesso', detail: 'Cliente deletado', life: 3000 });
         } catch (error) {
           console.error('Erro ao deletar cliente:', error.response?.data || error.message);
-          toast.current.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao deletar cliente', life: 3000 });
+          // Erro de delete: mantemos toast aqui porque não passa por formulário
+          toast.current.show({ severity: 'error', summary: 'Erro', detail: 'Não foi possível deletar o cliente.', life: 3500 });
         }
       },
       reject: () => {
@@ -66,21 +67,20 @@ const Clientes = () => {
     });
   };
 
+  // IMPORTANTE: não mostramos toast de erro aqui; o ClienteForm cuida dos erros amigáveis.
   const handleFormSubmit = async (clienteData) => {
-    try {
-      if (editingCliente) {
-        const response = await apiEstoque.put(`/clientes/${editingCliente.id}`, clienteData);
-        setClientes(prev => prev.map(c => (c.id === editingCliente.id ? response.data : c)));
-        toast.current.show({ severity: 'success', summary: 'Sucesso', detail: 'Cliente atualizado', life: 3000 });
-      } else {
-        const response = await apiEstoque.post('/clientes', clienteData);
-        setClientes(prev => [...prev, response.data]);
-        toast.current.show({ severity: 'success', summary: 'Sucesso', detail: 'Cliente criado', life: 3000 });
-      }
+    if (editingCliente) {
+      const response = await apiEstoque.put(`/clientes/${editingCliente.id}`, clienteData);
+      setClientes(prev => prev.map(c => (c.id === editingCliente.id ? response.data : c)));
+      toast.current.show({ severity: 'success', summary: 'Sucesso', detail: 'Cliente atualizado', life: 3000 });
       setShowDialog(false);
-    } catch (error) {
-      console.error('Erro ao salvar cliente:', error.response?.data || error.message);
-      toast.current.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao salvar cliente', life: 3000 });
+      return response.data;
+    } else {
+      const response = await apiEstoque.post('/clientes', clienteData);
+      setClientes(prev => [...prev, response.data]);
+      toast.current.show({ severity: 'success', summary: 'Sucesso', detail: 'Cliente criado', life: 3000 });
+      setShowDialog(false);
+      return response.data;
     }
   };
 
@@ -104,12 +104,12 @@ const Clientes = () => {
         </DataTable>
       </div>
 
-      <Dialog 
-        header={dialogTitle} 
-        visible={showDialog} 
+      <Dialog
+        header={dialogTitle}
+        visible={showDialog}
         className='w-7'
         modal onHide={() => setShowDialog(false)}
-        >
+      >
         <ClienteForm initialData={editingCliente || {}} onSubmit={handleFormSubmit} onCancel={() => setShowDialog(false)} />
       </Dialog>
     </SakaiLayout>

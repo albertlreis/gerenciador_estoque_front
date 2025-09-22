@@ -156,6 +156,7 @@ const CatalogoProdutos = () => {
         visible={dialogNovoCarrinho}
         onHide={() => setDialogNovoCarrinho(false)}
         clientes={clientes}
+        setClientes={setClientes}                   // << novo
         clienteSelecionado={clienteSelecionado}
         setClienteSelecionado={setClienteSelecionado}
         onConfirmar={confirmarNovoCarrinho}
