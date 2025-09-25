@@ -87,12 +87,6 @@ const menuItems = (navigate, has) => {
           key: 'produtos-gerenciar',
           icon: 'pi pi-fw pi-pencil',
           command: () => navigate('/produtos')
-        },
-        has(PERMISSOES.PRODUTOS?.IMPORTAR) && {
-          label: 'Importar Produtos',
-          key: 'produtos-importar',
-          icon: 'pi pi-fw pi-upload',
-          command: () => navigate('/produtos/importar')
         }
       ].filter(Boolean)
     },
@@ -131,6 +125,12 @@ const menuItems = (navigate, has) => {
           key: 'estoque-reservas',
           icon: 'pi pi-fw pi-clock',
           command: () => navigate('/reservas')
+        },
+        has(PERMISSOES.PRODUTOS?.IMPORTAR) && {
+          label: 'Importar Nota Fiscal',
+          key: 'produtos-importar',
+          icon: 'pi pi-fw pi-upload',
+          command: () => navigate('/produtos/importar')
         }
       ].filter(Boolean)
     },

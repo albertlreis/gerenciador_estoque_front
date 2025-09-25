@@ -16,11 +16,14 @@ import ConsignacaoSection from '../components/ConsignacaoSection';
 import LocalizacoesModal from '../components/LocalizacoesModal';
 import { formatarValor } from '../utils/formatters';
 import FinalizarPedidoSkeleton from "../components/skeletons/FinalizarPedidoSkeleton";
-import {PERMISSOES} from "../constants/permissoes";
+import { PERMISSOES } from "../constants/permissoes";
+
+import { criarParceiro } from '../services/parceiros';
+import { ParceiroForm } from '../components/ParceiroForm';
 
 const FinalizarPedido = () => {
   const { user } = useAuth();
-  const isAdmin = user?.permissoes?.includes(PERMISSOES.SELECIONAR_VENDEDOR);
+  const isAdmin = user?.permissoes?.includes(PERMISSOES.PEDIDOS.SELECIONAR_VENDEDOR);
 
   const { id } = useParams();
   const navigate = useNavigate();
@@ -49,6 +52,11 @@ const FinalizarPedido = () => {
   const [mostrarLocModal, setMostrarLocModal] = useState(false);
   const [itemLocSelecionado, setItemLocSelecionado] = useState(null);
 
+  // ——— estado do modal de parceiro ———
+  const [parceiroFormVisible, setParceiroFormVisible] = useState(false);
+  const [parceiroSaving, setParceiroSaving] = useState(false);
+  const [parceiroEditing] = useState(null); // reservado para edição futura direta na página
+
   useEffect(() => {
     const carregarTudo = async () => {
       try {
@@ -62,7 +70,7 @@ const FinalizarPedido = () => {
       }
     };
     carregarTudo();
-  }, [id]);
+  }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (isAdmin && carrinhoAtual?.id_usuario) {
@@ -72,7 +80,7 @@ const FinalizarPedido = () => {
 
   useEffect(() => {
     if (itens.length > 0) carregarDepositosParaItens();
-  }, [itens]);
+  }, [itens]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const handler = (e) => {
@@ -106,7 +114,6 @@ const FinalizarPedido = () => {
   const toArray = (payload) => {
     if (Array.isArray(payload)) return payload;
     if (payload == null) return [];
-    // tente formatos comuns: {data: [...]}, {results: [...]}, {dados: {results: [...]}}
     if (Array.isArray(payload.data)) return payload.data;
     if (Array.isArray(payload.results)) return payload.results;
     if (payload.dados && Array.isArray(payload.dados.results)) return payload.dados.results;
@@ -140,6 +147,31 @@ const FinalizarPedido = () => {
     } catch (e) {
       console.error('Erro ao buscar parceiros:', e);
       setParceiros([]);
+    }
+  };
+
+  // ——— abrir modal “Novo parceiro” ———
+  const abrirCriacaoParceiro = () => {
+    setParceiroFormVisible(true);
+  };
+
+  // ——— salvar parceiro do modal e vincular ao carrinho ———
+  const onSubmitParceiro = async (payload) => {
+    setParceiroSaving(true);
+    try {
+      const novo = await criarParceiro(payload);
+      await fetchParceiros();
+      if (novo?.id && carrinhoAtual?.id) {
+        await atualizarCarrinho(carrinhoAtual.id, { id_parceiro: novo.id });
+      }
+      toast.current?.show({ severity: 'success', summary: 'Parceiro criado', detail: 'Vinculado ao carrinho.' });
+      setParceiroFormVisible(false);
+    } catch (err) {
+      console.error(err);
+      const msg = err?.response?.data?.message || 'Falha ao criar parceiro.';
+      toast.current?.show({ severity: 'error', summary: 'Erro', detail: msg });
+    } finally {
+      setParceiroSaving(false);
     }
   };
 
@@ -260,7 +292,6 @@ const FinalizarPedido = () => {
               detail: 'Itens reservados no depósito selecionado.',
             });
 
-            // Abre o modal de localizações do primeiro item (sugestão)
             const primeiro = itens[0];
             setItemLocSelecionado(primeiro);
             setMostrarLocModal(true);
@@ -333,6 +364,15 @@ const FinalizarPedido = () => {
         depositos={itemLocSelecionado ? (depositosPorItem[itemLocSelecionado.id] || []) : []}
       />
 
+      {/* Modal de criar parceiro direto na finalização */}
+      <ParceiroForm
+        visible={parceiroFormVisible}
+        onHide={() => setParceiroFormVisible(false)}
+        initialData={parceiroEditing}
+        onSubmit={onSubmitParceiro}
+        loading={parceiroSaving}
+      />
+
       {loading ? (
         <FinalizarPedidoSkeleton />
       ) : (
@@ -350,6 +390,7 @@ const FinalizarPedido = () => {
               setIdVendedorSelecionado={setIdVendedorSelecionado}
               onAtualizarCarrinho={atualizarCarrinho}
               toast={toast}
+              onCriarParceiro={abrirCriacaoParceiro}
             />
 
             <ConsignacaoSection

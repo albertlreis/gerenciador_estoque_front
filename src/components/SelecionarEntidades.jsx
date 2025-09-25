@@ -1,6 +1,7 @@
 import React from 'react';
 import { Dropdown } from 'primereact/dropdown';
 import { confirmDialog } from 'primereact/confirmdialog';
+import { Button } from 'primereact/button';
 
 const asArray = (x) => (Array.isArray(x) ? x : []);
 
@@ -14,6 +15,7 @@ const SelecionarEntidades = ({
                                setIdVendedorSelecionado,
                                onAtualizarCarrinho,
                                toast,
+                               onCriarParceiro,
                              }) => (
   <div className="grid mb-4 gap-3">
     {isAdmin && (
@@ -61,7 +63,16 @@ const SelecionarEntidades = ({
     </div>
 
     <div className="col-12 md:col-6">
-      <label className="block mb-1 font-medium">Parceiro</label>
+      <div className="flex align-items-center justify-content-between mb-1">
+        <label className="font-medium">Parceiro</label>
+        <Button
+          type="button"
+          icon="pi pi-plus"
+          label="Novo parceiro"
+          className="p-button-text p-button-sm"
+          onClick={() => onCriarParceiro?.()}
+        />
+      </div>
       <Dropdown
         value={carrinhoAtual?.id_parceiro ?? null}
         options={asArray(parceiros)}

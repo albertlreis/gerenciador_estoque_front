@@ -34,14 +34,33 @@ const DEFAULTS = {
   observacoes: '',
 };
 
+// Máscaras
+const HYBRID_MASK = '999.999.999-999?9/9999-99';
+const CPF_MASK    = '999.999.999-99';
+const CNPJ_MASK   = '99.999.999/9999-99';
+
 function validarEmail(email) {
   if (!email) return true;
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+function digitsOnly(v) {
+  return String(v || '').replace(/\D+/g, '');
+}
+function formatCPF(d) {
+  const s = digitsOnly(d).slice(0, 11);
+  if (s.length !== 11) return s;
+  return s.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4');
+}
+function formatCNPJ(d) {
+  const s = digitsOnly(d).slice(0, 14);
+  if (s.length !== 14) return s;
+  return s.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
 }
 
 export function ParceiroForm({ visible, onHide, initialData, onSubmit, loading }) {
   const [form, setForm] = useState(DEFAULTS);
   const [errors, setErrors] = useState({});
+  const [docMask, setDocMask] = useState(HYBRID_MASK);
   const toast = useRef(null);
   const nomeRef = useRef(null);
 
@@ -50,21 +69,34 @@ export function ParceiroForm({ visible, onHide, initialData, onSubmit, loading }
   }, [visible]);
 
   useEffect(() => {
-    if (visible) {
-      setForm({
-        ...DEFAULTS,
-        ...Object.fromEntries(
-          Object.keys(DEFAULTS).map((k) => [k, initialData?.[k] ?? DEFAULTS[k]])
-        ),
-      });
-      setErrors({});
+    if (!visible) return;
+    const merged = {
+      ...DEFAULTS,
+      ...Object.fromEntries(Object.keys(DEFAULTS).map((k) => [k, initialData?.[k] ?? DEFAULTS[k]])),
+    };
+    setForm(merged);
+
+    const digits = digitsOnly(merged.documento);
+    if (digits.length === 11) {
+      setDocMask(CPF_MASK);
+      setForm((prev) => ({ ...prev, documento: formatCPF(digits) }));
+    } else if (digits.length === 14) {
+      setDocMask(CNPJ_MASK);
+      setForm((prev) => ({ ...prev, documento: formatCNPJ(digits) }));
+    } else {
+      setDocMask(HYBRID_MASK);
     }
+    setErrors({});
   }, [visible, initialData]);
 
   const hasChanges = useMemo(() => {
     if (!initialData) return true;
     return JSON.stringify({ ...form, documento: normalizeDocumento(form.documento) ?? '' }) !==
-      JSON.stringify({ ...DEFAULTS, ...Object.fromEntries(Object.keys(DEFAULTS).map((k) => [k, initialData?.[k] ?? DEFAULTS[k]])), documento: normalizeDocumento(initialData?.documento) ?? '' });
+      JSON.stringify({
+        ...DEFAULTS,
+        ...Object.fromEntries(Object.keys(DEFAULTS).map((k) => [k, initialData?.[k] ?? DEFAULTS[k]])),
+        documento: normalizeDocumento(initialData?.documento) ?? ''
+      });
   }, [form, initialData]);
 
   const handleChange = (field) => (e) => {
@@ -74,12 +106,34 @@ export function ParceiroForm({ visible, onHide, initialData, onSubmit, loading }
 
   const validate = () => {
     const errs = {};
+    const d = digitsOnly(form.documento);
+
     if (!form.nome?.trim()) errs.nome = 'Informe o nome';
     if (!form.tipo) errs.tipo = 'Informe o tipo';
-    if (form.email && !validarEmail(form.email)) errs.email = 'E-mail inválido';
+
+    if (!form.documento?.trim()) {
+      errs.documento = 'Informe o CPF ou CNPJ';
+    } else if (!(d.length === 11 || d.length === 14)) {
+      errs.documento = 'CPF deve ter 11 dígitos ou CNPJ 14 dígitos';
+    }
+
+    if (!form.email?.trim()) {
+      errs.email = 'Informe o e-mail';
+    } else if (!validarEmail(form.email)) {
+      errs.email = 'E-mail inválido';
+    }
+
+    if (!form.telefone?.trim()) {
+      errs.telefone = 'Informe o telefone';
+    }
+
     setErrors(errs);
     if (Object.keys(errs).length) {
-      toast.current?.show({ severity: 'warn', summary: 'Atenção', detail: 'Corrija os campos destacados.' });
+      toast.current?.show({
+        severity: 'warn',
+        summary: 'Atenção',
+        detail: 'Corrija os campos destacados.',
+      });
     }
     return Object.keys(errs).length === 0;
   };
@@ -90,6 +144,48 @@ export function ParceiroForm({ visible, onHide, initialData, onSubmit, loading }
     onSubmit?.(payload);
   };
 
+  const documentoDigits = digitsOnly(form.documento);
+  const isCNPJ = documentoDigits.length > 11;
+
+  const handleDocumentoFocus = () => {
+    setDocMask(HYBRID_MASK);
+  };
+
+  const handleDocumentoBlur = () => {
+    const d = digitsOnly(form.documento);
+    if (d.length === 11) {
+      setDocMask(CPF_MASK);
+      setForm((prev) => ({ ...prev, documento: formatCPF(d) }));
+    } else if (d.length === 14) {
+      setDocMask(CNPJ_MASK);
+      setForm((prev) => ({ ...prev, documento: formatCNPJ(d) }));
+    } else {
+      setDocMask(HYBRID_MASK);
+    }
+  };
+
+  // Footer usa `hasChanges` diretamente (sem ref)
+  const footer = (
+    <div className="flex justify-content-end gap-2 flex-nowrap w-full">
+      <Button
+        type="button"
+        label="Cancelar"
+        icon="pi pi-times"
+        className="p-button-text"
+        onClick={onHide}
+        disabled={loading}
+      />
+      <Button
+        type="submit"
+        form="parceiro-form"
+        label="Salvar"
+        icon="pi pi-check"
+        disabled={loading || !hasChanges}
+        loading={loading}
+      />
+    </div>
+  );
+
   return (
     <Dialog
       header={initialData?.id ? 'Editar Parceiro' : 'Novo Parceiro'}
@@ -97,13 +193,18 @@ export function ParceiroForm({ visible, onHide, initialData, onSubmit, loading }
       style={{ width: '720px', maxWidth: '95vw' }}
       modal
       onHide={onHide}
+      footer={footer}
     >
       <Toast ref={toast} />
 
-      <form className="p-fluid" onSubmit={(e) => { e.preventDefault(); onSalvar(); }}>
+      {/* Formulário responsivo */}
+      <form id="parceiro-form" className="p-fluid" onSubmit={(e) => { e.preventDefault(); onSalvar(); }}>
         <div className="formgrid grid">
+          {/* Nome */}
           <div className="field col-12 md:col-8">
-            <label htmlFor="nome">Nome *</label>
+            <label htmlFor="nome">
+              Nome <span className="p-error">*</span>
+            </label>
             <InputText
               id="nome"
               ref={nomeRef}
@@ -116,8 +217,11 @@ export function ParceiroForm({ visible, onHide, initialData, onSubmit, loading }
             {errors.nome && <small className="p-error">{errors.nome}</small>}
           </div>
 
-          <div className="field col-12 md:col-4">
-            <label htmlFor="tipo">Tipo *</label>
+          {/* Tipo */}
+          <div className="field col-12 sm:col-6 md:col-4">
+            <label htmlFor="tipo">
+              Categoria <span className="p-error">*</span>
+            </label>
             <Dropdown
               id="tipo"
               options={TIPO_OPCOES}
@@ -132,19 +236,32 @@ export function ParceiroForm({ visible, onHide, initialData, onSubmit, loading }
             {errors.tipo && <small className="p-error">{errors.tipo}</small>}
           </div>
 
-          <div className="field col-12 md:col-4">
-            <label htmlFor="documento">Documento (CPF/CNPJ)</label>
-            <InputText
+          {/* Documento */}
+          <div className="field col-12 sm:col-6 md:col-4">
+            <label htmlFor="documento">
+              Documento (CPF/CNPJ) <span className="p-error">*</span>
+            </label>
+            <InputMask
               id="documento"
+              mask={docMask}
+              autoClear={false}
+              slotChar=""
               value={form.documento ?? ''}
+              onFocus={handleDocumentoFocus}
+              onBlur={handleDocumentoBlur}
               onChange={handleChange('documento')}
-              placeholder="Somente números ou com máscara"
+              placeholder={isCNPJ ? '00.000.000/0000-00' : '000.000.000-00'}
+              className={classNames({ 'p-invalid': errors.documento })}
               disabled={loading}
             />
+            {errors.documento && <small className="p-error">{errors.documento}</small>}
           </div>
 
-          <div className="field col-12 md:col-4">
-            <label htmlFor="email">E-mail</label>
+          {/* Email */}
+          <div className="field col-12 sm:col-6 md:col-4">
+            <label htmlFor="email">
+              E-mail <span className="p-error">*</span>
+            </label>
             <InputText
               id="email"
               value={form.email ?? ''}
@@ -156,18 +273,24 @@ export function ParceiroForm({ visible, onHide, initialData, onSubmit, loading }
             {errors.email && <small className="p-error">{errors.email}</small>}
           </div>
 
-          <div className="field col-12 md:col-4">
-            <label htmlFor="telefone">Telefone</label>
+          {/* Telefone */}
+          <div className="field col-12 sm:col-6 md:col-4">
+            <label htmlFor="telefone">
+              Telefone <span className="p-error">*</span>
+            </label>
             <InputMask
               id="telefone"
               mask="(99) 99999-9999"
               value={form.telefone ?? ''}
               onChange={handleChange('telefone')}
               placeholder="(11) 99999-9999"
+              className={classNames({ 'p-invalid': errors.telefone })}
               disabled={loading}
             />
+            {errors.telefone && <small className="p-error">{errors.telefone}</small>}
           </div>
 
+          {/* Endereço */}
           <div className="field col-12">
             <label htmlFor="endereco">Endereço</label>
             <InputText
@@ -179,6 +302,7 @@ export function ParceiroForm({ visible, onHide, initialData, onSubmit, loading }
             />
           </div>
 
+          {/* Observações */}
           <div className="field col-12">
             <label htmlFor="observacoes">Observações</label>
             <InputTextarea
@@ -192,7 +316,8 @@ export function ParceiroForm({ visible, onHide, initialData, onSubmit, loading }
             />
           </div>
 
-          <div className="field col-12 md:col-4">
+          {/* Status */}
+          <div className="field col-12 sm:col-6 md:col-4">
             <label htmlFor="status">Status</label>
             <Dropdown
               id="status"
@@ -205,11 +330,6 @@ export function ParceiroForm({ visible, onHide, initialData, onSubmit, loading }
               placeholder="Selecione"
               disabled={loading}
             />
-          </div>
-
-          <div className="field col-12 flex justify-content-end gap-2 mt-2">
-            <Button type="button" label="Cancelar" icon="pi pi-times" className="p-button-text" onClick={onHide} disabled={loading} />
-            <Button type="submit" label="Salvar" icon="pi pi-check" disabled={loading || !hasChanges} loading={loading} />
           </div>
         </div>
       </form>
