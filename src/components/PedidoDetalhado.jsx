@@ -129,7 +129,7 @@ const PedidoDetalhado = ({ visible, onHide, pedido }) => {
                 <div className="border-1 surface-border border-round p-3 mb-3 h-full">
                   <div className="mb-2 flex align-items-center gap-3">
                     <img
-                      src={item.imagem ?? '/placeholder.jpg'}
+                      src={item.imagem ?? 'https://placehold.co/500x300?text=Sem+Imagem'}
                       alt={item.nome_produto}
                       className="shadow-1"
                       style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '6px' }}

@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useRef, useCallback} from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Dropdown } from 'primereact/dropdown';
@@ -12,9 +12,8 @@ import ConsignacaoModal from '../components/consignacoes/ConsignacaoModal';
 import { PERFIS } from '../constants/perfis';
 import { useAuth } from '../context/AuthContext';
 import CalendarBR from "../components/CalendarBR";
-import {formatarDataParaISO} from "../utils/formatters";
+import { formatarDataParaISO } from "../utils/formatters";
 import { STATUS_CONSIGNACAO, STATUS_CONSIGNACAO_OPTIONS } from '../constants/statusConsignacao';
-
 
 const Consignacoes = () => {
   const { user } = useAuth();
@@ -26,16 +25,17 @@ const Consignacoes = () => {
   const [filtros, setFiltros] = useState({});
   const [paginacao, setPaginacao] = useState({ totalRecords: 0, page: 0, rows: 10 });
   const [modalId, setModalId] = useState(null);
-  const toast = useRef(null);
   const [expanded, setExpanded] = useState(false);
-  const [carregado, setCarregado] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [loadingPdfId, setLoadingPdfId] = useState(null);
+  const toast = useRef(null);
 
   const fetchClientes = async () => {
     try {
       const { data } = await api.get('/consignacoes/clientes');
       setClientes(data.map(c => ({ label: c.nome, value: c.id })));
     } catch {
-      toast.current.show({ severity: 'warn', summary: 'Erro', detail: 'Erro ao buscar clientes' });
+      toast.current?.show({ severity: 'warn', summary: 'Erro', detail: 'Erro ao buscar clientes' });
     }
   };
 
@@ -44,12 +44,13 @@ const Consignacoes = () => {
       const { data } = await api.get('/consignacoes/vendedores');
       setVendedores(data.map(v => ({ label: v.nome, value: v.id })));
     } catch {
-      toast.current.show({ severity: 'warn', summary: 'Erro', detail: 'Erro ao buscar clientes' });
+      toast.current?.show({ severity: 'warn', summary: 'Erro', detail: 'Erro ao buscar vendedores' });
     }
   };
 
   const fetchConsignacoes = useCallback(
     async ({ page, rows, filtros: overrideFiltros } = {}) => {
+      setLoading(true);
       try {
         const paginaAtual = page ?? paginacao.page;
         const linhas = rows ?? paginacao.rows;
@@ -65,46 +66,50 @@ const Consignacoes = () => {
           },
         });
 
-        const atualizadas = data.data.map(c => ({
+        const atualizadas = (data?.data ?? []).map((c) => ({
           ...c,
           status: c.status_calculado ?? c.status
         }));
 
         setConsignacoes(atualizadas);
-        setPaginacao((prev) => ({ ...prev, totalRecords: data.total }));
+        setPaginacao((prev) => ({
+          ...prev,
+          totalRecords: Number(data?.total ?? 0)
+        }));
       } catch (err) {
-        toast.current.show({ severity: 'error', summary: 'Erro', detail: 'Falha ao carregar consignações' });
+        toast.current?.show({ severity: 'error', summary: 'Erro', detail: 'Falha ao carregar consignações' });
+      } finally {
+        setLoading(false);
       }
     },
-    [filtros, paginacao]
+    [filtros, paginacao.page, paginacao.rows]
   );
 
   useEffect(() => {
     fetchClientes();
     if (isAdmin) fetchVendedores();
-    fetchConsignacoes(); // Busca inicial
-  }, []);
-
-  useEffect(() => {
-    if (carregado) fetchConsignacoes();
-  }, [paginacao]);
+    fetchConsignacoes(); // busca inicial
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin]);
 
   const statusTemplate = (rowData) => {
     const { label, color } = STATUS_CONSIGNACAO[rowData.status] || {
       label: rowData.status,
       color: 'secondary',
     };
-
     return <Tag value={label} severity={color} />;
   };
 
   const onPageChange = (e) => {
-    setPaginacao((prev) => ({ ...prev, page: e.page, rows: e.rows }));
-    fetchConsignacoes({ page: e.page, rows: e.rows }); // Passa nova página diretamente
+    // Atualiza estado da paginação e dispara busca apenas uma vez
+    const next = { page: e.page, rows: e.rows };
+    setPaginacao((prev) => ({ ...prev, ...next }));
+    fetchConsignacoes({ page: e.page, rows: e.rows });
   };
 
   const gerarPdf = async (pedidoId) => {
     try {
+      setLoadingPdfId(pedidoId);
       const response = await api.get(`/consignacoes/${pedidoId}/pdf`, {
         responseType: 'blob'
       });
@@ -120,6 +125,8 @@ const Consignacoes = () => {
       window.URL.revokeObjectURL(url);
     } catch (err) {
       toast.current?.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao gerar PDF' });
+    } finally {
+      setLoadingPdfId(null);
     }
   };
 
@@ -133,8 +140,9 @@ const Consignacoes = () => {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                setPaginacao((prev) => ({ ...prev, page: 0 })); // Reset página
-                fetchConsignacoes({ page: 0 }); // Executa busca
+                // resetar página e buscar
+                setPaginacao((prev) => ({ ...prev, page: 0 }));
+                fetchConsignacoes({ page: 0 });
               }}
             >
               <div className="p-4 mb-4 surface-0 border-round shadow-1">
@@ -145,11 +153,12 @@ const Consignacoes = () => {
                       options={clientes}
                       placeholder="Selecione o cliente"
                       value={filtros.cliente_id || null}
-                      onChange={(e) => setFiltros({...filtros, cliente_id: e.value})}
+                      onChange={(e) => setFiltros({ ...filtros, cliente_id: e.value })}
                       className="w-full"
                       showClear
                       filter
                       filterBy="label"
+                      disabled={loading}
                     />
                   </div>
 
@@ -162,11 +171,12 @@ const Consignacoes = () => {
                         optionValue="value"
                         placeholder="Selecione o vendedor"
                         value={filtros.vendedor_id || null}
-                        onChange={(e) => setFiltros({...filtros, vendedor_id: e.value})}
+                        onChange={(e) => setFiltros({ ...filtros, vendedor_id: e.value })}
                         className="w-full"
                         showClear
                         filter
                         filterBy="label"
+                        disabled={loading}
                       />
                     </div>
                   )}
@@ -179,11 +189,12 @@ const Consignacoes = () => {
                       optionValue="value"
                       placeholder="Status"
                       value={filtros.status || null}
-                      onChange={(e) => setFiltros({...filtros, status: e.value})}
+                      onChange={(e) => setFiltros({ ...filtros, status: e.value })}
                       className="w-full"
                       showClear
                       filter
                       filterBy="label"
+                      disabled={loading}
                     />
                   </div>
 
@@ -192,6 +203,7 @@ const Consignacoes = () => {
                     <CalendarBR
                       value={filtros.data_ini}
                       onChange={(e) => setFiltros({ ...filtros, data_ini: e.value })}
+                      disabled={loading}
                     />
                   </div>
 
@@ -200,6 +212,7 @@ const Consignacoes = () => {
                     <CalendarBR
                       value={filtros.data_fim}
                       onChange={(e) => setFiltros({ ...filtros, data_fim: e.value })}
+                      disabled={loading}
                     />
                   </div>
 
@@ -211,6 +224,7 @@ const Consignacoes = () => {
                         className="p-button-outlined"
                         severity="secondary"
                         type="button"
+                        disabled={loading}
                         onClick={() => {
                           const filtrosVazios = {};
                           setFiltros(filtrosVazios);
@@ -219,10 +233,11 @@ const Consignacoes = () => {
                         }}
                       />
                       <Button
-                        label="Buscar"
-                        icon="pi pi-search"
+                        label={loading ? 'Buscando...' : 'Buscar'}
+                        icon={loading ? 'pi pi-spin pi-spinner' : 'pi pi-search'}
                         type="submit"
                         className="p-button-primary"
+                        disabled={loading}
                       />
                     </div>
                   </div>
@@ -243,17 +258,18 @@ const Consignacoes = () => {
           totalRecords={paginacao.totalRecords}
           onPage={onPageChange}
           lazy
+          loading={loading}                         // <— spinner da tabela
           emptyMessage="Nenhuma consignação encontrada"
         >
           <Column
             header="Nº Pedido"
             body={(row) => row.numero_externo || row.pedido_id}
-            style={{minWidth: '120px'}}
+            style={{ minWidth: '120px' }}
           />
-          <Column field="cliente_nome" header="Cliente"/>
-          <Column field="vendedor_nome" header="Vendedor"/>
-          <Column field="data_envio" header="Envio"/>
-          <Column field="prazo_resposta" header="Prazo"/>
+          <Column field="cliente_nome" header="Cliente" />
+          <Column field="vendedor_nome" header="Vendedor" />
+          <Column field="data_envio" header="Envio" />
+          <Column field="prazo_resposta" header="Prazo" />
           <Column
             field="status"
             header="Status Pedido"
@@ -268,17 +284,19 @@ const Consignacoes = () => {
                   severity="info"
                   onClick={() => setModalId(rowData.pedido_id)}
                   tooltip="Ver detalhes"
+                  disabled={loading}
                 />
                 <Button
-                  icon="pi pi-file-pdf"
+                  icon={loadingPdfId === rowData.pedido_id ? 'pi pi-spin pi-spinner' : 'pi pi-file-pdf'}
                   severity="danger"
                   onClick={() => gerarPdf(rowData.pedido_id)}
                   tooltip="Gerar PDF"
+                  loading={loadingPdfId === rowData.pedido_id}
+                  disabled={loading || loadingPdfId === rowData.pedido_id}
                 />
               </div>
             )}
           />
-
         </DataTable>
 
         <ConsignacaoModal
