@@ -225,11 +225,54 @@ const FinalizarPedido = () => {
     }
   };
 
+  const finalizarComOpcao = async (registrar_movimentacao, depositosPayload) => {
+    try {
+      const resultado = await finalizarPedido({
+        id_parceiro: carrinhoAtual?.id_parceiro,
+        observacoes,
+        modo_consignacao: modoConsignacao,
+        prazo_consignacao: prazoConsignacao,
+        id_usuario: isAdmin ? idVendedorSelecionado : carrinhoAtual?.id_usuario,
+        depositos_por_item: depositosPayload,
+        registrar_movimentacao,
+      });
+
+      if (resultado?.success) {
+        if (registrar_movimentacao) {
+          toast.current?.show({
+            severity: 'success',
+            summary: 'Pedido finalizado',
+            detail: 'Movimentação registrada.',
+          });
+          navigate('/pedidos');
+        } else {
+          toast.current?.show({
+            severity: 'success',
+            summary: 'Pedido finalizado',
+            detail: 'Itens reservados no depósito selecionado.',
+          });
+          // abre o modal de localizações após reservar
+          const primeiro = itens[0];
+          setItemLocSelecionado(primeiro);
+          setMostrarLocModal(true);
+        }
+      } else {
+        toast.current?.show({
+          severity: 'error',
+          summary: 'Erro ao finalizar',
+          detail: resultado?.message || (registrar_movimentacao ? 'Falha ao registrar movimentação.' : 'Falha ao reservar itens.'),
+        });
+      }
+    } catch (err) {
+      showApiErrors(err);
+    }
+  };
+
   const handleFinalizar = async () => {
     if (modoConsignacao) {
       const faltando = verificarEstoqueInsuficiente();
       if (faltando.length > 0) {
-        toast.current.show({
+        toast.current?.show({
           severity: 'warn',
           summary: 'Não é possível finalizar',
           detail: 'Há itens sem estoque suficiente para consignação.',
@@ -242,66 +285,24 @@ const FinalizarPedido = () => {
 
     const depositosPayload = itens.map(item => ({
       id_carrinho_item: item.id,
-      id_deposito: item.id_deposito || null
+      id_deposito: item.id_deposito || null,
     }));
 
+    // Se NÃO for admin, vai direto para RESERVA (sem dialog)
+    if (!isAdmin) {
+      await finalizarComOpcao(false, depositosPayload);
+      return;
+    }
+
+    // Admin: exibe a opção de movimentar ou apenas reservar
     confirmDialog({
       message: 'Deseja registrar a movimentação de estoque agora?',
       header: 'Confirmar movimentação',
       icon: 'pi pi-box',
       acceptLabel: 'Sim, movimentar',
       rejectLabel: 'Não, apenas reservar',
-      accept: async () => {
-        try {
-          const resultado = await finalizarPedido({
-            id_parceiro: carrinhoAtual?.id_parceiro,
-            observacoes,
-            modo_consignacao: modoConsignacao,
-            prazo_consignacao: prazoConsignacao,
-            id_usuario: isAdmin ? idVendedorSelecionado : carrinhoAtual?.id_usuario,
-            depositos_por_item: depositosPayload,
-            registrar_movimentacao: true,
-          });
-
-          if (resultado?.success) {
-            toast.current.show({ severity: 'success', summary: 'Pedido finalizado', detail: 'Movimentação registrada.' });
-            navigate('/pedidos');
-          } else {
-            toast.current.show({ severity: 'error', summary: 'Erro ao finalizar', detail: resultado?.message || 'Falha ao registrar movimentação.' });
-          }
-        } catch (err) {
-          showApiErrors(err);
-        }
-      },
-      reject: async () => {
-        try {
-          const resultado = await finalizarPedido({
-            id_parceiro: carrinhoAtual?.id_parceiro,
-            observacoes,
-            modo_consignacao: modoConsignacao,
-            prazo_consignacao: prazoConsignacao,
-            id_usuario: isAdmin ? idVendedorSelecionado : carrinhoAtual?.id_usuario,
-            depositos_por_item: depositosPayload,
-            registrar_movimentacao: false,
-          });
-
-          if (resultado?.success) {
-            toast.current.show({
-              severity: 'success',
-              summary: 'Pedido finalizado',
-              detail: 'Itens reservados no depósito selecionado.',
-            });
-
-            const primeiro = itens[0];
-            setItemLocSelecionado(primeiro);
-            setMostrarLocModal(true);
-          } else {
-            toast.current.show({ severity: 'error', summary: 'Erro ao finalizar', detail: resultado?.message || 'Falha ao reservar itens.' });
-          }
-        } catch (err) {
-          showApiErrors(err);
-        }
-      }
+      accept: () => finalizarComOpcao(true, depositosPayload),
+      reject: () => finalizarComOpcao(false, depositosPayload),
     });
   };
 
