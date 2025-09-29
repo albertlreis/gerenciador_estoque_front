@@ -268,6 +268,7 @@ const Consignacoes = () => {
           />
           <Column field="cliente_nome" header="Cliente" />
           <Column field="vendedor_nome" header="Vendedor" />
+          <Column field="parceiro_nome" header="Parceiro" />
           <Column field="data_envio" header="Envio" />
           <Column field="prazo_resposta" header="Prazo" />
           <Column
