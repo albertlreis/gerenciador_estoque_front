@@ -1,3 +1,4 @@
+// src/pages/Relatorios.jsx
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Dropdown } from 'primereact/dropdown';
 import { MultiSelect } from 'primereact/multiselect';
@@ -12,6 +13,7 @@ import { Divider } from 'primereact/divider';
 import { SplitButton } from 'primereact/splitbutton';
 import { Tooltip } from 'primereact/tooltip';
 import { Tag } from 'primereact/tag';
+import { ProgressSpinner } from 'primereact/progressspinner';
 import { saveAs } from 'file-saver';
 
 import api from '../services/apiEstoque';
@@ -36,6 +38,16 @@ const useDebounced = (fn, delay = 350) => {
   };
 };
 
+/** Garante um array independente do formato comum vindo da API */
+const ensureArray = (val) => {
+  if (Array.isArray(val)) return val;
+  if (val && Array.isArray(val.data)) return val.data;       // { data: [...] }
+  if (val && Array.isArray(val.results)) return val.results; // { results: [...] }
+  if (val && Array.isArray(val.items)) return val.items;     // { items: [...] }
+  if (val && Array.isArray(val.rows)) return val.rows;       // { rows: [...] }
+  return [];
+};
+
 const TIPO = {
   ESTOQUE: 'estoque',
   PEDIDOS: 'pedidos',
@@ -55,6 +67,7 @@ export default function Relatorios() {
   const [clientes, setClientes] = useState([]);
   const [parceiros, setParceiros] = useState([]);
   const [vendedores, setVendedores] = useState([]);
+  const [loadingFiltrosPedidos, setLoadingFiltrosPedidos] = useState(false);
 
   // Estoque
   const [depositos, setDepositos] = useState([]);
@@ -101,14 +114,14 @@ export default function Relatorios() {
     { label: 'Vence em 30d', action: () => setPeriodoVencimento([new Date(), addDays(new Date(), 30)]) },
   ];
 
-// === helpers (adicione perto dos outros helpers) ===
+  // === helpers (adicione perto dos outros helpers) ===
   const normalize = (s = '') =>
     String(s)
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase();
 
-// === categorias (substitua sua buscarCategorias atual) ===
+  // === categorias (substitua sua buscarCategorias atual) ===
   const buscarCategorias = useDebounced(async (query = '') => {
     const q = (query || '').trim();
     try {
@@ -151,24 +164,27 @@ export default function Relatorios() {
   useEffect(() => {
     const carregarParaPedidos = async () => {
       try {
+        setLoadingFiltrosPedidos(true);
         const [resClientes, resParceiros, resVendedores] = await Promise.all([
           api.get('/clientes'),
           api.get('/parceiros'),
           apiAuth.get('/usuarios/vendedores'),
         ]);
-        setClientes(resClientes.data || []);
-        setParceiros(resParceiros.data || []);
-        setVendedores(resVendedores.data || []);
+        setClientes(ensureArray(resClientes?.data));
+        setParceiros(ensureArray(resParceiros?.data));
+        setVendedores(ensureArray(resVendedores?.data));
       } catch (error) {
         console.error('Erro ao carregar filtros de pedidos:', error);
         toast.current?.show({ severity: 'error', summary: 'Erro', detail: 'Erro ao carregar clientes/parceiros/vendedores' });
+      } finally {
+        setLoadingFiltrosPedidos(false);
       }
     };
 
     const carregarParaEstoque = async () => {
       try {
         const resDepositos = await api.get('/depositos');
-        const lista = (resDepositos.data || []).map((d) => ({ label: d.nome || d.label || `Depósito #${d.id}`, value: d.id }));
+        const lista = ensureArray(resDepositos?.data).map((d) => ({ label: d.nome || d.label || `Depósito #${d.id}`, value: d.id }));
         setDepositos(lista);
       } catch (error) {
         console.error('Erro ao carregar depósitos:', error);
@@ -318,7 +334,6 @@ export default function Relatorios() {
     });
   };
 
-
   /** Chips-resumo dos filtros aplicados (UX!) */
   const filtrosAtivos = useMemo(() => {
     const chips = [];
@@ -346,9 +361,23 @@ export default function Relatorios() {
     return chips;
   }, [tipo, depositoIds, somenteOutlet, categoria, produto, periodoPedidos, clienteId, parceiroId, vendedorId, periodoEnvio, periodoVencimento, statusConsig, consolidado]);
 
+  // Options seguros para os Dropdowns de Pedidos
+  const clientesOpts = useMemo(
+    () => ensureArray(clientes).map(c => ({ label: c.nome ?? c.label ?? `Cliente #${c.id}`, value: c.id })),
+    [clientes]
+  );
+  const parceirosOpts = useMemo(
+    () => ensureArray(parceiros).map(p => ({ label: p.nome ?? p.label ?? `Parceiro #${p.id}`, value: p.id })),
+    [parceiros]
+  );
+  const vendedoresOpts = useMemo(
+    () => ensureArray(vendedores).map(v => ({ label: v.nome ?? v.label ?? `Vendedor #${v.id}`, value: v.id })),
+    [vendedores]
+  );
+
   /** Ações principais (SplitButton) */
   const exportActions = [
-    { label: loading ? 'Gerando…' : 'Exportar Excel', icon: loading ? 'pi pi-spinner pi-spin' : 'pi pi-file-excel', command: () => baixarArquivo('excel'), disabled: !tipo || loading },
+    { label: loading ? 'Gerando…' : 'Exportar Excel', icon: loading ? 'pi pi-spinner pi-spin' : 'pi pi-file-excel', command: () => baixarArquivo('excel'), disabled: !tipo || loading || loadingFiltrosPedidos },
   ];
 
   return (
@@ -508,19 +537,56 @@ export default function Relatorios() {
                   </div>
                 </div>
 
+                {/* Indicador de loading dos filtros (lado direito do período) */}
+                <div className="field col-12 md:col-6 flex align-items-end justify-content-end">
+                  {loadingFiltrosPedidos && (
+                    <div className="flex align-items-center gap-2">
+                      <ProgressSpinner strokeWidth="4" style={{ width: '22px', height: '22px' }} />
+                      <small className="text-500">Carregando filtros…</small>
+                    </div>
+                  )}
+                </div>
+
                 <div className="field col-12 md:col-4">
                   <label className="mb-2 block">Cliente</label>
-                  <Dropdown value={clienteId} onChange={(e) => setClienteId(e.value)} options={clientes.map((c) => ({ label: c.nome, value: c.id }))} placeholder="Todos" filter showClear className="w-full" />
+                  <Dropdown
+                    value={clienteId}
+                    onChange={(e) => setClienteId(e.value)}
+                    options={clientesOpts}
+                    placeholder={loadingFiltrosPedidos ? 'Carregando...' : 'Todos'}
+                    filter
+                    showClear
+                    className="w-full"
+                    disabled={loadingFiltrosPedidos}
+                  />
                 </div>
 
                 <div className="field col-12 md:col-4">
                   <label className="mb-2 block">Parceiro</label>
-                  <Dropdown value={parceiroId} onChange={(e) => setParceiroId(e.value)} options={parceiros.map((p) => ({ label: p.nome, value: p.id }))} placeholder="Todos" filter showClear className="w-full" />
+                  <Dropdown
+                    value={parceiroId}
+                    onChange={(e) => setParceiroId(e.value)}
+                    options={parceirosOpts}
+                    placeholder={loadingFiltrosPedidos ? 'Carregando...' : 'Todos'}
+                    filter
+                    showClear
+                    className="w-full"
+                    disabled={loadingFiltrosPedidos}
+                  />
                 </div>
 
                 <div className="field col-12 md:col-4">
                   <label className="mb-2 block">Vendedor</label>
-                  <Dropdown value={vendedorId} onChange={(e) => setVendedorId(e.value)} options={vendedores.map((v) => ({ label: v.nome, value: v.id }))} placeholder="Todos" filter showClear className="w-full" />
+                  <Dropdown
+                    value={vendedorId}
+                    onChange={(e) => setVendedorId(e.value)}
+                    options={vendedoresOpts}
+                    placeholder={loadingFiltrosPedidos ? 'Carregando...' : 'Todos'}
+                    filter
+                    showClear
+                    className="w-full"
+                    disabled={loadingFiltrosPedidos}
+                  />
                 </div>
               </>
             )}
@@ -591,7 +657,7 @@ export default function Relatorios() {
               className="p-button-danger"
               onClick={() => baixarArquivo('pdf')}
               model={exportActions}
-              disabled={!tipo || loading}
+              disabled={!tipo || loading || loadingFiltrosPedidos}
             />
           </div>
         </Panel>
