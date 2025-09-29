@@ -73,6 +73,8 @@ export default function Relatorios() {
   const [catSug, setCatSug] = useState([]);
   const [prodSug, setProdSug] = useState([]);
 
+  const [catInput, setCatInput] = useState('');
+
   // UI
   const [loading, setLoading] = useState(false);
 
@@ -99,14 +101,39 @@ export default function Relatorios() {
     { label: 'Vence em 30d', action: () => setPeriodoVencimento([new Date(), addDays(new Date(), 30)]) },
   ];
 
-  /** Autocomplete (debounced) */
+// === helpers (adicione perto dos outros helpers) ===
+  const normalize = (s = '') =>
+    String(s)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+
+// === categorias (substitua sua buscarCategorias atual) ===
   const buscarCategorias = useDebounced(async (query = '') => {
+    const q = (query || '').trim();
     try {
-      const { data } = await api.get('/categorias', { params: { search: query, per_page: 20, page: 1 } });
-      const arr = (data?.data ?? data ?? []).map(c => ({ id: c.id, label: c.nome || c.titulo || `Categoria #${c.id}` }));
-      setCatSug(arr);
-    } catch (e) { /* silencioso */ }
-  }, 350);
+      // cobre diferentes nomes aceitos no back
+      const { data } = await api.get('/categorias', {
+        params: { nome: q, search: q, q, per_page: 100, page: 1 },
+      });
+
+      const raw = (data?.data ?? data ?? []);
+      const mapped = raw.map((c) => ({
+        id: c.id,
+        label: c.nome || c.titulo || c.label || `Categoria #${c.id}`,
+      }));
+
+      // filtro cliente (case/acentos-insensível)
+      const nq = normalize(q);
+      const filtered = nq
+        ? mapped.filter((c) => normalize(c.label).includes(nq))
+        : mapped.slice(0, 50); // dropdown vazio: mostra um recorte, não tudo
+
+      setCatSug(filtered);
+    } catch (e) {
+      setCatSug([]); // falha silenciosa
+    }
+  }, 300);
 
   const buscarProdutos = useDebounced(async (query = '') => {
     try {
@@ -382,14 +409,36 @@ export default function Relatorios() {
                   <div className="col-12 md:col-6 mt-2">
                     <label className="mb-2 block">Categoria</label>
                     <AutoComplete
-                      value={categoria}
+                      value={catInput}
                       suggestions={catSug}
-                      completeMethod={(e) => buscarCategorias(e.query || '')}
+                      completeMethod={({ query }) => buscarCategorias(query)}
                       field="label"
                       placeholder="Buscar categoria…"
                       dropdown
-                      onChange={(e) => setCategoria(e.value)}
-                      onSelect={(e) => setCategoria(e.value)}
+                      forceSelection={false}           // evita limpar ao sair do foco
+                      onChange={(e) => {
+                        // enquanto digita, e.value é string
+                        if (typeof e.value === 'string') {
+                          setCatInput(e.value);
+                          // não mexe em categoria selecionada aqui
+                        } else {
+                          // alguns builds do Prime chamam onChange com objeto ao selecionar
+                          setCategoria(e.value);
+                          setCatInput(e.value?.label ?? '');
+                        }
+                      }}
+                      onSelect={(e) => {
+                        // ao clicar numa sugestão
+                        setCategoria(e.value);         // {id, label}
+                        setCatInput(e.value?.label ?? '');
+                      }}
+                      onClear={() => {
+                        setCategoria(null);
+                        setCatInput('');
+                        setCatSug([]);
+                      }}
+                      emptySearchMessage="Nenhuma categoria encontrada"
+                      emptyMessage="Nenhuma categoria"
                       aria-label="Categoria"
                       itemTemplate={(op) => <span className="font-medium">{op.label}</span>}
                       className="w-full"
