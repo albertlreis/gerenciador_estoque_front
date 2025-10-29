@@ -37,6 +37,7 @@ import AssistenciasAutorizadas from "./pages/AssistenciasAutorizadas";
 import CaixaLeituraEstoque from "./pages/CaixaLeituraEstoque";
 import Fornecedores from "./pages/Fornecedores";
 import Parceiros from "./pages/Parceiros";
+import ContasPagar from './pages/ContasPagar';
 
 const renderProtectedRoute = (element, permissoes) => (
   <PrivateRoute element={<PermissaoRoute element={element} permissoes={permissoes}/>}/>
@@ -126,6 +127,11 @@ const App = () => {
       <Route
         path="/parceiros"
         element={renderProtectedRoute(<Parceiros/>, PERMISSOES.PARCEIROS.VISUALIZAR)}
+      />
+
+      <Route
+        path="/financeiro/contas-pagar"
+        element={renderProtectedRoute(<ContasPagar/>, PERMISSOES.FINANCEIRO.CONTAS_PAGAR.VISUALIZAR)}
       />
     </Routes>
   );

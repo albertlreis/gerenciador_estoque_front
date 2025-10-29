@@ -91,6 +91,22 @@ const menuItems = (navigate, has) => {
       ].filter(Boolean)
     },
 
+    (has([
+      PERMISSOES.FINANCEIRO?.CONTAS_PAGAR?.VISUALIZAR,
+    ]) && {
+      label: 'Financeiro',
+      key: 'financeiro',
+      icon: 'pi pi-fw pi-wallet',
+      items: [
+        has(PERMISSOES.FINANCEIRO?.CONTAS_PAGAR?.VISUALIZAR) && {
+          label: 'Contas a Pagar',
+          key: 'financeiro-contas-pagar',
+          icon: 'pi pi-fw pi-arrow-down-left',
+          command: () => navigate('/financeiro/contas-pagar')
+        },
+      ].filter(Boolean)
+    }),
+
     has(PERMISSOES.DEPOSITOS?.VISUALIZAR) && {
       label: 'Estoque',
       key: 'estoque',

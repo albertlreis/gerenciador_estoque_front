@@ -131,4 +131,15 @@ export const PERMISSOES = {
     EXCLUIR: 'parceiros.excluir',
   },
 
+  FINANCEIRO: {
+    CONTAS_PAGAR: {
+      VISUALIZAR: 'contas.pagar.view',
+      CRIAR: 'contas.pagar.create',
+      ATUALIZAR: 'contas.pagar.update',
+      EXCLUIR: 'contas.pagar.delete',
+      PAGAR: 'contas.pagar.pagar',
+      ESTORNAR: 'contas.pagar.estornar',
+    },
+  },
+
 };
