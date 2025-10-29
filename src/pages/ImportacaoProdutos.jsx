@@ -1,19 +1,16 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import SakaiLayout from '../layouts/SakaiLayout';
-import { Toast } from 'primereact/toast';
-import { ConfirmDialog } from 'primereact/confirmdialog';
-import ImportacaoProdutoXML from '../components/ImportacaoProdutoXML';
+import ImportacaoProdutoXML from '../components/importacaoProduto/ImportacaoProdutoXML';
 
 const ImportacaoProdutos = () => {
-  const toast = useRef(null);
-
   return (
     <SakaiLayout>
-      <Toast ref={toast} />
-      <ConfirmDialog />
-      <div className="importacao-produtos" style={{ margin: '2rem' }}>
-        <h2>Importação de Produtos via XML da NF-e</h2>
-        <p className="mb-4">Envie um arquivo XML de nota fiscal eletrônica e revise os produtos antes de salvar.</p>
+      <div className="importacao-produtos p-5">
+        <h2 className="text-2xl font-semibold mb-3">Importação de Produtos via XML da NF-e</h2>
+        <p className="text-gray-700 mb-5">
+          Envie o arquivo XML da nota fiscal eletrônica para importar produtos.
+          Revise os itens antes de confirmar a entrada no estoque.
+        </p>
 
         <ImportacaoProdutoXML />
       </div>

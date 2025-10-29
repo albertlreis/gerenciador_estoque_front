@@ -1,4 +1,3 @@
-// src/components/ProdutoAtributos.jsx
 import React, { useMemo, useRef, useState } from 'react';
 import { AutoComplete } from 'primereact/autocomplete';
 import { Button } from 'primereact/button';

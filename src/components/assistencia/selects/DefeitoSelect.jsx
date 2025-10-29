@@ -28,7 +28,7 @@ export default function DefeitoSelect({ value, onChange, placeholder = "Buscar d
       const descricao = op.raw.descricao;
       const resp = await apiEstoque.post('/assistencias/defeitos', { descricao }); // ajuste schema conforme seu back
       const novo = resp.data?.data || resp.data;
-      const v = { id: novo.id, label: `${novo.codigo} — ${novo.descricao}`, critico: !!novo.critico };
+      const v = { id: novo.id, label: `${novo.descricao}`, critico: !!novo.critico };
       setSelected(v);
       onChange?.(v);
     } else {

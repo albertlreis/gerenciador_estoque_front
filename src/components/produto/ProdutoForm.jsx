@@ -1,4 +1,3 @@
-// src/components/produto/ProdutoForm.jsx
 import React, { useState, useEffect } from 'react';
 import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
