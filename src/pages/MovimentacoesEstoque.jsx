@@ -1,10 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { Accordion, AccordionTab } from 'primereact/accordion';
 import { Toast } from 'primereact/toast';
 import { Card } from 'primereact/card';
 import { Dialog } from 'primereact/dialog';
-import { Button } from 'primereact/button';
 import apiEstoque from '../services/apiEstoque';
 import SakaiLayout from '../layouts/SakaiLayout';
 import LocalizacaoEstoqueDialog from '../components/LocalizacaoEstoqueDialog';
@@ -20,7 +19,6 @@ import EstoqueMovimentacoes from '../components/EstoqueMovimentacoes';
  * - Lista Movimentações recentes.
  */
 const MovimentacoesEstoque = () => {
-  const navigate = useNavigate();
   const LOCAL_STORAGE_KEY = 'filtros_movimentacoes_estoque';
 
   const toast = useRef(null);
@@ -67,17 +65,6 @@ const MovimentacoesEstoque = () => {
     { label: 'Entrada', value: 'entrada' },
     { label: 'Saída', value: 'saida' },
   ];
-
-  useEffect(() => {
-    const onKey = (e) => {
-      if (e.altKey && (e.key === 'l' || e.key === 'L')) {
-        e.preventDefault();
-        navigate('/estoque/caixa');
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [navigate]);
 
   useEffect(() => {
     const depositoId = searchParams.get('deposito');
@@ -253,22 +240,6 @@ const MovimentacoesEstoque = () => {
       <div className="p-4 md:p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl">Estoque e Movimentações</h2>
-
-          {/* BOTÕES DE ACESSO RÁPIDO */}
-          <div className="flex gap-2">
-            <Button
-              label="Caixa (Leitor) — Alt+L"
-              icon="pi pi-barcode"
-              className="p-button-sm"
-              onClick={() => navigate('/estoque/caixa')}
-            />
-            <Button
-              label="Transferir Depósitos"
-              icon="pi pi-external-link"
-              className="p-button-sm p-button-secondary"
-              onClick={() => navigate('/estoque/caixa?mode=transfer')}
-            />
-          </div>
         </div>
 
         <EstoqueFiltro

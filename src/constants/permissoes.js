@@ -139,6 +139,8 @@ export const PERMISSOES = {
       EXCLUIR: 'contas.pagar.delete',
       PAGAR: 'contas.pagar.pagar',
       ESTORNAR: 'contas.pagar.estornar',
+      EXPORTAR_EXCEL: 'contas.pagar.exportar_excel',
+      EXPORTAR_PDF:   'contas.pagar.exportar_pdf',
     },
   },
 

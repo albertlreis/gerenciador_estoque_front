@@ -31,9 +31,29 @@ export default function ContasPagarPage() {
   const [dialogPagVisivel, setDialogPagVisivel] = useState(false);
   const [contaPag, setContaPag] = useState(null);
 
+  const [kpis, setKpis] = useState({ total_liquido: 0, valor_pago_periodo: 0, contas_pagas: 0, contas_vencidas: 0 });
+
   useEffect(() => { fetchContas(1, filtros); /* eslint-disable-next-line */ }, []);
 
-  const onBuscar = (override) => fetchContas(1, mapFiltrosApi(override));
+  const carregarKpis = async (f = filtros) => {
+    const params = {
+      busca: f?.texto || undefined,
+      status: f?.status || undefined,
+      forma_pagamento: f?.forma_pagamento || undefined,
+      data_ini: f?.periodo?.[0] || undefined,
+      data_fim: f?.periodo?.[1] || undefined,
+      vencidas: f?.vencidas || undefined,
+    };
+    const { data } = await apiFinanceiro.get('/contas-pagar/kpis', { params });
+    setKpis(data || {});
+  };
+
+  useEffect(() => { carregarKpis(filtros); /* eslint-disable-next-line */ }, []);
+
+  const onBuscar = async (override) => {
+    await fetchContas(1, mapFiltrosApi(override));
+    await carregarKpis(override);
+  };
 
   const mapFiltrosApi = (f) => ({
     busca: f?.texto || undefined,
@@ -69,10 +89,10 @@ export default function ContasPagarPage() {
     return <Tag value={cfg.label} severity={cfg.severity} className="text-xs" rounded/>;
   };
 
-  const onPage = (e) => {
+  const onPage = async (e) => {
     const nova = Math.floor(e.first / 10) + 1;
     setPagina(nova);
-    fetchContas(nova).catch(() => {});
+    await fetchContas(nova);
   };
 
   const abrirNovo = () => { setContaEdicao(null); setDialogFormVisivel(true); };
@@ -80,7 +100,7 @@ export default function ContasPagarPage() {
   const abrirPag = async (row) => {
     try {
       const { data } = await apiFinanceiro.get(`/contas-pagar/${row.id}`);
-      setContaPag(data?.data || data);
+      setContaPag(data?.data ?? data);
       setDialogPagVisivel(true);
     } catch (e) {
       toast.current?.show({ severity: 'error', summary: 'Erro', detail: e?.response?.data?.message || e.message });
@@ -103,6 +123,24 @@ export default function ContasPagarPage() {
     });
   };
 
+  const podeExportarExcel = has(PERMISSOES.FINANCEIRO.CONTAS_PAGAR.EXPORTAR_EXCEL) || has(PERMISSOES.FINANCEIRO.CONTAS_PAGAR.VISUALIZAR);
+  const podeExportarPdf   = has(PERMISSOES.FINANCEIRO.CONTAS_PAGAR.EXPORTAR_PDF)   || has(PERMISSOES.FINANCEIRO.CONTAS_PAGAR.VISUALIZAR);
+
+  const toQuery = (f) => {
+    const p = mapFiltrosApi(f);
+    const s = new URLSearchParams();
+    Object.entries(p).forEach(([k,v]) => { if (v!==undefined && v!==null && v!=='') s.append(k,String(v)); });
+    return s.toString();
+  };
+  const exportExcel = () => {
+    const q = toQuery(filtros);
+    window.open(`/api/contas-pagar/export/excel?${q}`, '_blank');
+  };
+  const exportPdf = () => {
+    const q = toQuery(filtros);
+    window.open(`/api/contas-pagar/export/pdf?${q}`, '_blank');
+  };
+
   const podeCriar = has(PERMISSOES.FINANCEIRO.CONTAS_PAGAR.CRIAR);
   const podeEditar = has(PERMISSOES.FINANCEIRO.CONTAS_PAGAR.ATUALIZAR);
   const podeExcluir = has(PERMISSOES.FINANCEIRO.CONTAS_PAGAR.EXCLUIR);
@@ -115,11 +153,38 @@ export default function ContasPagarPage() {
       <ConfirmDialog />
 
       <div className="p-4">
-        <div className="flex flex-wrap gap-3 justify-content-between align-items-end mb-3">
+        <div className="grid mb-3">
+          <div className="col-12 md:col-3">
+            <div className="p-3 border-round surface-0 shadow-1">
+              <div className="text-500 text-sm">Total Líquido (período)</div>
+              <div className="text-2xl font-bold">R$ {Number(kpis.total_liquido||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+            </div>
+          </div>
+          <div className="col-12 md:col-3">
+            <div className="p-3 border-round surface-0 shadow-1">
+              <div className="text-500 text-sm">Valor Pago (período)</div>
+              <div className="text-2xl font-bold">R$ {Number(kpis.valor_pago_periodo||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+            </div>
+          </div>
+          <div className="col-6 md:col-3">
+            <div className="p-3 border-round surface-0 shadow-1">
+              <div className="text-500 text-sm">Contas Pagas</div>
+              <div className="text-2xl font-bold">{kpis.contas_pagas||0}</div>
+            </div>
+          </div>
+          <div className="col-6 md:col-3">
+            <div className="p-3 border-round surface-0 shadow-1">
+              <div className="text-500 text-sm">Contas Vencidas</div>
+              <div className="text-2xl font-bold">{kpis.contas_vencidas||0}</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
           <ContasPagarFiltro filtros={filtros} setFiltros={setFiltros} onBuscar={(f) => onBuscar(f)} />
-          {podeCriar && (
-            <Button label="Nova Conta" icon="pi pi-plus" onClick={abrirNovo} />
-          )}
+          {podeExportarExcel && <Button icon="pi pi-file-excel" label="Excel" outlined onClick={exportExcel} />}
+          {podeExportarPdf   && <Button icon="pi pi-file-pdf"   label="PDF"   outlined onClick={exportPdf}   />}
+          {podeCriar && <Button label="Nova Conta" icon="pi pi-plus" onClick={abrirNovo} />}
         </div>
 
         <h2 className="mb-3">Contas a Pagar</h2>
