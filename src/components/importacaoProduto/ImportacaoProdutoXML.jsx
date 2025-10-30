@@ -72,7 +72,7 @@ export default function ImportacaoProdutoXML() {
   };
 
   /** Confirma importação */
-  const handleConfirm = async () => {
+  const handleConfirm = async (dataEntrada) => {
     setShowConfirmDialog(false);
     setLoading(true);
 
@@ -82,6 +82,7 @@ export default function ImportacaoProdutoXML() {
         produtos,
         deposito_id: deposito,
         token_xml: tokenXml,
+        data_entrada: dataEntrada,
       };
 
       const { data } = await apiEstoque.post('/produtos/importar-xml/confirmar', payload);
