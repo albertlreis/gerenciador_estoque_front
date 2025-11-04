@@ -8,127 +8,131 @@ import { Tag } from 'primereact/tag';
 import { Accordion, AccordionTab } from 'primereact/accordion';
 import { Button } from 'primereact/button';
 
-const ProdutoImportadoCard = ({ item, index, categorias, depositos, onChangeItem }) => {
+/**
+ * Componente para exibição e edição de um produto importado do PDF.
+ * Inclui campos de categoria, depósito, atributos e dimensões.
+ */
+export default function ProdutoImportadoCard({
+                                               item = {},
+                                               index,
+                                               categorias = [],
+                                               depositos = [],
+                                               onChangeItem
+                                             }) {
   const quantidade = Number(item.quantidade) || 0;
   const totalItem = Number(item.valor) || 0;
   const valorUnitario = quantidade > 0 ? totalItem / quantidade : 0;
   const total = totalItem.toLocaleString('pt-BR', {
     style: 'currency',
-    currency: 'BRL'
+    currency: 'BRL',
   });
 
+  const fixos = item.fixos || {};
+  const atributos = item.atributos || {};
+
   const handleFixosChange = (campo, value) => {
-    const atualizados = { ...item.fixos, [campo]: value };
+    const atualizados = { ...fixos, [campo]: value };
     onChangeItem(index, 'fixos', atualizados);
   };
 
   const handleAtributoChange = (grupo, campo, value) => {
-    const atualizados = {
-      ...item.atributos,
-      [grupo]: {
-        ...item.atributos?.[grupo],
-        [campo]: value,
-      },
-    };
-    onChangeItem(index, 'atributos', atualizados);
+    const grupoAtual = { ...(atributos[grupo] || {}) };
+    grupoAtual[campo] = value;
+    onChangeItem(index, 'atributos', { ...atributos, [grupo]: grupoAtual });
   };
 
   const handleRenomearAtributo = (grupo, campoAntigo, novoNome) => {
     if (!novoNome || novoNome === campoAntigo) return;
-
-    const grupoAtual = { ...item.atributos?.[grupo] };
+    const grupoAtual = { ...(atributos[grupo] || {}) };
     const valor = grupoAtual[campoAntigo];
     delete grupoAtual[campoAntigo];
     grupoAtual[novoNome] = valor;
-
-    onChangeItem(index, 'atributos', {
-      ...item.atributos,
-      [grupo]: grupoAtual
-    });
+    onChangeItem(index, 'atributos', { ...atributos, [grupo]: grupoAtual });
   };
 
   const handleAdicionarAtributo = (grupo) => {
-    const grupoAtual = { ...item.atributos?.[grupo] } || {};
+    const grupoAtual = { ...(atributos[grupo] || {}) };
     const novoNome = `atributo_${Object.keys(grupoAtual).length + 1}`;
     grupoAtual[novoNome] = '';
-    onChangeItem(index, 'atributos', {
-      ...item.atributos,
-      [grupo]: grupoAtual
-    });
+    onChangeItem(index, 'atributos', { ...atributos, [grupo]: grupoAtual });
   };
 
   const handleRemoverAtributo = (grupo, campo) => {
-    const grupoAtual = { ...item.atributos?.[grupo] };
+    const grupoAtual = { ...(atributos[grupo] || {}) };
     delete grupoAtual[campo];
-    onChangeItem(index, 'atributos', {
-      ...item.atributos,
-      [grupo]: grupoAtual
-    });
+    onChangeItem(index, 'atributos', { ...atributos, [grupo]: grupoAtual });
   };
 
   return (
     <Card
-      title={`Produto ${index + 1}: ${item.nome || item.descricao?.slice(0, 50)}`}
+      title={`Produto ${index + 1}: ${item.nome || item.descricao?.slice(0, 50) || ''}`}
       className={`mb-3 border-left-4 shadow-sm ${
         item.tipo === 'PRONTA ENTREGA' ? 'bg-blue-50' : 'bg-pink-50'
       } ${!item.id_categoria || !item.id_variacao ? 'border-red-300' : 'border-green-300'}`}
     >
       <div className="flex flex-column md:flex-row justify-between gap-4 p-3">
+        {/* Coluna principal */}
         <div className="flex-1">
           <fieldset className="mb-3">
-            <legend className="text-sm font-medium text-gray-600">Informações do Produto</legend>
+            <legend className="text-sm font-medium text-gray-600">
+              Informações do Produto
+            </legend>
             <div className="formgrid grid">
+              {/* Categoria */}
               <div className="field col-12 md:col-3">
                 <label className="block text-xs font-medium mb-1">Categoria</label>
                 <Dropdown
-                  value={item.id_categoria !== undefined && item.id_categoria !== null ? Number(item.id_categoria) : null}
-                  options={categorias}
+                  value={
+                    item.id_categoria !== undefined && item.id_categoria !== null
+                      ? Number(item.id_categoria)
+                      : null
+                  }
+                  options={Array.isArray(categorias) ? categorias : []}
                   optionLabel="nome"
                   optionValue="id"
                   placeholder="Selecione"
                   className={`w-full p-inputtext-sm ${!item.id_categoria ? 'p-invalid' : ''}`}
-                  aria-label="Categoria"
                   filter
-                  filterBy="nome"
                   onChange={(e) => onChangeItem(index, 'id_categoria', e.value)}
                 />
               </div>
 
+              {/* Referência */}
               <div className="field col-12 md:col-3">
                 <label className="block text-xs font-medium mb-1">Referência</label>
                 <InputText
                   value={item.ref || ''}
                   onChange={(e) => onChangeItem(index, 'ref', e.target.value)}
                   className="w-full p-inputtext-sm"
-                  aria-label="Referência"
                 />
               </div>
 
+              {/* Nome */}
               <div className="field col-12 md:col-6">
                 <label className="block text-xs font-medium mb-1">Nome</label>
                 <InputText
                   value={item.nome || ''}
                   onChange={(e) => onChangeItem(index, 'nome', e.target.value)}
                   className="w-full p-inputtext-sm"
-                  aria-label="Nome do Produto"
                 />
               </div>
 
+              {/* Tipo */}
               <div className="field col-12 md:col-4">
                 <label className="block text-xs font-medium mb-1">Tipo</label>
                 <Dropdown
                   value={item.tipo || ''}
                   options={[
                     { label: 'PEDIDO', value: 'PEDIDO' },
-                    { label: 'PRONTA ENTREGA', value: 'PRONTA ENTREGA' }
+                    { label: 'PRONTA ENTREGA', value: 'PRONTA ENTREGA' },
                   ]}
                   onChange={(e) => onChangeItem(index, 'tipo', e.value)}
                   className="w-full p-inputtext-sm"
                   placeholder="Selecione"
-                  aria-label="Tipo do Produto"
                 />
               </div>
 
+              {/* Enviar para fábrica */}
               {item.tipo === 'PEDIDO' && (
                 <div className="field col-12 md:col-4 align-items-center">
                   <label className="block text-xs font-medium mb-1">&nbsp;</label>
@@ -147,11 +151,12 @@ const ProdutoImportadoCard = ({ item, index, categorias, depositos, onChangeItem
                 </div>
               )}
 
+              {/* Depósito */}
               <div className="field col-12 md:col-4">
                 <label className="block text-xs font-medium mb-1">Depósito</label>
                 <Dropdown
                   value={item.id_deposito || null}
-                  options={depositos}
+                  options={Array.isArray(depositos) ? depositos : []}
                   optionLabel="nome"
                   optionValue="id"
                   placeholder="Selecione"
@@ -161,6 +166,7 @@ const ProdutoImportadoCard = ({ item, index, categorias, depositos, onChangeItem
                 />
               </div>
 
+              {/* Quantidade */}
               <div className="field col-6 md:col-2">
                 <label className="block text-xs font-medium mb-1">Quantidade</label>
                 <InputNumber
@@ -168,10 +174,10 @@ const ProdutoImportadoCard = ({ item, index, categorias, depositos, onChangeItem
                   onValueChange={(e) => onChangeItem(index, 'quantidade', e.value)}
                   min={1}
                   className="w-full p-inputtext-sm"
-                  aria-label="Quantidade"
                 />
               </div>
 
+              {/* Valor Unitário */}
               <div className="field col-6 md:col-3">
                 <label className="block text-xs font-medium mb-1">Valor Unitário</label>
                 <InputNumber
@@ -185,12 +191,12 @@ const ProdutoImportadoCard = ({ item, index, categorias, depositos, onChangeItem
                   currency="BRL"
                   locale="pt-BR"
                   className="w-full p-inputtext-sm"
-                  aria-label="Valor Unitário"
                 />
               </div>
             </div>
           </fieldset>
 
+          {/* Dimensões */}
           <fieldset className="mb-3">
             <legend className="text-sm font-medium text-gray-600">Dimensões</legend>
             <div className="formgrid grid">
@@ -200,26 +206,23 @@ const ProdutoImportadoCard = ({ item, index, categorias, depositos, onChangeItem
                     {campo.charAt(0).toUpperCase() + campo.slice(1)}
                   </label>
                   <InputNumber
-                    value={item.fixos?.[campo] || null}
+                    value={fixos[campo] || null}
                     onValueChange={(e) => handleFixosChange(campo, e.value)}
                     className="w-full p-inputtext-sm"
-                    aria-label={campo}
                   />
                 </div>
               ))}
             </div>
           </fieldset>
 
-          {item.atributos && (
+          {/* Atributos */}
+          {Object.keys(atributos).length > 0 && (
             <Accordion multiple activeIndex={[0]}>
               {['cores', 'tecidos', 'acabamentos', 'observacoes'].map((grupo) =>
-                item.atributos?.[grupo] ? (
-                  <AccordionTab
-                    key={grupo}
-                    header={grupo.charAt(0).toUpperCase() + grupo.slice(1)}
-                  >
+                atributos[grupo] ? (
+                  <AccordionTab key={grupo} header={grupo.charAt(0).toUpperCase() + grupo.slice(1)}>
                     <div className="formgrid grid">
-                      {Object.entries(item.atributos[grupo]).map(([campo, valor]) => (
+                      {Object.entries(atributos[grupo]).map(([campo, valor]) => (
                         <div key={`${grupo}-${campo}`} className="field col-12 md:col-6">
                           <div className="p-2 border-1 surface-border border-round relative">
                             <Button
@@ -236,26 +239,20 @@ const ProdutoImportadoCard = ({ item, index, categorias, depositos, onChangeItem
                                 handleRenomearAtributo(grupo, campo, e.target.value)
                               }
                               className="w-full p-inputtext-sm mb-2"
-                              placeholder="Ex: cor_inox"
                             />
                             <label className="block text-xs font-medium mb-1">Valor</label>
                             {grupo === 'observacoes' ? (
                               <InputTextarea
                                 value={valor}
-                                onChange={(e) =>
-                                  handleAtributoChange(grupo, campo, e.target.value)
-                                }
+                                onChange={(e) => handleAtributoChange(grupo, campo, e.target.value)}
                                 className="w-full p-inputtextarea-sm"
                                 rows={2}
                               />
                             ) : (
                               <InputText
                                 value={valor}
-                                onChange={(e) =>
-                                  handleAtributoChange(grupo, campo, e.target.value)
-                                }
+                                onChange={(e) => handleAtributoChange(grupo, campo, e.target.value)}
                                 className="w-full p-inputtext-sm"
-                                placeholder="Ex: azul"
                               />
                             )}
                           </div>
@@ -277,6 +274,7 @@ const ProdutoImportadoCard = ({ item, index, categorias, depositos, onChangeItem
           )}
         </div>
 
+        {/* Coluna lateral de status */}
         <div className="flex flex-column gap-2 text-right min-w-48 md:w-64 justify-between">
           <div>
             <span className="block text-sm font-medium">Total: {total}</span>
@@ -300,6 +298,4 @@ const ProdutoImportadoCard = ({ item, index, categorias, depositos, onChangeItem
       </div>
     </Card>
   );
-};
-
-export default ProdutoImportadoCard;
+}
