@@ -34,7 +34,7 @@ import PedidosFabrica from "./pages/PedidosFabrica";
 import Relatorios from "./pages/Relatorios";
 import Assistencias from "./pages/Assistencias";
 import AssistenciasAutorizadas from "./pages/AssistenciasAutorizadas";
-import CaixaLeituraEstoque from "./pages/CaixaLeituraEstoque";
+import LeituraEstoque from "./pages/LeituraEstoque";
 import Fornecedores from "./pages/Fornecedores";
 import Parceiros from "./pages/Parceiros";
 import ContasPagar from './pages/ContasPagar';
@@ -115,8 +115,8 @@ const App = () => {
       <Route path="/assistencias/autorizadas" element={renderProtectedRoute(<AssistenciasAutorizadas/>, PERMISSOES.ASSISTENCIAS.GERENCIAR)}/>
 
       <Route
-        path="/estoque/caixa"
-        element={renderProtectedRoute(<CaixaLeituraEstoque/>, [PERMISSOES.ESTOQUE.CAIXA])}
+        path="/estoque/leitura"
+        element={renderProtectedRoute(<LeituraEstoque/>, [PERMISSOES.ESTOQUE.MOVIMENTAR])}
       />
 
       <Route

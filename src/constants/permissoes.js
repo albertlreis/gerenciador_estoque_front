@@ -82,8 +82,8 @@ export const PERMISSOES = {
   },
   ESTOQUE: {
     MOVIMENTACAO: 'estoque.movimentacao',
+    MOVIMENTAR: 'estoque.movimentar',
     HISTORICO: 'estoque.historico',
-    CAIXA: 'estoque.caixa',
     TRANSFERIR: 'estoque.transferir',
     LOGS: 'estoque.logs',
   },
