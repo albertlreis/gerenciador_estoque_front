@@ -67,41 +67,105 @@ export default function ImportacaoPedidoPDF() {
   /** 📤 Upload do arquivo PDF */
   const onUpload = async ({ files }) => {
     if (!files?.length) return;
+
     const formData = new FormData();
-    formData.append('arquivo', files[0]);
+    formData.append("arquivo", files[0]);
 
     setLoading(true);
-    setUploadStatus('uploading');
+    setUploadStatus("uploading");
 
     try {
-      const response = await apiEstoque.post('/pedidos/importar-pdf', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      const response = await apiEstoque.post("/pedidos/importar", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
-      // Confere se retorno é JSON válido
-      if (typeof response.data !== 'object' || !response.data) {
-        throw new Error('Resposta inesperada da API.');
-      }
+      const payload = response.data?.dados;
+      if (!payload) throw new Error("Resposta inesperada da API");
 
-      setDados(response.data);
-      setCliente(response.data.cliente || {});
-      setPedido(response.data.pedido || {});
-      setItens(response.data.itens || []);
-      setUploadStatus('done');
+      // ================================
+      // 📌 CLIENTE
+      // ================================
+      const clienteNormalizado = {
+        nome: payload.cliente?.nome || "",
+        documento: payload.cliente?.documento || "",
+        email: payload.cliente?.email || "",
+        telefone: payload.cliente?.telefone || "",
+        endereco: payload.cliente?.endereco || "",
+        bairro: "",
+        cidade: "",
+        cep: "",
+        endereco_entrega: "",
+        prazo_entrega: "",
+      };
+
+      // ================================
+      // 📌 PEDIDO
+      // ================================
+      const p = payload.pedido || {};
+
+      const pedidoNormalizado = {
+        numero_externo: p.numero_externo || "",
+        data_pedido: p.data_pedido || null,
+        data_inclusao: p.data_inclusao || null,
+        data_entrega: p.data_entrega || null,
+        total: Number(p.total) || 0,
+        observacoes: p.observacoes || "",
+        parcelas: p.parcelas || [],
+      };
+
+      // ================================
+      // 📌 ITENS
+      // ================================
+      const itensNormalizados = (payload.itens || []).map((item) => ({
+        ref: item.ref || item.codigo || "",
+        nome: item.nome || item.descricao || "",
+        quantidade: Number(item.quantidade ?? 0),
+        valor: Number(item.valor_total ?? 0),
+        preco_unitario: Number(item.preco_unitario ?? 0),
+        unidade: item.unidade || "PC",
+
+        // já vem preenchido pelo Python + Laravel
+        id_categoria: item.id_categoria ?? null,
+        produto_id: item.produto_id ?? null,
+        id_variacao: item.id_variacao ?? null,
+        variacao_nome: item.variacao_nome ?? null,
+
+        tipo: "PEDIDO",
+        enviar_fabrica: false,
+
+        atributos: item.atributos || {},
+        atributos_raw: item.atributos_raw || [],
+
+        // será selecionado pelo usuário
+        id_deposito: null,
+      }));
+
+      // ================================
+      // ✔️ Atribuir ao estado
+      // ================================
+      setDados(payload);
+      setCliente(clienteNormalizado);
+      setPedido(pedidoNormalizado);
+      setItens(itensNormalizados);
+
+      setUploadStatus("done");
 
       toast.current?.show({
-        severity: 'success',
-        summary: 'Sucesso',
-        detail: 'PDF importado com sucesso.',
+        severity: "success",
+        summary: "Sucesso",
+        detail: "PDF importado com sucesso!",
       });
+
     } catch (err) {
-      console.error('Erro no upload do PDF:', err);
-      setUploadStatus('error');
+      console.error("Erro no upload:", err);
+
       toast.current?.show({
-        severity: 'error',
-        summary: 'Erro',
-        detail: err.response?.data?.message || 'Falha ao importar PDF.',
+        severity: "error",
+        summary: "Erro",
+        detail: err.response?.data?.mensagem || "Falha ao importar PDF.",
       });
+
+      setUploadStatus("error");
     } finally {
       setLoading(false);
     }
