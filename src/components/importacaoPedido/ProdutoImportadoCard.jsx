@@ -11,13 +11,19 @@ import { Button } from 'primereact/button';
 /**
  * Componente responsável por exibir um produto importado do PDF,
  * permitindo revisar categoria, depósito, dimensões e atributos.
+ *
+ * Regras:
+ * - Produtos com id_variacao (já cadastrados) têm atributos/nome/ref/categoria bloqueados.
+ * - Quantidade, depósito e valores podem ser ajustados.
+ * - Usuário pode remover qualquer item antes de confirmar.
  */
 export default function ProdutoImportadoCard({
                                                item = {},
                                                index,
                                                categorias = [],
                                                depositos = [],
-                                               onChangeItem
+                                               onChangeItem,
+                                               onRemove,
                                              }) {
   const quantidade = Number(item.quantidade) || 0;
   const totalItem = Number(item.valor) || 0;
@@ -25,36 +31,36 @@ export default function ProdutoImportadoCard({
 
   const totalFormatado = totalItem.toLocaleString('pt-BR', {
     style: 'currency',
-    currency: 'BRL'
+    currency: 'BRL',
   });
 
   const atributos = item.atributos || {};
   const fixos = item.fixos || {};
+
+  const isCadastrado = !!item.id_variacao;
 
   // ==========================================================
   // Atualizações de campos
   // ==========================================================
 
   const handleFixosChange = (campo, value) => {
+    if (isCadastrado) return; // dimensões bloqueadas para cadastrados
     onChangeItem(index, 'fixos', { ...fixos, [campo]: value });
   };
 
   const atualizarAtributo = (campo, valor) => {
+    if (isCadastrado) return; // atributos bloqueados para cadastrados
     onChangeItem(index, 'atributos', { ...atributos, [campo]: valor });
   };
 
-  // ==========================================================
-  // Arrays convertidos para Dropdown
-  // ==========================================================
-
-  const categoriasOptions = categorias.map(c => ({
+  const categoriasOptions = categorias.map((c) => ({
     label: c.nome,
-    value: Number(c.id)
+    value: Number(c.id),
   }));
 
-  const depositosOptions = depositos.map(d => ({
+  const depositosOptions = depositos.map((d) => ({
     label: d.nome,
-    value: Number(d.id)
+    value: Number(d.id),
   }));
 
   return (
@@ -65,12 +71,8 @@ export default function ProdutoImportadoCard({
       } ${!item.id_categoria ? 'border-red-300' : 'border-green-300'}`}
     >
       <div className="flex flex-column md:flex-row justify-between gap-4 p-3">
-
-        {/* ------------------------------------------------------ */}
         {/* COLUNA PRINCIPAL */}
-        {/* ------------------------------------------------------ */}
         <div className="flex-1">
-
           {/* Informações principais */}
           <fieldset className="mb-3">
             <legend className="text-sm font-medium text-gray-600">
@@ -78,7 +80,6 @@ export default function ProdutoImportadoCard({
             </legend>
 
             <div className="formgrid grid">
-
               {/* Categoria */}
               <div className="field col-12 md:col-3">
                 <label className="block text-xs font-medium mb-1">Categoria</label>
@@ -86,9 +87,12 @@ export default function ProdutoImportadoCard({
                   value={item.id_categoria || null}
                   options={categoriasOptions}
                   placeholder="Selecione"
-                  className={`w-full p-inputtext-sm ${!item.id_categoria ? 'p-invalid' : ''}`}
-                  onChange={(e) => onChangeItem(index, 'id_categoria', e.value)}
+                  className={`w-full p-inputtext-sm ${
+                    !item.id_categoria ? 'p-invalid' : ''
+                  }`}
+                  onChange={(e) => !isCadastrado && onChangeItem(index, 'id_categoria', e.value)}
                   filter
+                  disabled={isCadastrado}
                 />
               </div>
 
@@ -99,6 +103,7 @@ export default function ProdutoImportadoCard({
                   value={item.ref || ''}
                   onChange={(e) => onChangeItem(index, 'ref', e.target.value)}
                   className="w-full p-inputtext-sm"
+                  disabled={isCadastrado}
                 />
               </div>
 
@@ -109,6 +114,7 @@ export default function ProdutoImportadoCard({
                   value={item.nome || ''}
                   onChange={(e) => onChangeItem(index, 'nome', e.target.value)}
                   className="w-full p-inputtext-sm"
+                  disabled={isCadastrado}
                 />
               </div>
 
@@ -119,7 +125,9 @@ export default function ProdutoImportadoCard({
                   value={item.id_deposito || null}
                   options={depositosOptions}
                   placeholder="Selecione"
-                  className={`w-full p-inputtext-sm ${!item.id_deposito ? 'p-invalid' : ''}`}
+                  className={`w-full p-inputtext-sm ${
+                    !item.id_deposito ? '' : ''
+                  }`}
                   onChange={(e) => onChangeItem(index, 'id_deposito', e.value)}
                   filter
                 />
@@ -146,13 +154,13 @@ export default function ProdutoImportadoCard({
                   locale="pt-BR"
                   onValueChange={(e) => {
                     const novoUnitario = e.value || 0;
-                    const novoTotal = novoUnitario * quantidade;
+                    const novaQuantidade = Number(item.quantidade || 0) || 1;
+                    const novoTotal = novoUnitario * novaQuantidade;
                     onChangeItem(index, 'valor', Number(novoTotal.toFixed(2)));
                   }}
                   className="w-full p-inputtext-sm"
                 />
               </div>
-
             </div>
           </fieldset>
 
@@ -161,7 +169,7 @@ export default function ProdutoImportadoCard({
             <legend className="text-sm font-medium text-gray-600">Dimensões</legend>
 
             <div className="formgrid grid">
-              {['largura', 'profundidade', 'altura'].map(campo => (
+              {['largura', 'profundidade', 'altura'].map((campo) => (
                 <div key={campo} className="field col-4">
                   <label className="block text-xs font-medium mb-1">
                     {campo[0].toUpperCase() + campo.substring(1)}
@@ -171,6 +179,7 @@ export default function ProdutoImportadoCard({
                     value={fixos[campo] || null}
                     onValueChange={(e) => handleFixosChange(campo, e.value)}
                     className="w-full p-inputtext-sm"
+                    disabled={isCadastrado}
                   />
                 </div>
               ))}
@@ -184,7 +193,6 @@ export default function ProdutoImportadoCard({
                 <div className="formgrid grid">
                   {Object.entries(atributos).map(([key, value]) => (
                     <div key={key} className="field col-12 md:col-6">
-
                       <label className="block text-xs font-medium mb-1">
                         {key.replace('_', ' ').toUpperCase()}
                       </label>
@@ -195,12 +203,14 @@ export default function ProdutoImportadoCard({
                           rows={2}
                           className="w-full"
                           onChange={(e) => atualizarAtributo(key, e.target.value)}
+                          disabled={isCadastrado}
                         />
                       ) : (
                         <InputText
                           value={value || ''}
                           className="w-full p-inputtext-sm"
                           onChange={(e) => atualizarAtributo(key, e.target.value)}
+                          disabled={isCadastrado}
                         />
                       )}
                     </div>
@@ -209,18 +219,12 @@ export default function ProdutoImportadoCard({
               </AccordionTab>
             </Accordion>
           )}
-
         </div>
 
-        {/* ------------------------------------------------------ */}
         {/* COLUNA LATERAL */}
-        {/* ------------------------------------------------------ */}
         <div className="flex flex-column gap-2 text-right min-w-48 md:w-64 justify-between">
-
           <div>
-            <span className="block text-sm font-medium">
-              Total: {totalFormatado}
-            </span>
+            <span className="block text-sm font-medium">Total: {totalFormatado}</span>
 
             <div className="mt-2">
               {item.id_variacao ? (
@@ -238,7 +242,6 @@ export default function ProdutoImportadoCard({
               )}
             </div>
 
-            {/* Categoria obrigatória */}
             {!item.id_categoria && (
               <div className="mt-2">
                 <Tag
@@ -248,10 +251,18 @@ export default function ProdutoImportadoCard({
                 />
               </div>
             )}
+          </div>
 
+          <div className="mt-3 flex justify-content-end">
+            <Button
+              type="button"
+              icon="pi pi-trash"
+              label="Remover"
+              className="p-button-text p-button-danger"
+              onClick={() => onRemove?.(index)}
+            />
           </div>
         </div>
-
       </div>
     </Card>
   );
