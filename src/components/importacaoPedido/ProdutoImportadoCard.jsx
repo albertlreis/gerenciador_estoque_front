@@ -25,8 +25,9 @@ export default function ProdutoImportadoCard({
                                                onChangeItem,
                                                onRemove,
                                              }) {
+  console.log(item)
   const quantidade = Number(item.quantidade) || 0;
-  const totalItem = Number(item.valor) || 0;
+  const totalItem = Number(item.preco_unitario) || 0;
   const valorUnitario = quantidade > 0 ? totalItem / quantidade : 0;
 
   const totalFormatado = totalItem.toLocaleString('pt-BR', {
