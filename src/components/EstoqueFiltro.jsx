@@ -7,7 +7,7 @@ import { Tooltip } from 'primereact/tooltip';
 import { motion } from 'framer-motion';
 import CalendarBR from "./CalendarBR";
 
-const EstoqueFiltro = ({ filtros, setFiltros, depositos, tipos, onBuscar, onLimpar }) => {
+const EstoqueFiltro = ({ filtros, setFiltros, depositos, categorias, fornecedores, tipos, onBuscar, onLimpar }) => {
   return (
     <motion.div
       className="surface-card border-round shadow-1 p-4 mb-4"
@@ -41,6 +41,36 @@ const EstoqueFiltro = ({ filtros, setFiltros, depositos, tipos, onBuscar, onLimp
             onChange={(e) => setFiltros({ ...filtros, deposito: e.value })}
             placeholder="Selecione o depósito"
             showClear
+            className="w-full"
+          />
+        </div>
+
+        {/* Categoria */}
+        <div className="field col-12 sm:col-6 md:col-2">
+          <label htmlFor="categoria" className="font-medium mb-2 block">Categoria</label>
+          <Dropdown
+            id="categoria"
+            value={filtros.categoria}
+            options={categorias}
+            onChange={(e) => setFiltros({ ...filtros, categoria: e.value })}
+            placeholder="Selecione"
+            showClear
+            filter
+            className="w-full"
+          />
+        </div>
+
+        {/* Fornecedor */}
+        <div className="field col-12 sm:col-6 md:col-2">
+          <label htmlFor="fornecedor" className="font-medium mb-2 block">Fornecedor</label>
+          <Dropdown
+            id="fornecedor"
+            value={filtros.fornecedor}
+            options={fornecedores}
+            onChange={(e) => setFiltros({ ...filtros, fornecedor: e.value })}
+            placeholder="Selecione"
+            showClear
+            filter
             className="w-full"
           />
         </div>

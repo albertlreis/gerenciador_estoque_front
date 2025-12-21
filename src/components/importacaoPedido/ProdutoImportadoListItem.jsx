@@ -2,7 +2,6 @@ import React from 'react';
 import { Checkbox } from 'primereact/checkbox';
 import { Dropdown } from 'primereact/dropdown';
 import { InputNumber } from 'primereact/inputnumber';
-import { Tag } from 'primereact/tag';
 import { Button } from 'primereact/button';
 
 export default function ProdutoImportadoListItem({
@@ -14,7 +13,6 @@ export default function ProdutoImportadoListItem({
                                                    onChangeItem,
                                                    onRemove,
                                                  }) {
-  console.log(item)
   const quantidade = Number(item.quantidade) || 0;
   const totalItem = Number(item.preco_unitario) || 0;
   const valorUnitario = quantidade > 0 ? totalItem / quantidade : 0;

@@ -255,6 +255,32 @@ export default function PedidosListagem() {
           className="text-sm"
           size="small"
         >
+          <Column
+            header=""
+            body={(row) => (
+              <Button
+                icon="pi pi-refresh"
+                severity="secondary"
+                onClick={() => {
+                  setPedidoSelecionado(row);
+                  setExibirDialogStatus(true);
+                }}
+                tooltip="Atualizar status"
+              />
+            )}
+          />
+          <Column
+            header=""
+            body={(row) => (
+              <Button
+                icon="pi pi-eye"
+                severity="info"
+                onClick={() => carregarDetalhesPedido(row)}
+                tooltip="Ver detalhes"
+              />
+            )}
+          />
+
           {colunasVisiveis.map((col) => (
             <Column
               key={col.field}
@@ -281,32 +307,6 @@ export default function PedidosListagem() {
                 : null;
             }}
             style={{ minWidth: '140px' }}
-          />
-
-          <Column
-            header=""
-            body={(row) => (
-              <Button
-                icon="pi pi-refresh"
-                severity="secondary"
-                onClick={() => {
-                  setPedidoSelecionado(row);
-                  setExibirDialogStatus(true);
-                }}
-                tooltip="Atualizar status"
-              />
-            )}
-          />
-          <Column
-            header=""
-            body={(row) => (
-              <Button
-                icon="pi pi-eye"
-                severity="info"
-                onClick={() => carregarDetalhesPedido(row)}
-                tooltip="Ver detalhes"
-              />
-            )}
           />
         </DataTable>
       </div>

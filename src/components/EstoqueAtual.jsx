@@ -4,24 +4,17 @@ import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Tooltip } from 'primereact/tooltip';
 
-/**
- * Tabela de Estoque Atual.
- * - Exibe a localização como:
- *   • código composto (ex.: "6-B1") quando houver localização física; OU
- *   • nome da área (ex.: "Assistência") quando estiver em área.
- * - O ícone de edição permanece sempre ao lado do texto, sem quebra de linha.
- * - RESTRIÇÃO: se quantidade === 0, não permite "Definir" localização (não exibe o botão).
- *
- * @param {Object}   props
- * @param {Array}    props.data
- * @param {boolean}  props.loading
- * @param {number}   props.total
- * @param {number}   props.first
- * @param {Function} props.onPage
- * @param {Function} props.onEditLocalizacao
- * @param {Function} props.verMovimentacoes
- */
-const EstoqueAtual = ({ data, loading, total, first, onPage, onEditLocalizacao, verMovimentacoes }) => {
+const EstoqueAtual = ({
+                        data,
+                        loading,
+                        total,
+                        first,
+                        onPage,
+                        onEditLocalizacao,
+                        verMovimentacoes,
+                        onExportPdf,
+                        loadingExportPdf,
+                      }) => {
   const [sortField, setSortField] = useState('produto_nome');
   const [sortOrder, setSortOrder] = useState(1);
   const [rows, setRows] = useState(10);
@@ -32,12 +25,12 @@ const EstoqueAtual = ({ data, loading, total, first, onPage, onEditLocalizacao, 
     </span>
   );
 
-  /**
-   * Renderiza a coluna de Localização:
-   * - Se não houver localização e quantidade > 0: mostra botão "Definir".
-   * - Se não houver localização e quantidade === 0: mostra apenas um traço (—).
-   * - Se houver localização: mostra texto + ícone de edição, sempre lado a lado (sem quebra).
-   */
+  const depositoTemplate = (rowData) => {
+    const isZero = Number(rowData?.quantidade ?? 0) === 0;
+    if (isZero) return <span className="text-500">—</span>;
+    return rowData.deposito_nome ?? '—';
+  };
+
   const localizacaoTemplate = (rowData) => {
     const loc = rowData.localizacao;
     const isZero = Number(rowData?.quantidade ?? 0) === 0;
@@ -85,8 +78,18 @@ const EstoqueAtual = ({ data, loading, total, first, onPage, onEditLocalizacao, 
   };
 
   return (
-    <div className="mb-5">
-      <h3 className="mb-3">Estoque Atual por Produto e Depósito</h3>
+    <div className="justify-between items-center mb-4 gap-2">
+      <h3 className="m-0">Estoque Atual por Produto e Depósito</h3>
+
+      <Button
+        icon="pi pi-file-pdf"
+        label={loadingExportPdf ? 'Gerando PDF...' : 'Exportar PDF'}
+        className="p-button-sm p-button-danger ml-auto m-2"
+        style={{ minWidth: 160 }}
+        onClick={onExportPdf}
+        loading={loadingExportPdf}
+        disabled={loadingExportPdf}
+      />
 
       <Tooltip
         target="#tooltip-localizacao"
@@ -109,9 +112,14 @@ const EstoqueAtual = ({ data, loading, total, first, onPage, onEditLocalizacao, 
         lazy
         responsiveLayout="scroll"
         emptyMessage="Nenhum item em estoque"
+        style={{ fontSize: '0.8em' }}
       >
         <Column field="produto_nome" header="Produto" sortable />
-        <Column field="deposito_nome" header="Depósito" sortable />
+
+        <Column field="produto_referencia" header="Referência" sortable />
+
+        <Column field="deposito_nome" header="Depósito" body={depositoTemplate} sortable />
+
         <Column field="quantidade" header="Quantidade" body={quantidadeTemplate} sortable />
         <Column
           header={
