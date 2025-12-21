@@ -16,7 +16,7 @@ import { usePedidosFiltros } from '../hooks/relatorios/usePedidosFiltros';
 import { useDepositos } from '../hooks/relatorios/useDepositos';
 import { useCategoriaAutoComplete } from '../hooks/relatorios/useCategoriaAutoComplete';
 import { useProdutoAutoComplete } from '../hooks/relatorios/useProdutoAutoComplete';
-import { useFornecedorAutoComplete } from '../hooks/relatorios/useFornecedorAutoComplete'; // NOVO
+import { useFornecedorAutoComplete } from '../hooks/relatorios/useFornecedorAutoComplete';
 
 import { RelatoriosHeader } from '../components/relatorios/RelatoriosHeader';
 import { FiltrosChips } from '../components/relatorios/FiltrosChips';
@@ -25,15 +25,14 @@ import { RelatoriosActionsBar } from '../components/relatorios/RelatoriosActions
 import { FiltrosEstoque } from '../components/relatorios/filtros/FiltrosEstoque';
 import { FiltrosPedidos } from '../components/relatorios/filtros/FiltrosPedidos';
 import { FiltrosConsignacoes } from '../components/relatorios/filtros/FiltrosConsignacoes';
+import { FiltrosAssistencias } from '../components/relatorios/filtros/FiltrosAssistencias';
 
-import { OPCOES_STATUS as OPCOES_STATUS_PEDIDO } from '../constants/statusPedido'; // NOVO
+import { OPCOES_STATUS as OPCOES_STATUS_PEDIDO } from '../constants/statusPedido';
 
 export default function Relatorios() {
   const toastRef = useRef(null);
-
   const st = useRelatoriosState();
 
-  // Presets (mantém igual ao original)
   const presetsPedidos = useMemo(
     () => [
       { label: 'Hoje', action: () => st.setPeriodoPedidos([new Date(), new Date()]) },
@@ -61,7 +60,6 @@ export default function Relatorios() {
     [st]
   );
 
-  // Carregamentos condicionados
   const { depositos } = useDepositos({
     enabled: st.tipo === TIPO.ESTOQUE,
     toastRef,
@@ -72,21 +70,16 @@ export default function Relatorios() {
     toastRef,
   });
 
-  // AutoCompletes
   const { catSug, buscarCategorias, clearSug } = useCategoriaAutoComplete();
   const { prodSug, buscarProdutos } = useProdutoAutoComplete();
-
-  // Fornecedor AutoComplete (NOVO)
   const { fornSug, buscarFornecedores, clearSug: clearFornSug } = useFornecedorAutoComplete();
 
-  // Reset por tipo (espelha comportamento atual)
   useEffect(() => {
     if (!st.tipo) return;
     st.resetPorTipo(st.tipo);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [st.tipo]);
 
-  // Validação (mantém na página por ora)
   const validar = useCallback(() => {
     if (st.tipo === TIPO.PEDIDOS) {
       const [ini, fim] = Array.isArray(st.periodoPedidos) ? st.periodoPedidos : [];
@@ -104,25 +97,38 @@ export default function Relatorios() {
       const [ei, ef] = Array.isArray(st.periodoEnvio) ? st.periodoEnvio : [];
       const [vi, vf] = Array.isArray(st.periodoVencimento) ? st.periodoVencimento : [];
       if (ei && ef && ei > ef) {
-        toastRef.current?.show({
-          severity: 'warn',
-          summary: 'Período inválido',
-          detail: 'Envio: início maior que fim.',
-        });
+        toastRef.current?.show({ severity: 'warn', summary: 'Período inválido', detail: 'Envio: início maior que fim.' });
         return false;
       }
       if (vi && vf && vi > vf) {
-        toastRef.current?.show({
-          severity: 'warn',
-          summary: 'Período inválido',
-          detail: 'Vencimento: início maior que fim.',
-        });
+        toastRef.current?.show({ severity: 'warn', summary: 'Período inválido', detail: 'Vencimento: início maior que fim.' });
+        return false;
+      }
+    }
+
+    if (st.tipo === TIPO.ASSISTENCIAS) {
+      const [ai, af] = Array.isArray(st.periodoAbertura) ? st.periodoAbertura : [];
+      const [ci, cf] = Array.isArray(st.periodoConclusao) ? st.periodoConclusao : [];
+
+      if (ai && af && ai > af) {
+        toastRef.current?.show({ severity: 'warn', summary: 'Período inválido', detail: 'Abertura: início maior que fim.' });
+        return false;
+      }
+      if (ci && cf && ci > cf) {
+        toastRef.current?.show({ severity: 'warn', summary: 'Período inválido', detail: 'Conclusão: início maior que fim.' });
         return false;
       }
     }
 
     return true;
-  }, [st.tipo, st.periodoPedidos, st.periodoEnvio, st.periodoVencimento]);
+  }, [
+    st.tipo,
+    st.periodoPedidos,
+    st.periodoEnvio,
+    st.periodoVencimento,
+    st.periodoAbertura,
+    st.periodoConclusao,
+  ]);
 
   const { loading, baixarArquivo } = useRelatorioExport({
     tipo: st.tipo,
@@ -235,6 +241,21 @@ export default function Relatorios() {
                 setStatusConsig={st.setStatusConsig}
                 consolidado={st.consolidado}
                 setConsolidado={st.setConsolidado}
+              />
+            )}
+
+            {st.tipo === TIPO.ASSISTENCIAS && (
+              <FiltrosAssistencias
+                statusAssistencia={st.statusAssistencia}
+                setStatusAssistencia={st.setStatusAssistencia}
+                periodoAbertura={st.periodoAbertura}
+                setPeriodoAbertura={st.setPeriodoAbertura}
+                periodoConclusao={st.periodoConclusao}
+                setPeriodoConclusao={st.setPeriodoConclusao}
+                locaisReparo={st.locaisReparo}
+                setLocaisReparo={st.setLocaisReparo}
+                custoResp={st.custoResp}
+                setCustoResp={st.setCustoResp}
               />
             )}
           </div>
