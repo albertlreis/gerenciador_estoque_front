@@ -9,17 +9,29 @@ import { toIsoDate } from '../../utils/date/dateHelpers';
  */
 export function appendFiltros({ tipo, params, filtros }) {
   if (tipo === TIPO.ESTOQUE) {
-    const { depositoIds, somenteOutlet, categoria, produto } = filtros;
+    const {
+      depositoIds,
+      somenteOutlet,
+      somenteSemEstoque,
+      categoria,
+      produto,
+      fornecedor,
+    } = filtros;
 
     if (depositoIds?.length) depositoIds.forEach((id) => params.append('deposito_ids[]', id));
     if (somenteOutlet) params.append('somente_outlet', 1);
+
+    // NOVOS
+    if (somenteSemEstoque) params.append('somente_sem_estoque', 1);
+    if (fornecedor?.id) params.append('fornecedor_id', fornecedor.id);
+
     if (categoria?.id) params.append('categoria_id', categoria.id);
     if (produto?.id) params.append('produto_id', produto.id);
     return;
   }
 
   if (tipo === TIPO.PEDIDOS) {
-    const { periodoPedidos, clienteId, parceiroId, vendedorId } = filtros;
+    const { periodoPedidos, clienteId, parceiroId, vendedorId, statusPedido } = filtros;
     const [ini, fim] = Array.isArray(periodoPedidos) ? periodoPedidos : [];
 
     if (ini) params.append('data_inicio', toIsoDate(ini));
@@ -27,6 +39,10 @@ export function appendFiltros({ tipo, params, filtros }) {
     if (clienteId) params.append('cliente_id', clienteId);
     if (parceiroId) params.append('parceiro_id', parceiroId);
     if (vendedorId) params.append('vendedor_id', vendedorId);
+
+    // NOVO
+    if (statusPedido != null && statusPedido !== '') params.append('status', statusPedido);
+
     return;
   }
 

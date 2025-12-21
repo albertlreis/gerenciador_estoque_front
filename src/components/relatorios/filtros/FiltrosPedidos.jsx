@@ -13,11 +13,14 @@ export function FiltrosPedidos({
 
                                  clienteId,
                                  setClienteId,
-                                 parceirosId, // (não usar) deixei de propósito? -> remova se não precisar
                                  parceiroId,
                                  setParceiroId,
                                  vendedorId,
                                  setVendedorId,
+
+                                 statusPedido,
+                                 setStatusPedido,
+                                 statusPedidoOptions,
 
                                  clientesOpts,
                                  parceirosOpts,
@@ -50,7 +53,8 @@ export function FiltrosPedidos({
         )}
       </div>
 
-      <div className="field col-12 md:col-4">
+      {/* 4 colunas no desktop (md) */}
+      <div className="field col-12 md:col-3">
         <label className="mb-2 block">Cliente</label>
         <Dropdown
           value={clienteId}
@@ -64,7 +68,7 @@ export function FiltrosPedidos({
         />
       </div>
 
-      <div className="field col-12 md:col-4">
+      <div className="field col-12 md:col-3">
         <label className="mb-2 block">Parceiro</label>
         <Dropdown
           value={parceiroId}
@@ -78,13 +82,27 @@ export function FiltrosPedidos({
         />
       </div>
 
-      <div className="field col-12 md:col-4">
+      <div className="field col-12 md:col-3">
         <label className="mb-2 block">Vendedor</label>
         <Dropdown
           value={vendedorId}
           onChange={(e) => setVendedorId(e.value)}
           options={vendedoresOpts}
           placeholder={loadingFiltrosPedidos ? 'Carregando...' : 'Todos'}
+          filter
+          showClear
+          className="w-full"
+          disabled={loadingFiltrosPedidos}
+        />
+      </div>
+
+      <div className="field col-12 md:col-3">
+        <label className="mb-2 block">Status</label>
+        <Dropdown
+          value={statusPedido}
+          onChange={(e) => setStatusPedido(e.value)}
+          options={statusPedidoOptions}
+          placeholder="Todos"
           filter
           showClear
           className="w-full"

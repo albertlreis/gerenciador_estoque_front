@@ -16,6 +16,7 @@ import { usePedidosFiltros } from '../hooks/relatorios/usePedidosFiltros';
 import { useDepositos } from '../hooks/relatorios/useDepositos';
 import { useCategoriaAutoComplete } from '../hooks/relatorios/useCategoriaAutoComplete';
 import { useProdutoAutoComplete } from '../hooks/relatorios/useProdutoAutoComplete';
+import { useFornecedorAutoComplete } from '../hooks/relatorios/useFornecedorAutoComplete'; // NOVO
 
 import { RelatoriosHeader } from '../components/relatorios/RelatoriosHeader';
 import { FiltrosChips } from '../components/relatorios/FiltrosChips';
@@ -24,6 +25,8 @@ import { RelatoriosActionsBar } from '../components/relatorios/RelatoriosActions
 import { FiltrosEstoque } from '../components/relatorios/filtros/FiltrosEstoque';
 import { FiltrosPedidos } from '../components/relatorios/filtros/FiltrosPedidos';
 import { FiltrosConsignacoes } from '../components/relatorios/filtros/FiltrosConsignacoes';
+
+import { OPCOES_STATUS as OPCOES_STATUS_PEDIDO } from '../constants/statusPedido'; // NOVO
 
 export default function Relatorios() {
   const toastRef = useRef(null);
@@ -73,6 +76,9 @@ export default function Relatorios() {
   const { catSug, buscarCategorias, clearSug } = useCategoriaAutoComplete();
   const { prodSug, buscarProdutos } = useProdutoAutoComplete();
 
+  // Fornecedor AutoComplete (NOVO)
+  const { fornSug, buscarFornecedores, clearSug: clearFornSug } = useFornecedorAutoComplete();
+
   // Reset por tipo (espelha comportamento atual)
   useEffect(() => {
     if (!st.tipo) return;
@@ -80,7 +86,7 @@ export default function Relatorios() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [st.tipo]);
 
-  // Validação (por enquanto mantém na página)
+  // Validação (mantém na página por ora)
   const validar = useCallback(() => {
     if (st.tipo === TIPO.PEDIDOS) {
       const [ini, fim] = Array.isArray(st.periodoPedidos) ? st.periodoPedidos : [];
@@ -165,6 +171,8 @@ export default function Relatorios() {
                 setDepositoIds={st.setDepositoIds}
                 somenteOutlet={st.somenteOutlet}
                 setSomenteOutlet={st.setSomenteOutlet}
+                somenteSemEstoque={st.somenteSemEstoque}
+                setSomenteSemEstoque={st.setSomenteSemEstoque}
                 categoria={st.categoria}
                 setCategoria={st.setCategoria}
                 catInput={st.catInput}
@@ -180,6 +188,17 @@ export default function Relatorios() {
                 setProduto={st.setProduto}
                 prodSug={prodSug}
                 buscarProdutos={buscarProdutos}
+                fornecedor={st.fornecedor}
+                setFornecedor={st.setFornecedor}
+                fornInput={st.fornInput}
+                setFornInput={st.setFornInput}
+                fornSug={fornSug}
+                buscarFornecedores={buscarFornecedores}
+                onClearFornecedor={() => {
+                  st.setFornecedor(null);
+                  st.setFornInput('');
+                  clearFornSug();
+                }}
               />
             )}
 
@@ -195,6 +214,9 @@ export default function Relatorios() {
                 setParceiroId={st.setParceiroId}
                 vendedorId={st.vendedorId}
                 setVendedorId={st.setVendedorId}
+                statusPedido={st.statusPedido}
+                setStatusPedido={st.setStatusPedido}
+                statusPedidoOptions={OPCOES_STATUS_PEDIDO}
                 clientesOpts={clientesOpts}
                 parceirosOpts={parceirosOpts}
                 vendedoresOpts={vendedoresOpts}
