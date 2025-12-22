@@ -38,6 +38,13 @@ import LeituraEstoque from "./pages/LeituraEstoque";
 import Fornecedores from "./pages/Fornecedores";
 import Parceiros from "./pages/Parceiros";
 import ContasPagar from './pages/ContasPagar';
+import ComunicacaoDashboard from "./pages/ComunicacaoDashboard";
+import ComunicacaoTemplates from "./pages/ComunicacaoTemplates";
+import ComunicacaoTemplateForm from "./pages/ComunicacaoTemplateForm";
+import ComunicacaoRequests from "./pages/ComunicacaoRequests";
+import ComunicacaoRequestShow from "./pages/ComunicacaoRequestShow";
+import ComunicacaoMessages from "./pages/ComunicacaoMessages";
+import ComunicacaoMessageShow from "./pages/ComunicacaoMessageShow";
 
 const renderProtectedRoute = (element, permissoes) => (
   <PrivateRoute element={<PermissaoRoute element={element} permissoes={permissoes}/>}/>
@@ -133,6 +140,43 @@ const App = () => {
         path="/financeiro/contas-pagar"
         element={renderProtectedRoute(<ContasPagar/>, PERMISSOES.FINANCEIRO.CONTAS_PAGAR.VISUALIZAR)}
       />
+
+      {/* Comunicação */}
+      <Route
+        path="/comunicacao"
+        element={renderProtectedRoute(<ComunicacaoDashboard />, PERMISSOES.COMUNICACAO?.VISUALIZAR)}
+      />
+      <Route
+        path="/comunicacao/templates"
+        element={renderProtectedRoute(<ComunicacaoTemplates />, PERMISSOES.COMUNICACAO?.TEMPLATES)}
+      />
+      <Route
+        path="/comunicacao/templates/novo"
+        element={renderProtectedRoute(<ComunicacaoTemplateForm mode="create" />, PERMISSOES.COMUNICACAO?.TEMPLATES)}
+      />
+      <Route
+        path="/comunicacao/templates/:id"
+        element={renderProtectedRoute(<ComunicacaoTemplateForm mode="edit" />, PERMISSOES.COMUNICACAO?.TEMPLATES)}
+      />
+
+      <Route
+        path="/comunicacao/requests"
+        element={renderProtectedRoute(<ComunicacaoRequests />, PERMISSOES.COMUNICACAO?.VISUALIZAR)}
+      />
+      <Route
+        path="/comunicacao/requests/:id"
+        element={renderProtectedRoute(<ComunicacaoRequestShow />, PERMISSOES.COMUNICACAO?.VISUALIZAR)}
+      />
+
+      <Route
+        path="/comunicacao/messages"
+        element={renderProtectedRoute(<ComunicacaoMessages />, PERMISSOES.COMUNICACAO?.VISUALIZAR)}
+      />
+      <Route
+        path="/comunicacao/messages/:id"
+        element={renderProtectedRoute(<ComunicacaoMessageShow />, PERMISSOES.COMUNICACAO?.VISUALIZAR)}
+      />
+
     </Routes>
   );
 };

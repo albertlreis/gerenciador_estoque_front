@@ -144,4 +144,9 @@ export const PERMISSOES = {
     },
   },
 
+  COMUNICACAO: {
+    VISUALIZAR: 'comunicacao.visualizar',
+    TEMPLATES: 'comunicacao.templates',
+  },
+
 };

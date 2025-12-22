@@ -229,6 +229,38 @@ const menuItems = (navigate, has) => {
       ].filter(Boolean)
     },
 
+    has(PERMISSOES.COMUNICACAO?.VISUALIZAR) && {
+      label: 'Comunicação',
+      key: 'comunicacao',
+      icon: 'pi pi-fw pi-megaphone',
+      items: [
+        {
+          label: 'Dashboard',
+          key: 'comunicacao-dashboard',
+          icon: 'pi pi-fw pi-chart-line',
+          command: () => navigate('/comunicacao')
+        },
+        has(PERMISSOES.COMUNICACAO?.TEMPLATES) && {
+          label: 'Templates',
+          key: 'comunicacao-templates',
+          icon: 'pi pi-fw pi-file-edit',
+          command: () => navigate('/comunicacao/templates')
+        },
+        {
+          label: 'Requests',
+          key: 'comunicacao-requests',
+          icon: 'pi pi-fw pi-send',
+          command: () => navigate('/comunicacao/requests')
+        },
+        {
+          label: 'Mensagens',
+          key: 'comunicacao-messages',
+          icon: 'pi pi-fw pi-inbox',
+          command: () => navigate('/comunicacao/messages')
+        }
+      ].filter(Boolean)
+    },
+
     {
       label: 'Monitoramento',
       key: 'monitoramento',
