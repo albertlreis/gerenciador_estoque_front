@@ -4,9 +4,7 @@ import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 
-import ClienteForm from './ClienteForm';
-import apiEstoque from '../services/apiEstoque';
-import { extractApiError } from '../utils/extractApiError';
+import ClienteForm from '../components/cliente/ClienteForm';
 
 const NovoCarrinhoDialog = ({
                               visible,
@@ -19,22 +17,6 @@ const NovoCarrinhoDialog = ({
                             }) => {
   const [showClienteDialog, setShowClienteDialog] = useState(false);
   const toast = useRef(null);
-
-  const handleClienteCriado = async (clienteData) => {
-    try {
-      const { data: novoCliente } = await apiEstoque.post('/clientes', clienteData);
-      setClientes?.((prev) => Array.isArray(prev) ? [...prev, novoCliente] : [novoCliente]);
-      setClienteSelecionado?.(novoCliente.id);
-      toast.current?.show({ severity: 'success', summary: 'Cliente criado', detail: 'Novo cliente cadastrado com sucesso.', life: 2500 });
-      setShowClienteDialog(false);
-      return novoCliente;
-    } catch (error) {
-      const { title, message } = extractApiError(error);
-      toast.current?.show({ severity: 'error', summary: title, detail: message, life: 4000 });
-      // rethrow para o ClienteForm tratar fieldErrors também
-      throw error;
-    }
-  };
 
   return (
     <>
@@ -86,7 +68,19 @@ const NovoCarrinhoDialog = ({
       >
         <ClienteForm
           initialData={{}}
-          onSubmit={handleClienteCriado}
+          onSaved={(novoCliente) => {
+            setClientes?.((prev) => Array.isArray(prev) ? [...prev, novoCliente] : [novoCliente]);
+            setClienteSelecionado?.(novoCliente.id);
+
+            toast.current?.show({
+              severity: 'success',
+              summary: 'Cliente criado',
+              detail: 'Novo cliente cadastrado com sucesso.',
+              life: 2500,
+            });
+
+            setShowClienteDialog(false);
+          }}
           onCancel={() => setShowClienteDialog(false)}
         />
       </Dialog>

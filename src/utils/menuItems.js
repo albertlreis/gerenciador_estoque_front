@@ -124,17 +124,17 @@ const menuItems = (navigate, has) => {
           icon: 'pi pi-fw pi-sort-alt',
           command: () => navigate('/movimentacoes-estoque')
         },
-        has(PERMISSOES.ESTOQUE?.CAIXA) && {
-          label: 'Caixa (Leitor)',
-          key: 'estoque-caixa',
+        has(PERMISSOES.ESTOQUE?.MOVIMENTAR) && {
+          label: 'Leitura de Estoque',
+          key: 'estoque-leitura',
           icon: 'pi pi-fw pi-barcode',
-          command: () => navigate('/estoque/caixa')
+          command: () => navigate('/estoque/leitura')
         },
-        has(PERMISSOES.ESTOQUE?.TRANSFERIR) && {
+        has(PERMISSOES.ESTOQUE?.MOVIMENTAR) && {
           label: 'Transferir entre Depósitos',
           key: 'estoque-transferir',
           icon: 'pi pi-fw pi-external-link',
-          command: () => navigate('/estoque/caixa?mode=transfer')
+          command: () => navigate('/estoque/leitura?mode=transfer')
         },
         {
           label: 'Reservas Pendentes',
@@ -226,6 +226,38 @@ const menuItems = (navigate, has) => {
           icon: 'pi pi-fw pi-verified',
           command: () => navigate('/assistencias/autorizadas')
         },
+      ].filter(Boolean)
+    },
+
+    has(PERMISSOES.COMUNICACAO?.VISUALIZAR) && {
+      label: 'Comunicação',
+      key: 'comunicacao',
+      icon: 'pi pi-fw pi-megaphone',
+      items: [
+        {
+          label: 'Dashboard',
+          key: 'comunicacao-dashboard',
+          icon: 'pi pi-fw pi-chart-line',
+          command: () => navigate('/comunicacao')
+        },
+        has(PERMISSOES.COMUNICACAO?.TEMPLATES) && {
+          label: 'Templates',
+          key: 'comunicacao-templates',
+          icon: 'pi pi-fw pi-file-edit',
+          command: () => navigate('/comunicacao/templates')
+        },
+        {
+          label: 'Requests',
+          key: 'comunicacao-requests',
+          icon: 'pi pi-fw pi-send',
+          command: () => navigate('/comunicacao/requests')
+        },
+        {
+          label: 'Mensagens',
+          key: 'comunicacao-messages',
+          icon: 'pi pi-fw pi-inbox',
+          command: () => navigate('/comunicacao/messages')
+        }
       ].filter(Boolean)
     },
 

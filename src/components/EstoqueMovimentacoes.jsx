@@ -128,6 +128,7 @@ const EstoqueMovimentacoes = ({ data, loading, total, first, onPage }) => {
         lazy
         responsiveLayout="scroll"
         emptyMessage="Nenhuma movimentação encontrada"
+        style={{ fontSize: '0.8em' }}
       >
         <Column header="Data" body={dataTemplate} sortable field="data_movimentacao" />
         <Column
@@ -142,6 +143,16 @@ const EstoqueMovimentacoes = ({ data, loading, total, first, onPage }) => {
             >
               {rowData.produto_nome}
             </div>
+          )}
+        />
+        <Column
+          field="produto_referencia"
+          header="Referência"
+          sortable
+          body={(rowData) => (
+            <span className="whitespace-nowrap">
+              {rowData.produto_referencia || '—'}
+            </span>
           )}
         />
         <Column header="Movimentação" body={movimentacaoTemplate} />

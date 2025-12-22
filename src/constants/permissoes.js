@@ -82,8 +82,8 @@ export const PERMISSOES = {
   },
   ESTOQUE: {
     MOVIMENTACAO: 'estoque.movimentacao',
+    MOVIMENTAR: 'estoque.movimentar',
     HISTORICO: 'estoque.historico',
-    CAIXA: 'estoque.caixa',
     TRANSFERIR: 'estoque.transferir',
     LOGS: 'estoque.logs',
   },
@@ -142,6 +142,11 @@ export const PERMISSOES = {
       EXPORTAR_EXCEL: 'contas.pagar.exportar_excel',
       EXPORTAR_PDF:   'contas.pagar.exportar_pdf',
     },
+  },
+
+  COMUNICACAO: {
+    VISUALIZAR: 'comunicacao.visualizar',
+    TEMPLATES: 'comunicacao.templates',
   },
 
 };

@@ -8,159 +8,133 @@ import { Tag } from 'primereact/tag';
 import { Accordion, AccordionTab } from 'primereact/accordion';
 import { Button } from 'primereact/button';
 
-const ProdutoImportadoCard = ({ item, index, categorias, depositos, onChangeItem }) => {
+/**
+ * Componente responsável por exibir um produto importado do PDF,
+ * permitindo revisar categoria, depósito, dimensões e atributos.
+ *
+ * Regras:
+ * - Produtos com id_variacao (já cadastrados) têm atributos/nome/ref/categoria bloqueados.
+ * - Quantidade, depósito e valores podem ser ajustados.
+ * - Usuário pode remover qualquer item antes de confirmar.
+ */
+export default function ProdutoImportadoCard({
+                                               item = {},
+                                               index,
+                                               categorias = [],
+                                               depositos = [],
+                                               onChangeItem,
+                                               onRemove,
+                                             }) {
+  console.log(item)
   const quantidade = Number(item.quantidade) || 0;
-  const totalItem = Number(item.valor) || 0;
+  const totalItem = Number(item.preco_unitario) || 0;
   const valorUnitario = quantidade > 0 ? totalItem / quantidade : 0;
-  const total = totalItem.toLocaleString('pt-BR', {
+
+  const totalFormatado = totalItem.toLocaleString('pt-BR', {
     style: 'currency',
-    currency: 'BRL'
+    currency: 'BRL',
   });
 
+  const atributos = item.atributos || {};
+  const fixos = item.fixos || {};
+
+  const isCadastrado = !!item.id_variacao;
+
+  // ==========================================================
+  // Atualizações de campos
+  // ==========================================================
+
   const handleFixosChange = (campo, value) => {
-    const atualizados = { ...item.fixos, [campo]: value };
-    onChangeItem(index, 'fixos', atualizados);
+    if (isCadastrado) return; // dimensões bloqueadas para cadastrados
+    onChangeItem(index, 'fixos', { ...fixos, [campo]: value });
   };
 
-  const handleAtributoChange = (grupo, campo, value) => {
-    const atualizados = {
-      ...item.atributos,
-      [grupo]: {
-        ...item.atributos?.[grupo],
-        [campo]: value,
-      },
-    };
-    onChangeItem(index, 'atributos', atualizados);
+  const atualizarAtributo = (campo, valor) => {
+    if (isCadastrado) return; // atributos bloqueados para cadastrados
+    onChangeItem(index, 'atributos', { ...atributos, [campo]: valor });
   };
 
-  const handleRenomearAtributo = (grupo, campoAntigo, novoNome) => {
-    if (!novoNome || novoNome === campoAntigo) return;
+  const categoriasOptions = categorias.map((c) => ({
+    label: c.nome,
+    value: Number(c.id),
+  }));
 
-    const grupoAtual = { ...item.atributos?.[grupo] };
-    const valor = grupoAtual[campoAntigo];
-    delete grupoAtual[campoAntigo];
-    grupoAtual[novoNome] = valor;
-
-    onChangeItem(index, 'atributos', {
-      ...item.atributos,
-      [grupo]: grupoAtual
-    });
-  };
-
-  const handleAdicionarAtributo = (grupo) => {
-    const grupoAtual = { ...item.atributos?.[grupo] } || {};
-    const novoNome = `atributo_${Object.keys(grupoAtual).length + 1}`;
-    grupoAtual[novoNome] = '';
-    onChangeItem(index, 'atributos', {
-      ...item.atributos,
-      [grupo]: grupoAtual
-    });
-  };
-
-  const handleRemoverAtributo = (grupo, campo) => {
-    const grupoAtual = { ...item.atributos?.[grupo] };
-    delete grupoAtual[campo];
-    onChangeItem(index, 'atributos', {
-      ...item.atributos,
-      [grupo]: grupoAtual
-    });
-  };
+  const depositosOptions = depositos.map((d) => ({
+    label: d.nome,
+    value: Number(d.id),
+  }));
 
   return (
     <Card
-      title={`Produto ${index + 1}: ${item.nome || item.descricao?.slice(0, 50)}`}
+      title={`Produto ${index + 1}: ${item.nome || item.descricao || ''}`}
       className={`mb-3 border-left-4 shadow-sm ${
-        item.tipo === 'PRONTA ENTREGA' ? 'bg-blue-50' : 'bg-pink-50'
-      } ${!item.id_categoria || !item.id_variacao ? 'border-red-300' : 'border-green-300'}`}
+        item.id_variacao ? 'bg-green-50' : 'bg-yellow-50'
+      } ${!item.id_categoria ? 'border-red-300' : 'border-green-300'}`}
     >
       <div className="flex flex-column md:flex-row justify-between gap-4 p-3">
+        {/* COLUNA PRINCIPAL */}
         <div className="flex-1">
+          {/* Informações principais */}
           <fieldset className="mb-3">
-            <legend className="text-sm font-medium text-gray-600">Informações do Produto</legend>
+            <legend className="text-sm font-medium text-gray-600">
+              Informações do Produto
+            </legend>
+
             <div className="formgrid grid">
+              {/* Categoria */}
               <div className="field col-12 md:col-3">
                 <label className="block text-xs font-medium mb-1">Categoria</label>
                 <Dropdown
-                  value={item.id_categoria !== undefined && item.id_categoria !== null ? Number(item.id_categoria) : null}
-                  options={categorias}
-                  optionLabel="nome"
-                  optionValue="id"
+                  value={item.id_categoria || null}
+                  options={categoriasOptions}
                   placeholder="Selecione"
-                  className={`w-full p-inputtext-sm ${!item.id_categoria ? 'p-invalid' : ''}`}
-                  aria-label="Categoria"
+                  className={`w-full p-inputtext-sm ${
+                    !item.id_categoria ? 'p-invalid' : ''
+                  }`}
+                  onChange={(e) => !isCadastrado && onChangeItem(index, 'id_categoria', e.value)}
                   filter
-                  filterBy="nome"
-                  onChange={(e) => onChangeItem(index, 'id_categoria', e.value)}
+                  disabled={isCadastrado}
                 />
               </div>
 
+              {/* Referência */}
               <div className="field col-12 md:col-3">
                 <label className="block text-xs font-medium mb-1">Referência</label>
                 <InputText
                   value={item.ref || ''}
                   onChange={(e) => onChangeItem(index, 'ref', e.target.value)}
                   className="w-full p-inputtext-sm"
-                  aria-label="Referência"
+                  disabled={isCadastrado}
                 />
               </div>
 
+              {/* Nome */}
               <div className="field col-12 md:col-6">
                 <label className="block text-xs font-medium mb-1">Nome</label>
                 <InputText
                   value={item.nome || ''}
                   onChange={(e) => onChangeItem(index, 'nome', e.target.value)}
                   className="w-full p-inputtext-sm"
-                  aria-label="Nome do Produto"
+                  disabled={isCadastrado}
                 />
               </div>
 
-              <div className="field col-12 md:col-4">
-                <label className="block text-xs font-medium mb-1">Tipo</label>
-                <Dropdown
-                  value={item.tipo || ''}
-                  options={[
-                    { label: 'PEDIDO', value: 'PEDIDO' },
-                    { label: 'PRONTA ENTREGA', value: 'PRONTA ENTREGA' }
-                  ]}
-                  onChange={(e) => onChangeItem(index, 'tipo', e.value)}
-                  className="w-full p-inputtext-sm"
-                  placeholder="Selecione"
-                  aria-label="Tipo do Produto"
-                />
-              </div>
-
-              {item.tipo === 'PEDIDO' && (
-                <div className="field col-12 md:col-4 align-items-center">
-                  <label className="block text-xs font-medium mb-1">&nbsp;</label>
-                  <div className="flex align-items-center">
-                    <input
-                      type="checkbox"
-                      id={`enviar_fabrica_${index}`}
-                      checked={item.enviar_fabrica || false}
-                      onChange={(e) => onChangeItem(index, 'enviar_fabrica', e.target.checked)}
-                      className="mr-2"
-                    />
-                    <label htmlFor={`enviar_fabrica_${index}`} className="text-sm">
-                      Solicitar produção na fábrica
-                    </label>
-                  </div>
-                </div>
-              )}
-
+              {/* Depósito */}
               <div className="field col-12 md:col-4">
                 <label className="block text-xs font-medium mb-1">Depósito</label>
                 <Dropdown
                   value={item.id_deposito || null}
-                  options={depositos}
-                  optionLabel="nome"
-                  optionValue="id"
+                  options={depositosOptions}
                   placeholder="Selecione"
-                  className={`w-full p-inputtext-sm ${!item.id_deposito ? 'p-invalid' : ''}`}
+                  className={`w-full p-inputtext-sm ${
+                    !item.id_deposito ? '' : ''
+                  }`}
                   onChange={(e) => onChangeItem(index, 'id_deposito', e.value)}
                   filter
                 />
               </div>
 
+              {/* Quantidade */}
               <div className="field col-6 md:col-2">
                 <label className="block text-xs font-medium mb-1">Quantidade</label>
                 <InputNumber
@@ -168,138 +142,129 @@ const ProdutoImportadoCard = ({ item, index, categorias, depositos, onChangeItem
                   onValueChange={(e) => onChangeItem(index, 'quantidade', e.value)}
                   min={1}
                   className="w-full p-inputtext-sm"
-                  aria-label="Quantidade"
                 />
               </div>
 
+              {/* Valor Unitário */}
               <div className="field col-6 md:col-3">
                 <label className="block text-xs font-medium mb-1">Valor Unitário</label>
                 <InputNumber
                   value={valorUnitario}
-                  onValueChange={(e) => {
-                    const novoUnitario = e.value || 0;
-                    const novoTotal = novoUnitario * (item.quantidade || 0);
-                    onChangeItem(index, 'valor', parseFloat(novoTotal.toFixed(2)));
-                  }}
                   mode="currency"
                   currency="BRL"
                   locale="pt-BR"
+                  onValueChange={(e) => {
+                    const novoUnitario = e.value || 0;
+                    const novaQuantidade = Number(item.quantidade || 0) || 1;
+                    const novoTotal = novoUnitario * novaQuantidade;
+                    onChangeItem(index, 'valor', Number(novoTotal.toFixed(2)));
+                  }}
                   className="w-full p-inputtext-sm"
-                  aria-label="Valor Unitário"
                 />
               </div>
             </div>
           </fieldset>
 
+          {/* Dimensões */}
           <fieldset className="mb-3">
             <legend className="text-sm font-medium text-gray-600">Dimensões</legend>
+
             <div className="formgrid grid">
               {['largura', 'profundidade', 'altura'].map((campo) => (
                 <div key={campo} className="field col-4">
                   <label className="block text-xs font-medium mb-1">
-                    {campo.charAt(0).toUpperCase() + campo.slice(1)}
+                    {campo[0].toUpperCase() + campo.substring(1)}
                   </label>
+
                   <InputNumber
-                    value={item.fixos?.[campo] || null}
+                    value={fixos[campo] || null}
                     onValueChange={(e) => handleFixosChange(campo, e.value)}
                     className="w-full p-inputtext-sm"
-                    aria-label={campo}
+                    disabled={isCadastrado}
                   />
                 </div>
               ))}
             </div>
           </fieldset>
 
-          {item.atributos && (
+          {/* ATRIBUTOS */}
+          {atributos && Object.keys(atributos).length > 0 && (
             <Accordion multiple activeIndex={[0]}>
-              {['cores', 'tecidos', 'acabamentos', 'observacoes'].map((grupo) =>
-                item.atributos?.[grupo] ? (
-                  <AccordionTab
-                    key={grupo}
-                    header={grupo.charAt(0).toUpperCase() + grupo.slice(1)}
-                  >
-                    <div className="formgrid grid">
-                      {Object.entries(item.atributos[grupo]).map(([campo, valor]) => (
-                        <div key={`${grupo}-${campo}`} className="field col-12 md:col-6">
-                          <div className="p-2 border-1 surface-border border-round relative">
-                            <Button
-                              icon="pi pi-times"
-                              className="p-button-rounded p-button-sm p-button-text absolute top-0 right-0"
-                              onClick={() => handleRemoverAtributo(grupo, campo)}
-                              tooltip="Remover atributo"
-                              tooltipOptions={{ position: 'top' }}
-                            />
-                            <label className="block text-xs font-medium mb-1">Nome do Atributo</label>
-                            <InputText
-                              value={campo}
-                              onChange={(e) =>
-                                handleRenomearAtributo(grupo, campo, e.target.value)
-                              }
-                              className="w-full p-inputtext-sm mb-2"
-                              placeholder="Ex: cor_inox"
-                            />
-                            <label className="block text-xs font-medium mb-1">Valor</label>
-                            {grupo === 'observacoes' ? (
-                              <InputTextarea
-                                value={valor}
-                                onChange={(e) =>
-                                  handleAtributoChange(grupo, campo, e.target.value)
-                                }
-                                className="w-full p-inputtextarea-sm"
-                                rows={2}
-                              />
-                            ) : (
-                              <InputText
-                                value={valor}
-                                onChange={(e) =>
-                                  handleAtributoChange(grupo, campo, e.target.value)
-                                }
-                                className="w-full p-inputtext-sm"
-                                placeholder="Ex: azul"
-                              />
-                            )}
-                          </div>
-                        </div>
-                      ))}
+              <AccordionTab header="Atributos do Produto">
+                <div className="formgrid grid">
+                  {Object.entries(atributos).map(([key, value]) => (
+                    <div key={key} className="field col-12 md:col-6">
+                      <label className="block text-xs font-medium mb-1">
+                        {key.replace('_', ' ').toUpperCase()}
+                      </label>
+
+                      {key === 'observacao' ? (
+                        <InputTextarea
+                          value={value || ''}
+                          rows={2}
+                          className="w-full"
+                          onChange={(e) => atualizarAtributo(key, e.target.value)}
+                          disabled={isCadastrado}
+                        />
+                      ) : (
+                        <InputText
+                          value={value || ''}
+                          className="w-full p-inputtext-sm"
+                          onChange={(e) => atualizarAtributo(key, e.target.value)}
+                          disabled={isCadastrado}
+                        />
+                      )}
                     </div>
-                    <div className="mt-2">
-                      <Button
-                        icon="pi pi-plus"
-                        label="Adicionar atributo"
-                        className="p-button-sm p-button-text"
-                        onClick={() => handleAdicionarAtributo(grupo)}
-                      />
-                    </div>
-                  </AccordionTab>
-                ) : null
-              )}
+                  ))}
+                </div>
+              </AccordionTab>
             </Accordion>
           )}
         </div>
 
+        {/* COLUNA LATERAL */}
         <div className="flex flex-column gap-2 text-right min-w-48 md:w-64 justify-between">
           <div>
-            <span className="block text-sm font-medium">Total: {total}</span>
+            <span className="block text-sm font-medium">Total: {totalFormatado}</span>
+
             <div className="mt-2">
               {item.id_variacao ? (
-                <Tag severity="success" value="Produto vinculado" />
+                <Tag
+                  severity="success"
+                  value="Produto já cadastrado"
+                  style={{ background: '#16a34a', color: 'white', fontWeight: 'bold' }}
+                />
               ) : (
-                <Tag severity="warning" value="Produto não cadastrado" />
+                <Tag
+                  severity="warning"
+                  value="Produto novo"
+                  style={{ background: '#f59e0b', color: 'black', fontWeight: 'bold' }}
+                />
               )}
             </div>
+
             {!item.id_categoria && (
               <div className="mt-2">
-                <Tag severity="danger" value="Categoria obrigatória" />
+                <Tag
+                  severity="danger"
+                  value="Categoria obrigatória"
+                  style={{ background: '#dc2626', color: 'white' }}
+                />
               </div>
             )}
-            {item.enviar_fabrica && (
-              <Tag severity="info" value="Encomenda para fábrica" className="mt-2" />
-            )}
+          </div>
+
+          <div className="mt-3 flex justify-content-end">
+            <Button
+              type="button"
+              icon="pi pi-trash"
+              label="Remover"
+              className="p-button-text p-button-danger"
+              onClick={() => onRemove?.(index)}
+            />
           </div>
         </div>
       </div>
     </Card>
   );
-};
-
-export default ProdutoImportadoCard;
+}

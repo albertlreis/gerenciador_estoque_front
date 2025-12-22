@@ -35,6 +35,8 @@ const MovimentacoesEstoque = () => {
   const [estoqueAtual, setEstoqueAtual] = useState([]);
   const [movimentacoes, setMovimentacoes] = useState([]);
   const [depositos, setDepositos] = useState([]);
+  const [categorias, setCategorias] = useState([]);
+  const [fornecedores, setFornecedores] = useState([]);
 
   const [loadingEstoque, setLoadingEstoque] = useState(false);
   const [loadingMovs, setLoadingMovs] = useState(false);
@@ -46,6 +48,7 @@ const MovimentacoesEstoque = () => {
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
   const [movsProduto, setMovsProduto] = useState([]);
   const [loadingDialog, setLoadingDialog] = useState(false);
+  const [loadingExportPdf, setLoadingExportPdf] = useState(false);
 
   const [resumo, setResumo] = useState({
     totalProdutos: 0,
@@ -56,6 +59,8 @@ const MovimentacoesEstoque = () => {
   const [filtros, setFiltros] = useState({
     tipo: null,
     deposito: null,
+    categoria: null,
+    fornecedor: null,
     produto: '',
     periodo: null,
     zerados: false,
@@ -78,6 +83,8 @@ const MovimentacoesEstoque = () => {
 
   useEffect(() => {
     fetchDepositos();
+    fetchCategorias();
+    fetchFornecedores();
   }, []);
 
   useEffect(() => {
@@ -167,12 +174,75 @@ const MovimentacoesEstoque = () => {
     }
   };
 
+  const exportarEstoquePdf = async () => {
+    if (loadingExportPdf) return;
+
+    setLoadingExportPdf(true);
+
+    try {
+      const formatDate = (d) =>
+        d instanceof Date ? d.toISOString().split('T')[0] : null;
+
+      const params = {
+        ...filtros,
+        zerados: filtros.zerados ? 1 : 0,
+        periodo:
+          filtros.periodo?.length === 2 && filtros.periodo[1]
+            ? [formatDate(filtros.periodo[0]), formatDate(filtros.periodo[1])]
+            : null,
+        export: 'pdf',
+      };
+
+      const response = await apiEstoque.get('/estoque/atual', {
+        params,
+        responseType: 'blob',
+      });
+
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'estoque-atual.pdf';
+      a.click();
+
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Erro',
+        detail: 'Erro ao exportar estoque em PDF',
+        life: 3000,
+      });
+    } finally {
+      setLoadingExportPdf(false);
+    }
+  };
+
   const fetchDepositos = async () => {
     try {
       const res = await apiEstoque.get('/depositos');
       setDepositos(res.data.map((dep) => ({ label: dep.nome, value: dep.id })));
     } catch (err) {
       console.error('Erro ao carregar depósitos');
+    }
+  };
+
+  const fetchCategorias = async () => {
+    try {
+      const res = await apiEstoque.get('/categorias');
+      setCategorias(res.data.map((c) => ({ label: c.nome, value: c.id })));
+    } catch (err) {
+      console.error('Erro ao carregar categorias');
+    }
+  };
+
+  const fetchFornecedores = async () => {
+    try {
+      const res = await apiEstoque.get('/fornecedores');
+      setFornecedores(res.data.map((f) => ({ label: f.nome, value: f.id })));
+    } catch (err) {
+      console.error('Erro ao carregar fornecedores');
     }
   };
 
@@ -191,7 +261,17 @@ const MovimentacoesEstoque = () => {
     setEstoqueAtual([]);
     setResumo({ totalProdutos: 0, totalPecas: 0, totalDepositos: 0 });
     setPaginaEstoque(1);
-    const reset = { tipo: null, deposito: null, produto: '', periodo: null, zerados: false };
+
+    const reset = {
+      tipo: null,
+      deposito: null,
+      categoria: null,
+      fornecedor: null,
+      produto: '',
+      periodo: null,
+      zerados: false,
+    };
+
     setFiltros(reset);
     localStorage.removeItem(LOCAL_STORAGE_KEY);
   };
@@ -246,6 +326,8 @@ const MovimentacoesEstoque = () => {
           filtros={filtros}
           setFiltros={setFiltros}
           depositos={depositos}
+          categorias={categorias}
+          fornecedores={fornecedores}
           tipos={tipos}
           onBuscar={handleBuscar}
           onLimpar={handleLimpar}
@@ -286,11 +368,15 @@ const MovimentacoesEstoque = () => {
                   first: e.first,
                   rows: e.rows,
                   sortField: e.sortField,
-                  sortOrder: e.sortOrder
+                  sortOrder: e.sortOrder,
                 });
               }}
-              onEditLocalizacao={(estoqueId, localizacaoId) => abrirDialogLocalizacao(estoqueId, localizacaoId)}
+              onEditLocalizacao={(estoqueId, localizacaoId) =>
+                abrirDialogLocalizacao(estoqueId, localizacaoId)
+              }
               verMovimentacoes={verMovimentacoes}
+              onExportPdf={exportarEstoquePdf}
+              loadingExportPdf={loadingExportPdf}
             />
           </AccordionTab>
           <AccordionTab header="Movimentações Recentes">
