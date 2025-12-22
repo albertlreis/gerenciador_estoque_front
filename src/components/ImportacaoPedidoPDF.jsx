@@ -18,8 +18,8 @@ import ProdutoImportadoListItem from './importacaoPedido/ProdutoImportadoListIte
 import FormularioPedido from './importacaoPedido/FormularioPedido';
 import TabelaParcelas from './importacaoPedido/TabelaParcelas';
 import PedidoFabricaForm from './PedidoFabricaForm';
-import ClienteForm from './ClienteForm';
-import AdicionarProduto from './produto/AdicionarProduto'; // <<< NOVO
+import ClienteForm from '../components/cliente/ClienteForm';
+import AdicionarProduto from './produto/AdicionarProduto';
 
 /**
  * Mescla produtos com mesma referência, somando quantidades e valores.
@@ -738,31 +738,19 @@ export default function ImportacaoPedidoPDF() {
       >
         <ClienteForm
           initialData={{}}
-          onSubmit={async (clienteData) => {
-            try {
-              const { data: novoCliente } = await apiEstoque.post(
-                '/clientes',
-                clienteData,
-              );
-              setClientes((prev) =>
-                Array.isArray(prev) ? [...prev, novoCliente] : [novoCliente],
-              );
-              setClienteSelecionadoId(novoCliente.id);
-              setCliente(novoCliente);
+          onSaved={(novoCliente) => {
+            setClientes((prev) => Array.isArray(prev) ? [...prev, novoCliente] : [novoCliente]);
+            setClienteSelecionadoId(novoCliente.id);
+            setCliente(novoCliente);
 
-              toast.current?.show({
-                severity: 'success',
-                summary: 'Cliente criado',
-                detail: 'Novo cliente cadastrado com sucesso.',
-                life: 2500,
-              });
+            toast.current?.show({
+              severity: 'success',
+              summary: 'Cliente criado',
+              detail: 'Novo cliente cadastrado com sucesso.',
+              life: 2500,
+            });
 
-              setMostrarDialogCliente(false);
-              return novoCliente;
-            } catch (error) {
-              // ClienteForm já trata fieldErrors via extractApiError
-              throw error;
-            }
+            setMostrarDialogCliente(false);
           }}
           onCancel={() => setMostrarDialogCliente(false)}
         />

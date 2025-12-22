@@ -427,3 +427,11 @@ textarea.p-inputtextarea {
 .tb-assistencias .p-toolbar-group-left {
   flex: 0 0 auto; /* botão fica só na esquerda */
 }
+
+/* cartões mais consistentes */
+.surface-border { border-color: var(--surface-border); }
+
+/* melhor espaçamento em telas menores */
+@media (max-width: 768px) {
+    .p-inputgroup > .p-button { min-width: 3rem; }
+}
