@@ -104,6 +104,12 @@ const menuItems = (navigate, has) => {
           icon: 'pi pi-fw pi-arrow-down-left',
           command: () => navigate('/financeiro/contas-pagar')
         },
+        has(PERMISSOES.FINANCEIRO?.CONTAS_RECEBER?.VISUALIZAR) && {
+          label: 'Contas a Receber',
+          key: 'financeiro-contas-receber',
+          icon: 'pi pi-fw pi-arrow-up-right',
+          command: () => navigate('/financeiro/contas-receber')
+        },
       ].filter(Boolean)
     }),
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Toast } from "primereact/toast";
 import { ConfirmPopup } from "primereact/confirmpopup";
-import { SakaiLayout } from "../layout/SakaiLayout";
+import SakaiLayout from '../layouts/SakaiLayout';
 import apiFinanceiro from "../services/apiFinanceiro";
 import FiltroContasReceber from "../components/contasReceber/FiltroContasReceber";
 import KpiContasReceber from "../components/contasReceber/KpiContasReceber";
