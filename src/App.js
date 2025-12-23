@@ -45,6 +45,7 @@ import ComunicacaoRequests from "./pages/ComunicacaoRequests";
 import ComunicacaoRequestShow from "./pages/ComunicacaoRequestShow";
 import ComunicacaoMessages from "./pages/ComunicacaoMessages";
 import ComunicacaoMessageShow from "./pages/ComunicacaoMessageShow";
+import ContasReceber from "./pages/ContasReceber";
 
 const renderProtectedRoute = (element, permissoes) => (
   <PrivateRoute element={<PermissaoRoute element={element} permissoes={permissoes}/>}/>
@@ -139,6 +140,11 @@ const App = () => {
       <Route
         path="/financeiro/contas-pagar"
         element={renderProtectedRoute(<ContasPagar/>, PERMISSOES.FINANCEIRO.CONTAS_PAGAR.VISUALIZAR)}
+      />
+
+      <Route
+        path="/financeiro/contas-receber"
+        element={renderProtectedRoute(<ContasReceber/>, PERMISSOES.FINANCEIRO.CONTAS_RECEBER.VISUALIZAR)}
       />
 
       {/* Comunicação */}

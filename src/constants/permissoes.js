@@ -142,6 +142,17 @@ export const PERMISSOES = {
       EXPORTAR_EXCEL: 'contas.pagar.exportar_excel',
       EXPORTAR_PDF:   'contas.pagar.exportar_pdf',
     },
+
+    CONTAS_RECEBER: {
+      VISUALIZAR: 'contas.receber.view',
+      CRIAR: 'contas.receber.create',
+      ATUALIZAR: 'contas.receber.update',
+      EXCLUIR: 'contas.receber.delete',
+      RECEBER: 'contas.receber.receber',
+      ESTORNAR: 'contas.receber.estornar',
+      EXPORTAR_EXCEL: 'contas.receber.exportar_excel',
+      EXPORTAR_PDF:   'contas.receber.exportar_pdf',
+    },
   },
 
   COMUNICACAO: {
