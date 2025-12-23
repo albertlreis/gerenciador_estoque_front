@@ -163,6 +163,14 @@ export const PERMISSOES = {
       EXPORTAR_PDF: 'financeiro.lancamentos.exportar_pdf',
     },
 
+    DESPESAS_RECORRENTES: {
+      VISUALIZAR: 'despesas_recorrentes.visualizar',
+      CRIAR: 'despesas_recorrentes.criar',
+      EDITAR: 'despesas_recorrentes.editar',
+      EXECUTAR: 'despesas_recorrentes.executar',
+      CANCELAR: 'despesas_recorrentes.cancelar',
+    },
+
     DASHBOARD: {
       VISUALIZAR: 'financeiro.dashboard.visualizar',
     },

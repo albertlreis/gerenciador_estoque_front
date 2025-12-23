@@ -97,6 +97,7 @@ const menuItems = (navigate, has) => {
         PERMISSOES.FINANCEIRO?.LANCAMENTOS?.VISUALIZAR,
         PERMISSOES.FINANCEIRO?.CONTAS_PAGAR?.VISUALIZAR,
         PERMISSOES.FINANCEIRO?.CONTAS_RECEBER?.VISUALIZAR,
+        PERMISSOES.FINANCEIRO?.DESPESAS_RECORRENTES?.VISUALIZAR,
       ])
     ) && {
       label: 'Financeiro',
@@ -126,6 +127,12 @@ const menuItems = (navigate, has) => {
           key: 'financeiro-contas-receber',
           icon: 'pi pi-fw pi-arrow-up-right',
           command: () => navigate('/financeiro/contas-receber')
+        },
+        has(PERMISSOES.FINANCEIRO?.DESPESAS_RECORRENTES?.VISUALIZAR) && {
+          label: 'Despesas Recorrentes',
+          key: 'financeiro-despesas-recorrentes',
+          icon: 'pi pi-fw pi-refresh',
+          command: () => navigate('/financeiro/despesas-recorrentes')
         },
       ].filter(Boolean)
     },
