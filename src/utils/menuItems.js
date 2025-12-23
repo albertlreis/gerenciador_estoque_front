@@ -91,13 +91,30 @@ const menuItems = (navigate, has) => {
       ].filter(Boolean)
     },
 
-    (has([
-      PERMISSOES.FINANCEIRO?.CONTAS_PAGAR?.VISUALIZAR,
-    ]) && {
+    (
+      has([
+        PERMISSOES.FINANCEIRO?.DASHBOARD?.VISUALIZAR,
+        PERMISSOES.FINANCEIRO?.LANCAMENTOS?.VISUALIZAR,
+        PERMISSOES.FINANCEIRO?.CONTAS_PAGAR?.VISUALIZAR,
+        PERMISSOES.FINANCEIRO?.CONTAS_RECEBER?.VISUALIZAR,
+      ])
+    ) && {
       label: 'Financeiro',
       key: 'financeiro',
       icon: 'pi pi-fw pi-wallet',
       items: [
+        has(PERMISSOES.FINANCEIRO?.DASHBOARD?.VISUALIZAR) && {
+          label: 'Dashboard Financeiro',
+          key: 'financeiro-dashboard',
+          icon: 'pi pi-fw pi-chart-line',
+          command: () => navigate('/financeiro/dashboard')
+        },
+        has(PERMISSOES.FINANCEIRO?.LANCAMENTOS?.VISUALIZAR) && {
+          label: 'Lançamentos',
+          key: 'financeiro-lancamentos',
+          icon: 'pi pi-fw pi-list',
+          command: () => navigate('/financeiro/lancamentos')
+        },
         has(PERMISSOES.FINANCEIRO?.CONTAS_PAGAR?.VISUALIZAR) && {
           label: 'Contas a Pagar',
           key: 'financeiro-contas-pagar',
@@ -111,7 +128,7 @@ const menuItems = (navigate, has) => {
           command: () => navigate('/financeiro/contas-receber')
         },
       ].filter(Boolean)
-    }),
+    },
 
     has(PERMISSOES.DEPOSITOS?.VISUALIZAR) && {
       label: 'Estoque',

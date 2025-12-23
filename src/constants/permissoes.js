@@ -153,6 +153,19 @@ export const PERMISSOES = {
       EXPORTAR_EXCEL: 'contas.receber.exportar_excel',
       EXPORTAR_PDF:   'contas.receber.exportar_pdf',
     },
+
+    LANCAMENTOS: {
+      VISUALIZAR: 'financeiro.lancamentos.visualizar',
+      CRIAR: 'financeiro.lancamentos.criar',
+      EDITAR: 'financeiro.lancamentos.editar',
+      EXCLUIR: 'financeiro.lancamentos.excluir',
+      EXPORTAR_EXCEL: 'financeiro.lancamentos.exportar_excel',
+      EXPORTAR_PDF: 'financeiro.lancamentos.exportar_pdf',
+    },
+
+    DASHBOARD: {
+      VISUALIZAR: 'financeiro.dashboard.visualizar',
+    },
   },
 
   COMUNICACAO: {
