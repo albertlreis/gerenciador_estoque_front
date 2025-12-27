@@ -2,9 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { InputText } from 'primereact/inputtext';
 import { Dropdown } from 'primereact/dropdown';
 import { Calendar } from 'primereact/calendar';
-import { Checkbox } from 'primereact/checkbox';
 import { Button } from 'primereact/button';
-
 import { useFinanceiroCatalogos } from '../../hooks/useFinanceiroCatalogos';
 
 export default function LancamentosFiltro({ filtros, setFiltros, onBuscar }) {
@@ -17,25 +15,28 @@ export default function LancamentosFiltro({ filtros, setFiltros, onBuscar }) {
   useEffect(() => setLocal(filtros), [filtros]);
 
   const tipos = [
-    { label: 'Receita', value: 'receita' },
-    { label: 'Despesa', value: 'despesa' },
+    { label: 'Receita', value: 'RECEITA' },
+    { label: 'Despesa', value: 'DESPESA' },
   ];
 
   const status = [
-    { label: 'Pendente', value: 'pendente' },
-    { label: 'Pago', value: 'pago' },
-    { label: 'Cancelado', value: 'cancelado' },
+    { label: 'Confirmado', value: 'CONFIRMADO' },
+    { label: 'Cancelado', value: 'CANCELADO' },
   ];
 
-  // Carrega contas 1x
   useEffect(() => {
     (async () => setContas(await loadContas()))();
     // eslint-disable-next-line
   }, []);
 
-  // Carrega categorias quando muda o tipo (para limitar ao tipo selecionado)
+  // Carrega categorias quando muda tipo (para limitar ao tipo selecionado)
   useEffect(() => {
-    (async () => setCategorias(await loadCategorias({ tipo: local?.tipo || undefined })))();
+    (async () => {
+      // seu hook aceita tipo=... e repassa pro back
+      // aqui mandamos RECEITA/DESPESA; se seu back ainda espera minúsculo,
+      // ajuste no back (recomendado) ou converta aqui.
+      setCategorias(await loadCategorias({ tipo: local?.tipo || undefined }));
+    })();
     // eslint-disable-next-line
   }, [local?.tipo]);
 
@@ -49,10 +50,12 @@ export default function LancamentosFiltro({ filtros, setFiltros, onBuscar }) {
       q: '',
       tipo: null,
       status: null,
-      atrasado: false,
       categoria_id: null,
       conta_id: null,
-      periodo: null
+      periodo: null,
+      order_by: 'data_movimento',
+      order_dir: 'desc',
+      per_page: 25,
     };
     setLocal(clean);
     setFiltros(clean);
@@ -108,21 +111,12 @@ export default function LancamentosFiltro({ filtros, setFiltros, onBuscar }) {
         className="w-16rem"
       />
 
-      <div className="flex align-items-center gap-2">
-        <Checkbox
-          inputId="atrasado"
-          checked={!!local.atrasado}
-          onChange={(e) => setLocal((s) => ({ ...s, atrasado: e.checked }))}
-        />
-        <label htmlFor="atrasado" className="text-sm">Atrasado</label>
-      </div>
-
       <Calendar
         value={local.periodo || null}
         onChange={(e) => setLocal((s) => ({ ...s, periodo: e.value }))}
         selectionMode="range"
         readOnlyInput
-        placeholder="Período (vencimento)"
+        placeholder="Período (movimento)"
         dateFormat="dd/mm/yy"
         className="w-20rem"
       />

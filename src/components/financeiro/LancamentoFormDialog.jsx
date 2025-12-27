@@ -12,10 +12,11 @@ import { useFinanceiroCatalogos } from '../../hooks/useFinanceiroCatalogos';
 const empty = {
   descricao: '',
   tipo: 'despesa',
-  status: 'pendente',
+  status: 'confirmado',
   valor: 0,
-  data_vencimento: null,
-  data_pagamento: null,
+  data_movimento: new Date(),
+  competencia: null, // opcional
+  data_pagamento: null, // opcional (se você quiser manter)
   categoria_id: null,
   conta_id: null,
   observacoes: '',
@@ -40,9 +41,10 @@ export default function LancamentoFormDialog({ visible, onHide, onSaved, lancame
       setForm({
         descricao: lancamento.descricao || '',
         tipo: lancamento.tipo || 'despesa',
-        status: lancamento.status || 'pendente',
+        status: (lancamento?.status?.value || lancamento.status || 'confirmado').toString().toLowerCase(),
         valor: Number(lancamento.valor || 0),
-        data_vencimento: lancamento.data_vencimento ? new Date(lancamento.data_vencimento) : null,
+        data_movimento: lancamento.data_movimento ? new Date(lancamento.data_movimento) : new Date(),
+        competencia: lancamento.competencia ? new Date(lancamento.competencia) : null,
         data_pagamento: lancamento.data_pagamento ? new Date(lancamento.data_pagamento) : null,
         categoria_id: lancamento?.categoria?.id || lancamento?.categoria_id || null,
         conta_id: lancamento?.conta?.id || lancamento?.conta_id || null,
@@ -68,8 +70,7 @@ export default function LancamentoFormDialog({ visible, onHide, onSaved, lancame
   ]), []);
 
   const status = useMemo(() => ([
-    { label: 'Pendente', value: 'pendente' },
-    { label: 'Pago', value: 'pago' },
+    { label: 'Confirmado', value: 'confirmado' },
     { label: 'Cancelado', value: 'cancelado' },
   ]), []);
 
@@ -81,8 +82,11 @@ export default function LancamentoFormDialog({ visible, onHide, onSaved, lancame
         tipo: form.tipo,
         status: form.status,
         valor: form.valor,
-        data_vencimento: form.data_vencimento ? form.data_vencimento.toISOString() : null,
+
+        data_movimento: form.data_movimento ? form.data_movimento.toISOString() : null,
+        competencia: form.competencia ? form.competencia.toISOString().slice(0, 10) : null, // YYYY-MM-DD
         data_pagamento: form.data_pagamento ? form.data_pagamento.toISOString() : null,
+
         categoria_id: form.categoria_id || null,
         conta_id: form.conta_id || null,
         observacoes: form.observacoes || null,
@@ -177,14 +181,30 @@ export default function LancamentoFormDialog({ visible, onHide, onSaved, lancame
         </div>
 
         <div className="col-12 md:col-6">
-          <label className="block text-sm mb-1">Vencimento</label>
-          <Calendar className="w-full" value={form.data_vencimento} onChange={(e) => setForm((s) => ({ ...s, data_vencimento: e.value }))} showIcon dateFormat="dd/mm/yy" />
+          <label className="block text-sm mb-1">Movimento</label>
+          <Calendar
+            className="w-full"
+            value={form.data_movimento}
+            onChange={(e) => setForm((s) => ({ ...s, data_movimento: e.value }))}
+            showIcon
+            showTime
+            hourFormat="24"
+            dateFormat="dd/mm/yy"
+          />
+          <small className="text-500">Data/hora do lançamento no ledger.</small>
         </div>
 
         <div className="col-12 md:col-6">
-          <label className="block text-sm mb-1">Pagamento</label>
-          <Calendar className="w-full" value={form.data_pagamento} onChange={(e) => setForm((s) => ({ ...s, data_pagamento: e.value }))} showIcon dateFormat="dd/mm/yy" />
-          <small className="text-500">Se status for “Pago” e não informar, o back define automaticamente.</small>
+          <label className="block text-sm mb-1">Competência (opcional)</label>
+          <Calendar
+            className="w-full"
+            value={form.competencia}
+            onChange={(e) => setForm((s) => ({ ...s, competencia: e.value }))}
+            showIcon
+            view="month"
+            dateFormat="mm/yy"
+          />
+          <small className="text-500">Use para relatórios por competência (mês/ano).</small>
         </div>
 
         <div className="col-12">

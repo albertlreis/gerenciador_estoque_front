@@ -5,22 +5,31 @@ export default function LancamentosTotaisCards({ totais }) {
 
   return (
     <div className="grid mb-3">
-      <div className="col-12 md:col-4">
+      <div className="col-12 md:col-3">
         <div className="p-3 border-round surface-0 shadow-1">
-          <div className="text-500 text-sm">Total Pago</div>
-          <div className="text-2xl font-bold">R$ {money(totais?.pago)}</div>
+          <div className="text-500 text-sm">Receitas confirmadas</div>
+          <div className="text-2xl font-bold">R$ {money(totais?.receitas_confirmadas)}</div>
         </div>
       </div>
-      <div className="col-12 md:col-4">
+
+      <div className="col-12 md:col-3">
         <div className="p-3 border-round surface-0 shadow-1">
-          <div className="text-500 text-sm">Total Pendente</div>
-          <div className="text-2xl font-bold">R$ {money(totais?.pendente)}</div>
+          <div className="text-500 text-sm">Despesas confirmadas</div>
+          <div className="text-2xl font-bold">R$ {money(totais?.despesas_confirmadas)}</div>
         </div>
       </div>
-      <div className="col-12 md:col-4">
+
+      <div className="col-12 md:col-3">
         <div className="p-3 border-round surface-0 shadow-1">
-          <div className="text-500 text-sm">Total Atrasado</div>
-          <div className="text-2xl font-bold">R$ {money(totais?.atrasado)}</div>
+          <div className="text-500 text-sm">Saldo confirmado</div>
+          <div className="text-2xl font-bold">R$ {money(totais?.saldo_confirmado)}</div>
+        </div>
+      </div>
+
+      <div className="col-12 md:col-3">
+        <div className="p-3 border-round surface-0 shadow-1">
+          <div className="text-500 text-sm">Cancelados</div>
+          <div className="text-2xl font-bold">{Number(totais?.cancelados || 0)}</div>
         </div>
       </div>
     </div>

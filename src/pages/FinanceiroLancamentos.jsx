@@ -20,6 +20,32 @@ import { formatDatePtBR } from '../utils/date/dateHelpers';
 
 const fmtMoney = (v) => Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
 
+const normEnum = (v) => {
+  if (!v) return '';
+  if (typeof v === 'object') return String(v.value ?? v.name ?? v.label ?? '');
+  return String(v);
+};
+
+const tipoLabel = (tipo) => {
+  const t = normEnum(tipo).toLowerCase();
+  if (t === 'receita' || t === 'receita'.toLowerCase() || t === 'receita'.toUpperCase().toLowerCase()) return 'Receita';
+  if (t === 'despesa' || t === 'despesa'.toLowerCase() || t === 'despesa'.toUpperCase().toLowerCase()) return 'Despesa';
+  if (t === 'receita'.toLowerCase() || t === 'receita') return 'Receita';
+  if (t === 'despesa'.toLowerCase() || t === 'despesa') return 'Despesa';
+  if (t === 'receita'.toLowerCase()) return 'Receita';
+  // casos: "RECEITA"/"DESPESA"
+  if (normEnum(tipo).toUpperCase() === 'RECEITA') return 'Receita';
+  if (normEnum(tipo).toUpperCase() === 'DESPESA') return 'Despesa';
+  return normEnum(tipo) || '-';
+};
+
+const statusLabel = (status) => {
+  const s = normEnum(status).toLowerCase();
+  if (s === 'confirmado' || normEnum(status).toUpperCase() === 'CONFIRMADO') return 'Confirmado';
+  if (s === 'cancelado' || normEnum(status).toUpperCase() === 'CANCELADO') return 'Cancelado';
+  return normEnum(status) || '-';
+};
+
 export default function FinanceiroLancamentos() {
   const toast = useRef(null);
   const { has } = useAuth();
@@ -28,18 +54,22 @@ export default function FinanceiroLancamentos() {
     q: '',
     tipo: null,
     status: null,
-    atrasado: false,
     categoria_id: null,
     conta_id: null,
-    periodo: null,
-    order_by: 'data_vencimento',
+    periodo: null, // range -> data_movimento
+    order_by: 'data_movimento',
     order_dir: 'desc',
     per_page: 25,
   });
 
   const { lista, meta, loading, fetchLancamentos, mapFiltrosApi } = useLancamentosFinanceiros(filtros);
 
-  const [totais, setTotais] = useState({ pago: 0, pendente: 0, atrasado: 0 });
+  const [totais, setTotais] = useState({
+    receitas_confirmadas: 0,
+    despesas_confirmadas: 0,
+    saldo_confirmado: 0,
+    cancelados: 0,
+  });
 
   const [dialogVisivel, setDialogVisivel] = useState(false);
   const [editando, setEditando] = useState(null);
@@ -52,10 +82,27 @@ export default function FinanceiroLancamentos() {
     try {
       const params = mapFiltrosApi(f);
       const { data } = await apiFinanceiro.get('/financeiro/lancamentos/totais', { params });
-      setTotais(data?.data || { pago: 0, pendente: 0, atrasado: 0 });
+
+      setTotais(
+        data?.data || {
+          receitas_confirmadas: 0,
+          despesas_confirmadas: 0,
+          saldo_confirmado: 0,
+          cancelados: 0,
+        }
+      );
     } catch (e) {
-      toast.current?.show({ severity: 'error', summary: 'Erro (Totais)', detail: e?.response?.data?.message || e.message });
-      setTotais({ pago: 0, pendente: 0, atrasado: 0 });
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Erro (Totais)',
+        detail: e?.response?.data?.message || e.message,
+      });
+      setTotais({
+        receitas_confirmadas: 0,
+        despesas_confirmadas: 0,
+        saldo_confirmado: 0,
+        cancelados: 0,
+      });
     }
   };
 
@@ -74,34 +121,41 @@ export default function FinanceiroLancamentos() {
     }
   };
 
+  const rows = Number(meta?.per_page) || 25;
+  const page = Number(meta?.page) || 1;
+  const first = (page - 1) * rows;
+
   const onPage = async (e) => {
-    const page = Math.floor(e.first / meta.per_page) + 1;
+    const nextPage = (e.page ?? 0) + 1;
     try {
-      await fetchLancamentos(page, filtros);
+      await fetchLancamentos(nextPage, filtros);
     } catch (err) {
       toast.current?.show({ severity: 'error', summary: 'Erro', detail: err?.response?.data?.message || err.message });
     }
   };
 
   const statusTag = (row) => {
-    if (row?.atrasado) return <Tag value="Atrasado" severity="danger" className="text-xs" rounded />;
+    const st = statusLabel(row?.status).toLowerCase();
     const map = {
-      pendente: { label: 'Pendente', severity: 'warning' },
-      pago: { label: 'Pago', severity: 'success' },
+      confirmado: { label: 'Confirmado', severity: 'success' },
       cancelado: { label: 'Cancelado', severity: 'secondary' },
     };
-    const cfg = map[row.status] || { label: row.status || '-', severity: 'info' };
+    const cfg = map[st] || { label: statusLabel(row?.status), severity: 'info' };
     return <Tag value={cfg.label} severity={cfg.severity} className="text-xs" rounded />;
   };
 
-  const tipoTag = (tipo) => (
-    <Tag
-      value={tipo === 'receita' ? 'Receita' : 'Despesa'}
-      severity={tipo === 'receita' ? 'success' : 'danger'}
-      className="text-xs"
-      rounded
-    />
-  );
+  const tipoTag = (tipo) => {
+    const t = String(tipo || '').toUpperCase();
+    const isReceita = t === 'RECEITA';
+    return (
+      <Tag
+        value={isReceita ? 'Receita' : 'Despesa'}
+        severity={isReceita ? 'success' : 'danger'}
+        className="text-xs"
+        rounded
+      />
+    );
+  };
 
   const abrirNovo = () => {
     setEditando(null);
@@ -129,19 +183,31 @@ export default function FinanceiroLancamentos() {
         } catch (e) {
           toast.current?.show({ severity: 'error', summary: 'Erro', detail: e?.response?.data?.message || e.message });
         }
-      }
+      },
     });
   };
 
-  const cols = useMemo(() => ([
-    { field: 'id', header: '#', body: (r) => r.id },
-    { field: 'tipo', header: 'Tipo', body: (r) => tipoTag(r.tipo) },
-    { field: 'descricao', header: 'Descrição' },
-    { field: 'data_vencimento', header: 'Vencimento', body: (r) => (formatDatePtBR(r.data_vencimento) || '-') },
-    { field: 'data_pagamento', header: 'Pagamento', body: (r) => (formatDatePtBR(r.data_pagamento) || '-') },
-    { field: 'valor', header: 'Valor', body: (r) => `R$ ${fmtMoney(r.valor)}` },
-    { field: 'status', header: 'Status', body: (r) => statusTag(r) },
-  ]), []);
+  const cols = useMemo(
+    () => [
+      { field: 'id', header: '#', body: (r) => r.id },
+      { field: 'tipo', header: 'Tipo', body: (r) => tipoTag(r.tipo) },
+      { field: 'descricao', header: 'Descrição' },
+
+      // Mostra categoria/conta quando vier do resource
+      { field: 'categoria', header: 'Categoria', body: (r) => r?.categoria?.nome || '-' },
+      { field: 'conta', header: 'Conta', body: (r) => r?.conta?.nome || '-' },
+
+      {
+        field: 'data_movimento',
+        header: 'Movimento',
+        body: (r) => formatDatePtBR(r.data_movimento || r.data_vencimento) || '-',
+      },
+      { field: 'competencia', header: 'Competência', body: (r) => formatDatePtBR(r.competencia) || '-' },
+      { field: 'valor', header: 'Valor', body: (r) => `R$ ${fmtMoney(r.valor)}` },
+      { field: 'status', header: 'Status', body: (r) => statusTag(r) },
+    ],
+    []
+  );
 
   return (
     <SakaiLayout>
@@ -160,11 +226,12 @@ export default function FinanceiroLancamentos() {
 
         <DataTable
           value={lista}
+          dataKey="id"
           paginator
           lazy
-          rows={meta.per_page}
-          totalRecords={meta.total}
-          first={(meta.page - 1) * meta.per_page}
+          rows={rows}
+          totalRecords={Number(meta?.total) || 0}
+          first={Number.isFinite(first) ? first : 0}
           onPage={onPage}
           loading={loading}
           emptyMessage="Nenhum lançamento encontrado."
@@ -173,13 +240,7 @@ export default function FinanceiroLancamentos() {
           size="small"
         >
           {cols.map((col) => (
-            <Column
-              key={col.field}
-              field={col.field}
-              header={col.header}
-              body={col.body}
-              style={{ minWidth: '140px' }}
-            />
+            <Column key={col.field} field={col.field} header={col.header} body={col.body} style={{ minWidth: '140px' }} />
           ))}
 
           <Column
@@ -187,7 +248,9 @@ export default function FinanceiroLancamentos() {
             body={(row) => (
               <div className="flex gap-2">
                 {podeEditar && <Button icon="pi pi-pencil" tooltip="Editar" onClick={() => editar(row)} />}
-                {podeExcluir && <Button icon="pi pi-trash" tooltip="Excluir" severity="danger" outlined onClick={() => excluir(row)} />}
+                {podeExcluir && (
+                  <Button icon="pi pi-trash" tooltip="Excluir" severity="danger" outlined onClick={() => excluir(row)} />
+                )}
               </div>
             )}
             style={{ minWidth: 180 }}
