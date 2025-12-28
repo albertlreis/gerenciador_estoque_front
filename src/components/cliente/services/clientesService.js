@@ -1,7 +1,7 @@
 import apiEstoque from '../../../services/apiEstoque';
 
-export async function checkDocumentoDuplicado(documentoDigits, id) {
-  const res = await apiEstoque.get(`/clientes/verifica-documento/${documentoDigits}${id ? `/${id}` : ''}`);
+export async function checkDocumentoDuplicado(documento, id) {
+  const res = await apiEstoque.get(`/clientes/verifica-documento?documento=${documento}&ignorar_id=${id}`);
   return !!res.data?.existe;
 }
 

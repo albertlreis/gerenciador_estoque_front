@@ -20,7 +20,7 @@ export default function RelatorioDevedores() {
   const carregar = async (params = {}) => {
     setLoading(true);
     try {
-      const { data } = await apiFinanceiro.get("/contas-receber/relatorios/devedores", { params });
+      const { data } = await apiFinanceiro.get("/financeiro/contas-receber/relatorios/devedores", { params });
       setDados(data.data);
       setKpis(data.meta);
     } catch (e) {
@@ -33,7 +33,7 @@ export default function RelatorioDevedores() {
   // 📤 Exporta PDF ou Excel
   const exportar = async (tipo) => {
     try {
-      const endpoint = `/contas-receber/relatorios/devedores/exportar/${tipo}`;
+      const endpoint = `/financeiro/contas-receber/relatorios/devedores/exportar/${tipo}`;
       const response = await apiFinanceiro.get(endpoint, {
         responseType: "blob",
         params: filtros,

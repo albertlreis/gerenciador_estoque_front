@@ -18,7 +18,7 @@ export default function ModalDetalheDevedor({ visible, onHide, cliente }) {
   const carregarContas = async (idCliente) => {
     setLoading(true);
     try {
-      const { data } = await apiFinanceiro.get("/contas-receber", {
+      const { data } = await apiFinanceiro.get("/financeiro/contas-receber", {
         params: { cliente: cliente.cliente_nome, status: "ABERTO" },
       });
       setContas(data.data || []);
@@ -44,7 +44,7 @@ export default function ModalDetalheDevedor({ visible, onHide, cliente }) {
 
   const exportar = async (tipo) => {
     try {
-      const endpoint = `/contas-receber/exportar/${tipo}`;
+      const endpoint = `/financeiro/contas-receber/exportar/${tipo}`;
       const response = await apiFinanceiro.get(endpoint, {
         responseType: "blob",
         params: { cliente: cliente.cliente_nome, status: "ABERTO" },

@@ -60,7 +60,7 @@ export const CarrinhoProvider = ({ children }) => {
     if (!carrinhoAtual?.id) return;
 
     try {
-      await api.post('/carrinho-itens', {
+      await api.post(`/carrinhos/${carrinhoAtual.id}/itens`, {
         id_carrinho: carrinhoAtual.id,
         id_variacao,
         quantidade,
@@ -147,7 +147,7 @@ export const CarrinhoProvider = ({ children }) => {
   const cancelarCarrinho = async () => {
     if (!carrinhoAtual?.id) return;
     try {
-      await api.post(`/carrinhos/${carrinhoAtual.id}/cancelar`);
+      await api.patch(`/carrinhos/${carrinhoAtual.id}/cancelar`);
       setCarrinhoAtual(null);
       setItens([]);
       await listarCarrinhos();

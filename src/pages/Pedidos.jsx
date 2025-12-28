@@ -157,7 +157,7 @@ export default function PedidosListagem() {
     setLoadingDetalhes(true);
     setDetalhesVisivel(true);
     try {
-      const { data } = await api.get(`/pedidos/${pedido.id}/completo`);
+      const { data } = await api.get(`/pedidos/${pedido.id}/detalhado`);
       setPedidoDetalhado(data.data);
     } catch (err) {
       toast.current?.show({

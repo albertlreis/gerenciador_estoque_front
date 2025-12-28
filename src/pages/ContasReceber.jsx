@@ -20,7 +20,7 @@ export default function ContasReceber() {
   const carregarContas = async (params = {}) => {
     setLoading(true);
     try {
-      const { data } = await apiFinanceiro.get("/contas-receber", { params });
+      const { data } = await apiFinanceiro.get("/financeiro/contas-receber", { params });
       setContas(data.data || []);
     } catch {
       toast.current.show({ severity: "error", summary: "Erro", detail: "Falha ao carregar contas" });
@@ -32,7 +32,7 @@ export default function ContasReceber() {
   // 📊 carregar KPIs
   const carregarKpis = async () => {
     try {
-      const { data } = await apiFinanceiro.get("/contas-receber/kpis");
+      const { data } = await apiFinanceiro.get("/financeiro/contas-receber/kpis");
       setKpis(data);
     } catch (err) {
       console.error(err);
@@ -43,7 +43,7 @@ export default function ContasReceber() {
   const onBaixar = (conta) => setBaixaDialog({ visible: true, conta });
   const onConfirmBaixa = async (payload) => {
     try {
-      await apiFinanceiro.post(`/contas-receber/${payload.id}/baixa`, payload);
+      await apiFinanceiro.post(`/financeiro/contas-receber/${payload.id}/baixa`, payload);
       toast.current.show({ severity: "success", summary: "Baixa registrada com sucesso!" });
       setBaixaDialog({ visible: false, conta: null });
       carregarContas(filtros);

@@ -30,7 +30,7 @@ export default function PedidosExportar({ toast, loading }) {
       const params = new URLSearchParams({ formato });
       if (detalhado) params.append('detalhado', 'true');
 
-      const response = await apiEstoque.get(`/pedidos/exportar?${params.toString()}`, {
+      const response = await apiEstoque.get(`/pedidos/export?${params.toString()}`, {
         responseType: 'blob',
       });
 

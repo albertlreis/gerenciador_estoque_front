@@ -33,7 +33,7 @@ export async function excluirFornecedor(id) {
 }
 
 export async function restaurarFornecedor(id) {
-  const { data } = await apiEstoque.post(`/fornecedores/${id}/restore`);
+  const { data } = await apiEstoque.patch(`/fornecedores/${id}/restaurar`);
   return data?.data ?? data;
 }
 

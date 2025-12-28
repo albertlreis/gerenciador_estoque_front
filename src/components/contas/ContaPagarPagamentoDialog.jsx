@@ -38,7 +38,7 @@ export default function ContaPagarPagamentoDialog({ visible, onHide, conta, onAf
 
     (async () => {
       try {
-        const { data } = await apiFinanceiro.get('/financeiro/catalogo/contas-financeiras', { params: { ativo: true } });
+        const { data } = await apiFinanceiro.get('/financeiro/catalogos/contas-financeiras', { params: { ativo: true } });
         const arr = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
         const opts = arr.map((c) => ({ label: c.nome, value: c.id, raw: c }));
         setContas(opts);
@@ -69,7 +69,7 @@ export default function ContaPagarPagamentoDialog({ visible, onHide, conta, onAf
       form.append('conta_financeira_id', String(contaFinanceiraId));
       if (arquivo) form.append('comprovante', arquivo);
 
-      await apiFinanceiro.post(`/contas-pagar/${conta.id}/pagar`, form);
+      await apiFinanceiro.post(`/financeiro/contas-pagar/${conta.id}/pagar`, form);
 
       onAfterChange?.();
       onHide();
@@ -83,7 +83,7 @@ export default function ContaPagarPagamentoDialog({ visible, onHide, conta, onAf
   const estornar = async (pagamentoId) => {
     if (!podeEstornar) return;
     try {
-      await apiFinanceiro.delete(`/contas-pagar/${conta.id}/pagamentos/${pagamentoId}`);
+      await apiFinanceiro.delete(`/financeiro/contas-pagar/${conta.id}/pagamentos/${pagamentoId}`);
       onAfterChange?.();
     } catch (e) {
       toast.current?.show({ severity: 'error', summary: 'Erro', detail: e?.response?.data?.message || e.message });

@@ -36,7 +36,7 @@ export default function ImportacaoProdutoXML() {
     setLoadingUpload(true);
 
     try {
-      const { data } = await apiEstoque.post('/produtos/importar-xml', formData, {
+      const { data } = await apiEstoque.post('/produtos/importacoes/xml', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
@@ -85,7 +85,7 @@ export default function ImportacaoProdutoXML() {
         data_entrada: dataEntrada,
       };
 
-      const { data } = await apiEstoque.post('/produtos/importar-xml/confirmar', payload);
+      const { data } = await apiEstoque.post('/produtos/importacoes/xml/confirmar', payload);
 
       toast.current?.show({
         severity: 'success',

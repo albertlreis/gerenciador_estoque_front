@@ -122,7 +122,7 @@ const ProdutoVariacoes = ({
         else novas.push(data);
       }
 
-      if (existentes.length) await apiEstoque.put(`/produtos/${produtoId}/variacoes`, existentes);
+      if (existentes.length) await apiEstoque.patch(`/produtos/${produtoId}/variacoes/bulk`, existentes);
       for (const nova of novas) await apiEstoque.post(`/produtos/${produtoId}/variacoes`, nova);
 
       await carregarVariacoes();

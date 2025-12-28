@@ -96,7 +96,7 @@ const FinalizarPedido = () => {
   const carregarDepositosParaItens = async () => {
     try {
       const promises = itens.map(item =>
-        api.get(`/estoque/por-variacao/${item.id_variacao}`)
+        api.get(`/estoque/variacoes/${item.id_variacao}`)
           .then(res => ({ itemId: item.id, data: res.data }))
           .catch(() => ({ itemId: item.id, data: [] }))
       );
@@ -195,7 +195,7 @@ const FinalizarPedido = () => {
     }
 
     try {
-      await api.post('/carrinho-itens', {
+      await api.post(`/carrinhos/${item.id_carrinho}/itens`, {
         id_carrinho: item.id_carrinho,
         id_variacao: item.id_variacao,
         quantidade: novaQtd,
@@ -211,7 +211,7 @@ const FinalizarPedido = () => {
 
   const handleAtualizarDeposito = async (itemId, idDeposito) => {
     try {
-      await api.post('/carrinho-itens/atualizar-deposito', {
+      await api.patch(`/carrinhos/${carrinhoAtual.id}/itens/atualizar-deposito`, {
         id_carrinho_item: itemId,
         id_deposito: idDeposito
       });

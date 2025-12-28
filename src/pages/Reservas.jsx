@@ -20,7 +20,7 @@ const Reservas = () => {
   const carregarReservas = async () => {
     try {
       setLoading(true);
-      const { data } = await apiEstoque.get('/pedido-itens?entrega_pendente=1');
+      const { data } = await apiEstoque.get('/pedidos/itens?entrega_pendente=1');
       setReservas(data);
     } catch (error) {
       toast.current.show({ severity: 'error', summary: 'Erro', detail: 'Falha ao carregar reservas' });
@@ -37,7 +37,7 @@ const Reservas = () => {
       rejectLabel: 'Cancelar',
       accept: async () => {
         try {
-          await apiEstoque.post(`/pedido-itens/${item.id}/liberar-entrega`);
+          await apiEstoque.patch(`/pedidos/itens/${item.id}/liberar-entrega`);
           toast.current.show({ severity: 'success', summary: 'Sucesso', detail: 'Entrega liberada!' });
           carregarReservas();
         } catch (error) {

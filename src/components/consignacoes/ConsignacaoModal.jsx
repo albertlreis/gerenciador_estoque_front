@@ -36,7 +36,7 @@ const ConsignacaoModal = ({ id, visible, onHide, onAtualizar }) => {
   const carregar = async () => {
     setLoading(true);
     try {
-      const { data } = await api.get(`/consignacoes/pedido/${id}`);
+      const { data } = await api.get(`/consignacoes/pedidos/${id}`);
       setConsignacoes(data.consignacoes || []);
       setPedido(data.pedido || null);
     } finally {
@@ -48,7 +48,7 @@ const ConsignacaoModal = ({ id, visible, onHide, onAtualizar }) => {
     if (!qtdDevolver || qtdDevolver <= 0 || !consignacaoParaDevolver || !depositoId) return;
     setSaving(true);
     try {
-      await api.post(`/consignacoes/${consignacaoParaDevolver.id}/devolucao`, {
+      await api.post(`/consignacoes/${consignacaoParaDevolver.id}/devolucoes`, {
         quantidade: qtdDevolver,
         observacoes: obsDevolver,
         deposito_id: depositoId,

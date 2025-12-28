@@ -114,7 +114,7 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
       rejectLabel: 'Não',
       accept: async () => {
         try {
-          await apiEstoque.delete(`/variacoes/${variacao.id}/outlet/${outlet.id}`);
+          await apiEstoque.delete(`/variacoes/${variacao.id}/outlets/${outlet.id}`);
           toastRef.current?.show({ severity: 'success', summary: 'Outlet excluído', life: 3000 });
           await atualizarProduto(true);
         } catch {
@@ -206,12 +206,12 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
     try {
       if (outletEdicaoParam?.id) {
         await apiEstoque.put(
-          `/variacoes/${variacaoSelecionada.id}/outlet/${outletEdicaoParam.id}`,
+          `/variacoes/${variacaoSelecionada.id}/outlets/${outletEdicaoParam.id}`,
           dados
         );
         toastRef.current?.show({ severity: 'success', summary: 'Outlet atualizado com sucesso' });
       } else {
-        await apiEstoque.post(`/variacoes/${variacaoSelecionada.id}/outlet`, dados);
+        await apiEstoque.post(`/variacoes/${variacaoSelecionada.id}/outlets`, dados);
         toastRef.current?.show({ severity: 'success', summary: 'Outlet registrado com sucesso' });
       }
 

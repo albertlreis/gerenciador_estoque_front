@@ -60,7 +60,7 @@ export default function ContasPagarPage() {
   const carregarKpis = useCallback(async (f = filtros) => {
     try {
       const params = mapFiltrosApi(f);
-      const { data } = await apiFinanceiro.get('/contas-pagar/kpis', { params });
+      const { data } = await apiFinanceiro.get('/financeiro/contas-pagar/kpis', { params });
       setKpis(data || {});
     } catch (e) {
       toast.current?.show({
@@ -122,7 +122,7 @@ export default function ContasPagarPage() {
 
   const abrirPag = async (row) => {
     try {
-      const { data } = await apiFinanceiro.get(`/contas-pagar/${row.id}`);
+      const { data } = await apiFinanceiro.get(`/financeiro/contas-pagar/${row.id}`);
       console.log(data)
       setContaPag(data?.data ?? data);
       setDialogPagVisivel(true);
@@ -140,7 +140,7 @@ export default function ContasPagarPage() {
       rejectLabel: 'Não',
       accept: async () => {
         try {
-          await apiFinanceiro.delete(`/contas-pagar/${row.id}`);
+          await apiFinanceiro.delete(`/financeiro/contas-pagar/${row.id}`);
           toast.current?.show({ severity: 'success', summary: 'Excluída' });
           await fetchContas(pagina);
           await carregarKpis(filtros);
@@ -161,8 +161,8 @@ export default function ContasPagarPage() {
     return s.toString();
   };
 
-  const exportExcel = () => window.open(`/api/contas-pagar/export/excel?${toQuery(filtros)}`, '_blank');
-  const exportPdf   = () => window.open(`/api/contas-pagar/export/pdf?${toQuery(filtros)}`, '_blank');
+  const exportExcel = () => window.open(`/api/financeiro/contas-pagar/export/excel?${toQuery(filtros)}`, '_blank');
+  const exportPdf   = () => window.open(`/api/financeiro/contas-pagar/export/pdf?${toQuery(filtros)}`, '_blank');
 
   const podeCriar   = has(PERMISSOES.FINANCEIRO.CONTAS_PAGAR.CRIAR);
   const podeEditar  = has(PERMISSOES.FINANCEIRO.CONTAS_PAGAR.ATUALIZAR);

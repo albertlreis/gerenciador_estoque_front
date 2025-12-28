@@ -124,7 +124,7 @@ export default function ImportacaoPedidoPDF() {
     setUploadStatus('uploading');
 
     try {
-      const response = await apiEstoque.post('/pedidos/importar', formData, {
+      const response = await apiEstoque.post('/pedidos/import', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
@@ -408,7 +408,7 @@ export default function ImportacaoPedidoPDF() {
     }
 
     try {
-      const response = await apiEstoque.post('/pedidos/importar-pdf/confirmar', {
+      const response = await apiEstoque.post('/pedidos/import/pdf/confirm', {
         cliente: tipo === 'venda' ? cliente : {}, // <<< importante
         pedido: { ...pedido, tipo },
         itens: itens.map((item) => ({

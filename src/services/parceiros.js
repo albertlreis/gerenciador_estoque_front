@@ -33,7 +33,7 @@ export async function excluirParceiro(id) {
 }
 
 export async function restaurarParceiro(id) {
-  const { data } = await apiEstoque.post(`/parceiros/${id}/restore`);
+  const { data } = await apiEstoque.patch(`/parceiros/${id}/restaurar`);
   return data?.data ?? data;
 }
 

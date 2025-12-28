@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Timeline } from 'primereact/timeline';
-import { format } from 'date-fns';
 import { Dialog } from 'primereact/dialog';
 import { Dropdown } from 'primereact/dropdown';
 import { InputTextarea } from 'primereact/inputtextarea';
@@ -24,7 +23,7 @@ const PedidoStatusDialog = ({ visible, onHide, pedido, onSalvo, toast }) => {
   const carregarHistorico = async () => {
     setLoadingHistorico(true);
     try {
-      const { data } = await api.get(`/pedidos/${pedido.id}/historico-status`);
+      const { data } = await api.get(`/pedidos/${pedido.id}/status/historico`);
       setHistorico(data);
       return data;
     } catch (err) {
@@ -41,7 +40,7 @@ const PedidoStatusDialog = ({ visible, onHide, pedido, onSalvo, toast }) => {
 
   const carregarFluxoStatus = async (historicoUsado) => {
     try {
-      const { data } = await api.get(`/pedidos/${pedido.id}/fluxo-status`);
+      const { data } = await api.get(`/pedidos/${pedido.id}/status/fluxo`);
       const usados = historicoUsado.map(h => h.status);
       const filtrados = OPCOES_STATUS.filter((opt) => data.includes(opt.value) && !usados.includes(opt.value));
       setOpcoesStatus(filtrados);
@@ -98,7 +97,7 @@ const PedidoStatusDialog = ({ visible, onHide, pedido, onSalvo, toast }) => {
   const excluirStatus = async () => {
     if (!statusParaExcluir) return;
     try {
-      await api.delete(`/pedidos/status/${statusParaExcluir}`);
+      await api.delete(`/pedidos/${pedido.id}/status-historicos/${statusParaExcluir}`);
       toast.current.show({ severity: 'success', summary: 'Status removido com sucesso' });
       const atualizados = historico.filter((h) => h.id !== statusParaExcluir);
       setHistorico(atualizados);

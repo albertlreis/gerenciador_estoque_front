@@ -28,7 +28,7 @@ export function useContasPagar() {
       }
 
       const params = cleanParams({ page, per_page: 10, ...filtrosRef.current });
-      const { data } = await apiFinanceiro.get('/contas-pagar', { params });
+      const { data } = await apiFinanceiro.get('/financeiro/contas-pagar', { params });
 
       setLista(ensureArray(data?.data));
       setTotal(Number(data?.meta?.total ?? data?.total ?? 0) || 0);

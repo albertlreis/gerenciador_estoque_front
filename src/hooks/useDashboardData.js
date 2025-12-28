@@ -128,7 +128,7 @@ const useDashboardData = () => {
 
   const fetchEstatisticas = async () => {
     try {
-      const { data } = await apiEstoque.get('/pedidos/estatisticas', { params: { meses: periodo } });
+      const { data } = await apiEstoque.get('/pedidos/stats', { params: { meses: periodo } });
 
       setGraficoPedidos({
         labels: data.labels,
