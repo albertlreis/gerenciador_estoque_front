@@ -137,6 +137,7 @@ export default function ImportacaoPedidoPDF() {
       const p = payload.pedido || {};
 
       const pedidoNormalizado = {
+        tipo: 'venda',
         numero_externo: p.numero_externo || '',
         data_pedido: p.data_pedido || null,
         data_inclusao: p.data_inclusao || null,
@@ -385,7 +386,9 @@ export default function ImportacaoPedidoPDF() {
 
   /** 💾 Confirma importação e salva no banco */
   const confirmarImportacao = async () => {
-    if (!clienteSelecionadoId || !cliente?.nome) {
+    const tipo = pedido?.tipo ?? 'venda';
+
+    if (tipo === 'venda' && (!clienteSelecionadoId || !cliente?.nome)) {
       toast.current?.show({
         severity: 'warn',
         summary: 'Cliente obrigatório',
@@ -406,8 +409,8 @@ export default function ImportacaoPedidoPDF() {
 
     try {
       const response = await apiEstoque.post('/pedidos/importar-pdf/confirmar', {
-        cliente,
-        pedido,
+        cliente: tipo === 'venda' ? cliente : {}, // <<< importante
+        pedido: { ...pedido, tipo },
         itens: itens.map((item) => ({
           ...item,
           descricao: item.descricao,
@@ -430,21 +433,29 @@ export default function ImportacaoPedidoPDF() {
         : [];
 
       // Monta pedido para fábrica
+      const tipo = pedido?.tipo ?? 'venda';
+
       const fabrica = itens
         .filter((i) => i.enviar_fabrica)
         .map((item) => {
           const encontrado = variacoesConfirmadas.find(
             (v) => v.referencia === item.ref && v.nome_produto === item.nome,
           );
+
+          const vincularVenda = (tipo === 'venda');
+
           return {
             produto_variacao_id: encontrado?.id_variacao,
             produto_variacao_nome: encontrado?.nome_completo || '',
             quantidade: item.quantidade,
             deposito_id: item.id_deposito ?? null,
-            pedido_venda_id: pedidoId,
-            pedido_venda_label: pedido.numero_externo
-              ? `Pedido #${pedido.numero_externo}`
-              : `Pedido #${pedidoId}`,
+
+            // ✅ só vincula se for VENDA
+            pedido_venda_id: vincularVenda ? pedidoId : null,
+            pedido_venda_label: vincularVenda
+              ? (pedido.numero_externo ? `Pedido #${pedido.numero_externo}` : `Pedido #${pedidoId}`)
+              : '',
+
             observacoes: item.observacoes || '',
           };
         });
@@ -552,50 +563,6 @@ export default function ImportacaoPedidoPDF() {
       {/* Dados importados */}
       {dados && (
         <>
-          {/* Cliente */}
-          <Card title="Cliente do Pedido" className="mt-4 p-4">
-            <div className="grid align-items-end">
-              <div className="col-12 md:col-6">
-                <label className="block text-sm font-medium mb-1">
-                  Cliente <span className="p-error">*</span>
-                </label>
-                <Dropdown
-                  value={clienteSelecionadoId}
-                  options={clientes}
-                  optionLabel="nome"
-                  optionValue="id"
-                  placeholder="Selecione o cliente"
-                  className="w-full"
-                  filter
-                  showClear
-                  onChange={(e) => handleSelecionarCliente(e.value)}
-                />
-              </div>
-
-              <div className="col-12 md:col-3 flex align-items-end">
-                <Button
-                  type="button"
-                  label="Novo Cliente"
-                  icon="pi pi-user-plus"
-                  className="p-button-secondary"
-                  onClick={() => setMostrarDialogCliente(true)}
-                />
-              </div>
-
-              {cliente && cliente.documento && (
-                <div className="col-12 md:col-3 text-right text-xs text-color-secondary">
-                  <div>
-                    <strong>Documento:</strong> {cliente.documento}
-                  </div>
-                  {cliente.email && (
-                    <div>
-                      <strong>E-mail:</strong> {cliente.email}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </Card>
 
           {/* Pedido */}
           <Card title="Dados do Pedido" className="mt-4 p-4">
@@ -606,6 +573,53 @@ export default function ImportacaoPedidoPDF() {
               onChange={onChangePedido}
             />
           </Card>
+
+          {/* Cliente */}
+          {(pedido?.tipo ?? 'venda') === 'venda' && (
+            <Card title="Cliente do Pedido" className="mt-4 p-4">
+              <div className="grid align-items-end">
+                <div className="col-12 md:col-6">
+                  <label className="block text-sm font-medium mb-1">
+                    Cliente <span className="p-error">*</span>
+                  </label>
+                  <Dropdown
+                    value={clienteSelecionadoId}
+                    options={clientes}
+                    optionLabel="nome"
+                    optionValue="id"
+                    placeholder="Selecione o cliente"
+                    className="w-full"
+                    filter
+                    showClear
+                    onChange={(e) => handleSelecionarCliente(e.value)}
+                  />
+                </div>
+
+                <div className="col-12 md:col-3 flex align-items-end">
+                  <Button
+                    type="button"
+                    label="Novo Cliente"
+                    icon="pi pi-user-plus"
+                    className="p-button-secondary"
+                    onClick={() => setMostrarDialogCliente(true)}
+                  />
+                </div>
+
+                {cliente && cliente.documento && (
+                  <div className="col-12 md:col-3 text-right text-xs text-color-secondary">
+                    <div>
+                      <strong>Documento:</strong> {cliente.documento}
+                    </div>
+                    {cliente.email && (
+                      <div>
+                        <strong>E-mail:</strong> {cliente.email}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </Card>
+          )}
 
           {/* Parcelas */}
           {pedido.parcelas?.length > 0 && (
@@ -709,12 +723,19 @@ export default function ImportacaoPedidoPDF() {
         pedidoEditavel={null}
         itensIniciais={itensParaFabrica}
         onSave={async (dados) => {
+          const tipo = pedido?.tipo ?? 'venda';
+
           await apiEstoque.post('/pedidos-fabrica', {
             ...dados,
             itens: dados.itens.map((item, idx) => ({
               ...item,
-              pedido_venda_id: pedidoSalvoId,
-              observacoes: itensParaFabrica[idx]?.observacoes || '',
+              // ✅ Venda: se não vier definido, vincula ao pedido importado
+              // ✅ Reposição: não força vínculo
+              pedido_venda_id: (tipo === 'venda')
+                ? (item.pedido_venda_id ?? pedidoSalvoId)
+                : (item.pedido_venda_id ?? null),
+
+              observacoes: itensParaFabrica[idx]?.observacoes || item.observacoes || '',
             })),
           });
 

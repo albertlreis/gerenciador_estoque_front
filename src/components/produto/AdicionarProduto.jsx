@@ -1,4 +1,3 @@
-// src/components/produto/AdicionarProduto.jsx
 import React, { useRef, useState } from 'react';
 import { Dialog } from 'primereact/dialog';
 import { Dropdown } from 'primereact/dropdown';

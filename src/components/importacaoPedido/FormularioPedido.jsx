@@ -17,6 +17,20 @@ export default function FormularioPedido({ pedido = {}, vendedores = [], parceir
 
   return (
     <div className="formgrid grid p-fluid">
+      {/* Tipo do Pedido */}
+      <div className="field col-12 md:col-4">
+        <label className="block font-medium text-sm mb-1">Tipo</label>
+        <Dropdown
+          value={pedido.tipo ?? 'venda'}
+          options={[
+            { label: 'Venda (Cliente)', value: 'venda' },
+            { label: 'Reposição (Estoque)', value: 'reposicao' },
+          ]}
+          onChange={(e) => handleChange('tipo', e.value)}
+          className="w-full"
+        />
+      </div>
+
       {/* Número do Pedido */}
       <div className="field col-12 md:col-4">
         <label htmlFor="numero_externo" className="block font-medium text-sm mb-1">
