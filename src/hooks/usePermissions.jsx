@@ -1,3 +1,4 @@
+import { useCallback, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 
 /**
@@ -7,38 +8,34 @@ import { useAuth } from '../context/AuthContext';
 const usePermissions = () => {
   const { user } = useAuth();
 
-  const currentList = Array.isArray(user?.permissoes) ? user.permissoes : [];
-  const set = new Set(currentList);
+  const currentList = useMemo(
+    () => (Array.isArray(user?.permissoes) ? user.permissoes : []),
+    [user?.permissoes]
+  );
 
-  /**
-   * Verifica se possui AO MENOS uma das permissões informadas.
-   * @param {string|string[]} permissoes
-   * @returns {boolean}
-   */
-  const has = (permissoes) => {
-    if (!set.size || !permissoes) return false;
-    const lista = Array.isArray(permissoes) ? permissoes : [permissoes];
-    return lista.some((perm) => !!perm && set.has(perm));
-  };
+  const set = useMemo(() => new Set(currentList), [currentList]);
 
-  /**
-   * Verifica se possui TODAS as permissões informadas.
-   * @param {string|string[]} permissoes
-   * @returns {boolean}
-   */
-  const hasAll = (permissoes) => {
-    if (!set.size || !permissoes) return false;
-    const lista = Array.isArray(permissoes) ? permissoes : [permissoes];
-    return lista.every((perm) => !!perm && set.has(perm));
-  };
+  const has = useCallback(
+    (permissoes) => {
+      if (!set.size || !permissoes) return false;
+      const lista = Array.isArray(permissoes) ? permissoes : [permissoes];
+      return lista.some((perm) => !!perm && set.has(perm));
+    },
+    [set]
+  );
 
-  /**
-   * Lista atual de permissões do usuário.
-   * @returns {string[]}
-   */
-  const list = () => currentList;
+  const hasAll = useCallback(
+    (permissoes) => {
+      if (!set.size || !permissoes) return false;
+      const lista = Array.isArray(permissoes) ? permissoes : [permissoes];
+      return lista.every((perm) => !!perm && set.has(perm));
+    },
+    [set]
+  );
 
-  return { has, hasAll, list };
+  const list = useCallback(() => currentList, [currentList]);
+
+  return useMemo(() => ({ has, hasAll, list }), [has, hasAll, list]);
 };
 
 export default usePermissions;

@@ -1,128 +1,116 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { InputText } from 'primereact/inputtext';
 import { Password } from 'primereact/password';
 import { InputSwitch } from 'primereact/inputswitch';
 import { MultiSelect } from 'primereact/multiselect';
 import { Button } from 'primereact/button';
 
-const UsuarioForm = ({ initialData = {}, perfisOptions = [], onSubmit, onCancel }) => {
-  const isEditMode = Boolean(initialData.id);
+const UsuarioForm = ({ initialData = {}, perfisOptions = [], onSubmit, onCancel, saving = false }) => {
+  const isEditMode = Boolean(initialData?.id);
+
+  const initialPerfis = useMemo(
+    () => (initialData?.perfis ? initialData.perfis.map((p) => p.id) : []),
+    [initialData]
+  );
 
   const [usuario, setUsuario] = useState({
     nome: initialData.nome || '',
     email: initialData.email || '',
     senha: '',
     ativo: initialData.ativo !== undefined ? !!initialData.ativo : true,
-    perfis: initialData.perfis ? initialData.perfis.map(perfil => perfil.id) : []
+    perfis: initialPerfis
   });
-  const [loading, setLoading] = useState(false);
 
-  const handleChange = (field, value) => {
-    setUsuario({ ...usuario, [field]: value });
-  };
+  useEffect(() => {
+    setUsuario({
+      nome: initialData.nome || '',
+      email: initialData.email || '',
+      senha: '',
+      ativo: initialData.ativo !== undefined ? !!initialData.ativo : true,
+      perfis: initialPerfis,
+    });
+  }, [initialData, initialPerfis]);
+
+  const handleChange = (field, value) => setUsuario((prev) => ({ ...prev, [field]: value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    try {
-      await onSubmit(usuario);
-    } catch (error) {
-      console.error('Erro no processamento do formulário:', error);
-    } finally {
-      setLoading(false);
-    }
+
+    const payload = { ...usuario };
+    if (!payload.senha) delete payload.senha; // evita mandar senha vazia
+
+    await onSubmit?.(payload);
   };
 
   return (
     <form onSubmit={handleSubmit} className="p-fluid">
-      {/* Campo Nome */}
       <div className="field">
         <label className="p-col-12 p-md-3">Nome</label>
         <div className="p-col-12 p-md-9">
           <InputText
             value={usuario.nome}
-            className='text-base text-color surface-overlay p-2 border-2 border-solid  border-round focus:border-primary w-full'
+            disabled={saving}
+            className="text-base text-color surface-overlay p-2 border-2 border-solid border-round focus:border-primary w-full"
             onChange={(e) => handleChange('nome', e.target.value)}
           />
         </div>
       </div>
 
-      {/* Campo Email */}
       <div className="field">
         <label className="p-col-12 p-md-3">Email</label>
         <div className="p-col-12 p-md-9">
           <InputText
             value={usuario.email}
-            className='text-base text-color surface-overlay p-2 border-2 border-solid  border-round focus:border-primary w-full'
+            disabled={saving}
+            className="text-base text-color surface-overlay p-2 border-2 border-solid border-round focus:border-primary w-full"
             onChange={(e) => handleChange('email', e.target.value)}
           />
         </div>
       </div>
 
-      {/* Campo Senha: exibido no cadastro; para edição, se mantiver vazio, não altera */}
       {!isEditMode && (
         <div className="field">
           <label className="p-col-12 p-md-3">Senha</label>
           <div className="p-col-12 p-md-9">
             <Password
               value={usuario.senha}
+              disabled={saving}
               onChange={(e) => handleChange('senha', e.target.value)}
-              className='text-base text-color surface-overlay border-1 border-solid  border-round focus:border-primary w-full'
+              className="text-base text-color surface-overlay border-1 border-solid border-round focus:border-primary w-full"
               feedback={false}
               minLength={6}
             />
           </div>
         </div>
       )}
-      {/* Campo Perfis: permite vincular e desvincular perfis em cadastro e edição */}
+
       <div className="field">
         <label className="p-col-12 p-md-3">Perfis</label>
         <div className="p-col-12 p-md-9">
           <MultiSelect
             value={usuario.perfis}
             options={perfisOptions}
+            disabled={saving}
             onChange={(e) => handleChange('perfis', e.value)}
             optionLabel="nome"
-            optionValue="id"  // Define que o valor utilizado é o ID do perfil
+            optionValue="id"
             placeholder="Selecione os perfis"
             display="chip"
-            className='text-base text-color surface-overlay p-1 border-2 border-solid  border-round focus:border-primary w-full'
-
+            className="text-base text-color surface-overlay p-1 border-2 border-solid border-round focus:border-primary w-full"
           />
         </div>
       </div>
-      {/* Campo Ativo */}
+
       <div className="field">
         <label className="p-col-12 p-md-3">Ativo</label>
         <div className="p-col-12 p-md-9">
-          <InputSwitch
-            checked={usuario.ativo}
-            onChange={(e) => handleChange('ativo', e.value)}
-            className='text-base text-color surface-overlay p-2 border-round'
-
-          />
+          <InputSwitch checked={usuario.ativo} disabled={saving} onChange={(e) => handleChange('ativo', e.value)} />
         </div>
       </div>
 
-
-
-      {/* Botões Salvar/Cancelar */}
       <div className="p-field p-col-12" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
-        <Button
-          label="Salvar"
-          type="submit"
-          icon="pi pi-check"
-          loading={loading}
-          className="p-mr-2"
-        />
-        <Button
-          label="Cancelar"
-          type="button"
-          className="p-button-secondary"
-          icon="pi pi-times"
-          style={{ marginLeft: '0.5rem' }}
-          onClick={onCancel}
-        />
+        <Button label="Salvar" type="submit" icon="pi pi-check" loading={saving} className="p-mr-2" />
+        <Button label="Cancelar" type="button" className="p-button-secondary" icon="pi pi-times" style={{ marginLeft: '0.5rem' }} onClick={onCancel} disabled={saving} />
       </div>
     </form>
   );

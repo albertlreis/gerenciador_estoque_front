@@ -1,67 +1,42 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
 
-const PermissaoForm = ({ initialData = {}, onSubmit, onCancel }) => {
+const PermissaoForm = ({ initialData = {}, onSubmit, onCancel, saving = false }) => {
   const [permissao, setPermissao] = useState({
     nome: initialData.nome || '',
     descricao: initialData.descricao || ''
   });
-  const [loading, setLoading] = useState(false)
 
-  const handleChange = (field, value) => {
-    setPermissao({ ...permissao, [field]: value });
-  };
+  useEffect(() => {
+    setPermissao({
+      nome: initialData.nome || '',
+      descricao: initialData.descricao || '',
+    });
+  }, [initialData]);
 
-  const handleSubmit = (e) => {
-    setLoading(true);
+  const handleChange = (field, value) => setPermissao((prev) => ({ ...prev, [field]: value }));
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit(permissao);
+    await onSubmit?.(permissao);
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="p-fluid p-formgrid p-grid"
-      style={{gap: '1rem'}}
-    >
-      {/* Campo Nome */}
+    <form onSubmit={handleSubmit} className="p-fluid p-formgrid p-grid" style={{ gap: '1rem' }}>
       <div className="field">
         <label htmlFor="nome">Nome</label>
-        <InputText
-          id="nome"
-          value={permissao.nome}
-          onChange={(e) => handleChange('nome', e.target.value)}
-        />
+        <InputText id="nome" value={permissao.nome} disabled={saving} onChange={(e) => handleChange('nome', e.target.value)} />
       </div>
 
-      {/* Campo Descrição */}
       <div className="field">
         <label htmlFor="descricao">Descrição</label>
-        <InputText
-          id="descricao"
-          value={permissao.descricao}
-          onChange={(e) => handleChange('descricao', e.target.value)}
-        />
+        <InputText id="descricao" value={permissao.descricao} disabled={saving} onChange={(e) => handleChange('descricao', e.target.value)} />
       </div>
 
-      {/* Botões: alinhados à direita */}
-      <div
-        className="field"
-        style={{
-          display: 'flex',
-          justifyContent: 'flex-end',
-          marginTop: '0.5rem'
-        }}
-      >
-        <Button label="Salvar" type="submit" icon="pi pi-check" loading={loading}/>
-        <Button
-          label="Cancelar"
-          type="button"
-          className="p-button-secondary"
-          style={{marginLeft: '0.5rem'}}
-          onClick={onCancel}
-        />
+      <div className="field" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+        <Button label="Salvar" type="submit" icon="pi pi-check" loading={saving} />
+        <Button label="Cancelar" type="button" className="p-button-secondary" style={{ marginLeft: '0.5rem' }} onClick={onCancel} disabled={saving} />
       </div>
     </form>
   );

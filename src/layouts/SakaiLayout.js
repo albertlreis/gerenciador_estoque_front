@@ -26,6 +26,7 @@ const SakaiLayout = ({ children, defaultSidebarCollapsed = false }) => {
     const path = location.pathname;
 
     if (
+      path.startsWith('/acessos') ||
       path.startsWith('/usuarios') ||
       path.startsWith('/perfis') ||
       path.startsWith('/permissoes') ||
@@ -36,7 +37,7 @@ const SakaiLayout = ({ children, defaultSidebarCollapsed = false }) => {
       setExpandedKeys({ administracao: true });
     } else if (
       path.startsWith('/catalogo') ||
-      path.startsWith('/produtos') // cobre /produtos, /produtos/importar etc.
+      path.startsWith('/produtos')
     ) {
       setExpandedKeys({ produtos: true });
     } else if (
@@ -50,7 +51,7 @@ const SakaiLayout = ({ children, defaultSidebarCollapsed = false }) => {
       path.startsWith('/consignacoes') ||
       path.startsWith('/pedidos-fabrica')
     ) {
-      setExpandedKeys({ pedidos: true }); // chave correta do menu
+      setExpandedKeys({ pedidos: true });
     } else {
       setExpandedKeys({});
     }

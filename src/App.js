@@ -15,12 +15,9 @@ import Depositos from './pages/Depositos';
 import MovimentacoesEstoque from './pages/MovimentacoesEstoque';
 import FinalizarPedido from './pages/FinalizarPedido';
 import ImportacaoPage from './pages/ImportacaoProdutos';
-import Perfis from './pages/Perfis';
-import Permissoes from './pages/Permissoes';
 import Pedidos from './pages/Pedidos';
 import Produtos from './pages/Produtos';
 import ProdutosOutlet from './pages/ProdutosOutlet';
-import Usuarios from './pages/Usuarios';
 import CatalogoProdutos from './pages/CatalogoProdutos';
 import MonitoramentoCache from './pages/MonitoramentoCache';
 
@@ -49,6 +46,11 @@ import ContasReceber from "./pages/ContasReceber";
 import FinanceiroDashboard from "./pages/FinanceiroDashboard";
 import FinanceiroLancamentos from "./pages/FinanceiroLancamentos";
 import FinanceiroDespesasRecorrentes from "./pages/FinanceiroDespesasRecorrentes";
+import Acessos from "./pages/Acessos";
+import UsuariosTab from "./pages/acessos/UsuariosTab";
+import PerfisTab from "./pages/acessos/PerfisTab";
+import PermissoesTab from "./pages/acessos/PermissoesTab";
+import AcessosIndex from "./pages/acessos/AcessosIndex";
 
 const renderProtectedRoute = (element, permissoes) => (
   <PrivateRoute element={<PermissaoRoute element={element} permissoes={permissoes}/>}/>
@@ -56,6 +58,12 @@ const renderProtectedRoute = (element, permissoes) => (
 
 const App = () => {
   useCheckVersion();
+
+  const PERMISSOES_ACESSOS_ANY = [
+    PERMISSOES.USUARIOS?.VISUALIZAR,
+    PERMISSOES.PERFIS?.VISUALIZAR,
+    PERMISSOES.PERMISSOES?.VISUALIZAR,
+  ];
 
   return (
     <Routes>
@@ -72,6 +80,30 @@ const App = () => {
           />
         }
       />
+
+      <Route
+        path="/acessos"
+        element={
+          <PrivateRoute
+            element={<PermissaoRoute element={<Acessos />} permissoes={PERMISSOES_ACESSOS_ANY} />}
+          />
+        }
+      >
+        <Route index element={<AcessosIndex />} />
+
+        <Route
+          path="usuarios"
+          element={<PermissaoRoute element={<UsuariosTab />} permissoes={PERMISSOES.USUARIOS?.VISUALIZAR} />}
+        />
+        <Route
+          path="perfis"
+          element={<PermissaoRoute element={<PerfisTab />} permissoes={PERMISSOES.PERFIS?.VISUALIZAR} />}
+        />
+        <Route
+          path="permissoes"
+          element={<PermissaoRoute element={<PermissoesTab />} permissoes={PERMISSOES.PERMISSOES?.VISUALIZAR} />}
+        />
+      </Route>
 
       <Route path="/categorias" element={renderProtectedRoute(<Categorias/>, PERMISSOES.CATEGORIAS.VISUALIZAR)}/>
       <Route path="/clientes" element={renderProtectedRoute(<Clientes/>, PERMISSOES.CLIENTES.VISUALIZAR)}/>
@@ -98,8 +130,6 @@ const App = () => {
         path="/pedidos-fabrica"
         element={renderProtectedRoute(<PedidosFabrica />, PERMISSOES.PEDIDOS.VISUALIZAR)}
       />
-      <Route path="/perfis" element={renderProtectedRoute(<Perfis/>, PERMISSOES.PERFIS.VISUALIZAR)}/>
-      <Route path="/permissoes" element={renderProtectedRoute(<Permissoes/>, PERMISSOES.PERMISSOES.VISUALIZAR)}/>
       <Route path="/produtos" element={renderProtectedRoute(<Produtos/>, PERMISSOES.PRODUTOS.VISUALIZAR)}/>
       <Route path="/produtos/importar" element={renderProtectedRoute(<ImportacaoPage/>, PERMISSOES.PRODUTOS.IMPORTAR)}/>
       <Route path="/produtos-outlet" element={renderProtectedRoute(<ProdutosOutlet/>, PERMISSOES.PRODUTOS.OUTLET)}/>
@@ -112,7 +142,6 @@ const App = () => {
           PERMISSOES.PRODUTOS.CATALOGO
         )}
       />
-      <Route path="/usuarios" element={renderProtectedRoute(<Usuarios/>, PERMISSOES.USUARIOS.VISUALIZAR)}/>
       <Route path="/consignacoes" element={renderProtectedRoute(<Consignacoes/>, PERMISSOES.CONSIGNACOES.VISUALIZAR)}/>
       <Route path="/configuracoes"
              element={renderProtectedRoute(<Configuracoes/>, PERMISSOES.CONFIGURACOES.VISUALIZAR)}/>

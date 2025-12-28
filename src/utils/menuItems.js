@@ -193,23 +193,15 @@ const menuItems = (navigate, has) => {
       key: 'administracao',
       icon: 'pi pi-fw pi-briefcase',
       items: [
-        has(PERMISSOES.USUARIOS?.VISUALIZAR) && {
-          label: 'Usuários',
-          key: 'admin-usuarios',
-          icon: 'pi pi-fw pi-users',
-          command: () => navigate('/usuarios')
-        },
-        has(PERMISSOES.PERFIS?.VISUALIZAR) && {
-          label: 'Perfis',
-          key: 'admin-perfis',
-          icon: 'pi pi-fw pi-id-card',
-          command: () => navigate('/perfis')
-        },
-        has(PERMISSOES.PERMISSOES?.VISUALIZAR) && {
-          label: 'Permissões',
-          key: 'admin-permissoes',
-          icon: 'pi pi-fw pi-lock',
-          command: () => navigate('/permissoes')
+        has([
+          PERMISSOES.USUARIOS?.VISUALIZAR,
+          PERMISSOES.PERFIS?.VISUALIZAR,
+          PERMISSOES.PERMISSOES?.VISUALIZAR
+        ]) && {
+          label: 'Acessos',
+          key: 'admin-acessos',
+          icon: 'pi pi-fw pi-key',
+          command: () => navigate('/acessos')
         },
         has(PERMISSOES.CATEGORIAS?.VISUALIZAR) && {
           label: 'Categorias',
