@@ -1,100 +1,100 @@
 import apiFinanceiro from '../services/apiFinanceiro';
-import { ENDPOINTS } from '../constants/endpoints';
+import { FINANCEIRO_ENDPOINTS } from '../constants/endpointsFinanceiro';
 
 export const FinanceiroApi = {
   // DASHBOARD
-  dashboard: (params) => apiFinanceiro.get(ENDPOINTS.financeiro.dashboard, { params }),
+  dashboard: (params) => apiFinanceiro.get(FINANCEIRO_ENDPOINTS.dashboard, { params }),
 
   // CATÁLOGOS
   catalogos: {
     categoriasFinanceiras: (params) =>
-      apiFinanceiro.get(ENDPOINTS.financeiro.catalogos.categoriasFinanceiras, { params }),
+      apiFinanceiro.get(FINANCEIRO_ENDPOINTS.catalogos.categoriasFinanceiras, { params }),
     contasFinanceiras: (params) =>
-      apiFinanceiro.get(ENDPOINTS.financeiro.catalogos.contasFinanceiras, { params }),
+      apiFinanceiro.get(FINANCEIRO_ENDPOINTS.catalogos.contasFinanceiras, { params }),
   },
 
-  centrosCusto: (params) => apiFinanceiro.get(ENDPOINTS.financeiro.centrosCusto, { params }),
+  centrosCusto: (params) => apiFinanceiro.get(FINANCEIRO_ENDPOINTS.centrosCusto, { params }),
 
   // LANÇAMENTOS
   lancamentos: {
-    totais: (params) => apiFinanceiro.get(ENDPOINTS.financeiro.lancamentos.totais, { params }),
-    listar: (params) => apiFinanceiro.get(ENDPOINTS.financeiro.lancamentos.base, { params }),
-    buscar: (id) => apiFinanceiro.get(ENDPOINTS.financeiro.lancamentos.byId(id)),
-    criar: (payload) => apiFinanceiro.post(ENDPOINTS.financeiro.lancamentos.base, payload),
-    atualizar: (id, payload) => apiFinanceiro.put(ENDPOINTS.financeiro.lancamentos.byId(id), payload),
-    remover: (id) => apiFinanceiro.delete(ENDPOINTS.financeiro.lancamentos.byId(id)),
+    totais: (params) => apiFinanceiro.get(FINANCEIRO_ENDPOINTS.lancamentos.totais, { params }),
+    listar: (params) => apiFinanceiro.get(FINANCEIRO_ENDPOINTS.lancamentos.base, { params }),
+    buscar: (id) => apiFinanceiro.get(FINANCEIRO_ENDPOINTS.lancamentos.byId(id)),
+    criar: (payload) => apiFinanceiro.post(FINANCEIRO_ENDPOINTS.lancamentos.base, payload),
+    atualizar: (id, payload) => apiFinanceiro.put(FINANCEIRO_ENDPOINTS.lancamentos.byId(id), payload),
+    remover: (id) => apiFinanceiro.delete(FINANCEIRO_ENDPOINTS.lancamentos.byId(id)),
   },
 
   // CONTAS A PAGAR
   contasPagar: {
-    kpis: (params) => apiFinanceiro.get(ENDPOINTS.financeiro.contasPagar.kpis, { params }),
+    kpis: (params) => apiFinanceiro.get(FINANCEIRO_ENDPOINTS.contasPagar.kpis, { params }),
 
     exportarExcel: (params) =>
-      apiFinanceiro.get(ENDPOINTS.financeiro.contasPagar.exportExcel, {
+      apiFinanceiro.get(FINANCEIRO_ENDPOINTS.contasPagar.exportExcel, {
         params,
         responseType: 'blob',
       }),
 
     exportarPdf: (params) =>
-      apiFinanceiro.get(ENDPOINTS.financeiro.contasPagar.exportPdf, {
+      apiFinanceiro.get(FINANCEIRO_ENDPOINTS.contasPagar.exportPdf, {
         params,
         responseType: 'blob',
       }),
 
-    listar: (params) => apiFinanceiro.get(ENDPOINTS.financeiro.contasPagar.base, { params }),
-    buscar: (id) => apiFinanceiro.get(ENDPOINTS.financeiro.contasPagar.byId(id)),
-    criar: (payload) => apiFinanceiro.post(ENDPOINTS.financeiro.contasPagar.base, payload),
-    atualizar: (id, payload) => apiFinanceiro.put(ENDPOINTS.financeiro.contasPagar.byId(id), payload),
-    remover: (id) => apiFinanceiro.delete(ENDPOINTS.financeiro.contasPagar.byId(id)),
+    listar: (params) => apiFinanceiro.get(FINANCEIRO_ENDPOINTS.contasPagar.base, { params }),
+    buscar: (id) => apiFinanceiro.get(FINANCEIRO_ENDPOINTS.contasPagar.byId(id)),
+    criar: (payload) => apiFinanceiro.post(FINANCEIRO_ENDPOINTS.contasPagar.base, payload),
+    atualizar: (id, payload) => apiFinanceiro.put(FINANCEIRO_ENDPOINTS.contasPagar.byId(id), payload),
+    remover: (id) => apiFinanceiro.delete(FINANCEIRO_ENDPOINTS.contasPagar.byId(id)),
 
-    pagar: (id, payload) => apiFinanceiro.post(ENDPOINTS.financeiro.contasPagar.pagar(id), payload),
+    pagar: (id, payload) => apiFinanceiro.post(FINANCEIRO_ENDPOINTS.contasPagar.pagar(id), payload),
 
     estornarPagamento: (contaId, pagamentoId) =>
-      apiFinanceiro.delete(ENDPOINTS.financeiro.contasPagar.estornar(contaId, pagamentoId)),
+      apiFinanceiro.delete(FINANCEIRO_ENDPOINTS.contasPagar.estornar(contaId, pagamentoId)),
   },
 
   // CONTAS A RECEBER
   contasReceber: {
-    kpis: (params) => apiFinanceiro.get(ENDPOINTS.financeiro.contasReceber.kpis, { params }),
+    kpis: (params) => apiFinanceiro.get(FINANCEIRO_ENDPOINTS.contasReceber.kpis, { params }),
 
     exportarExcel: (params) =>
-      apiFinanceiro.get(ENDPOINTS.financeiro.contasReceber.exportExcel, {
+      apiFinanceiro.get(FINANCEIRO_ENDPOINTS.contasReceber.exportExcel, {
         params,
         responseType: 'blob',
       }),
 
     exportarPdf: (params) =>
-      apiFinanceiro.get(ENDPOINTS.financeiro.contasReceber.exportPdf, {
+      apiFinanceiro.get(FINANCEIRO_ENDPOINTS.contasReceber.exportPdf, {
         params,
         responseType: 'blob',
       }),
 
-    listar: (params) => apiFinanceiro.get(ENDPOINTS.financeiro.contasReceber.base, { params }),
-    buscar: (id) => apiFinanceiro.get(ENDPOINTS.financeiro.contasReceber.byId(id)),
-    criar: (payload) => apiFinanceiro.post(ENDPOINTS.financeiro.contasReceber.base, payload),
-    atualizar: (id, payload) => apiFinanceiro.put(ENDPOINTS.financeiro.contasReceber.byId(id), payload),
-    remover: (id) => apiFinanceiro.delete(ENDPOINTS.financeiro.contasReceber.byId(id)),
+    listar: (params) => apiFinanceiro.get(FINANCEIRO_ENDPOINTS.contasReceber.base, { params }),
+    buscar: (id) => apiFinanceiro.get(FINANCEIRO_ENDPOINTS.contasReceber.byId(id)),
+    criar: (payload) => apiFinanceiro.post(FINANCEIRO_ENDPOINTS.contasReceber.base, payload),
+    atualizar: (id, payload) => apiFinanceiro.put(FINANCEIRO_ENDPOINTS.contasReceber.byId(id), payload),
+    remover: (id) => apiFinanceiro.delete(FINANCEIRO_ENDPOINTS.contasReceber.byId(id)),
 
-    pagar: (id, payload) => apiFinanceiro.post(ENDPOINTS.financeiro.contasReceber.pagar(id), payload),
+    pagar: (id, payload) => apiFinanceiro.post(FINANCEIRO_ENDPOINTS.contasReceber.pagar(id), payload),
 
     estornarPagamento: (contaId, pagamentoId) =>
-      apiFinanceiro.delete(ENDPOINTS.financeiro.contasReceber.estornar(contaId, pagamentoId)),
+      apiFinanceiro.delete(FINANCEIRO_ENDPOINTS.contasReceber.estornar(contaId, pagamentoId)),
   },
 
   // DESPESAS RECORRENTES
   despesasRecorrentes: {
-    listar: (params) => apiFinanceiro.get(ENDPOINTS.financeiro.despesasRecorrentes.base, { params }),
-    buscar: (id) => apiFinanceiro.get(ENDPOINTS.financeiro.despesasRecorrentes.byId(id)),
-    criar: (payload) => apiFinanceiro.post(ENDPOINTS.financeiro.despesasRecorrentes.base, payload),
+    listar: (params) => apiFinanceiro.get(FINANCEIRO_ENDPOINTS.despesasRecorrentes.base, { params }),
+    buscar: (id) => apiFinanceiro.get(FINANCEIRO_ENDPOINTS.despesasRecorrentes.byId(id)),
+    criar: (payload) => apiFinanceiro.post(FINANCEIRO_ENDPOINTS.despesasRecorrentes.base, payload),
     atualizar: (id, payload) =>
-      apiFinanceiro.put(ENDPOINTS.financeiro.despesasRecorrentes.byId(id), payload),
-    remover: (id) => apiFinanceiro.delete(ENDPOINTS.financeiro.despesasRecorrentes.byId(id)),
+      apiFinanceiro.put(FINANCEIRO_ENDPOINTS.despesasRecorrentes.byId(id), payload),
+    remover: (id) => apiFinanceiro.delete(FINANCEIRO_ENDPOINTS.despesasRecorrentes.byId(id)),
 
-    pausar: (id) => apiFinanceiro.patch(ENDPOINTS.financeiro.despesasRecorrentes.pausar(id)),
-    ativar: (id) => apiFinanceiro.patch(ENDPOINTS.financeiro.despesasRecorrentes.ativar(id)),
-    cancelar: (id) => apiFinanceiro.patch(ENDPOINTS.financeiro.despesasRecorrentes.cancelar(id)),
+    pausar: (id) => apiFinanceiro.patch(FINANCEIRO_ENDPOINTS.despesasRecorrentes.pausar(id)),
+    ativar: (id) => apiFinanceiro.patch(FINANCEIRO_ENDPOINTS.despesasRecorrentes.ativar(id)),
+    cancelar: (id) => apiFinanceiro.patch(FINANCEIRO_ENDPOINTS.despesasRecorrentes.cancelar(id)),
 
-    executar: (id, payload) => apiFinanceiro.post(ENDPOINTS.financeiro.despesasRecorrentes.executar(id), payload),
+    executar: (id, payload) => apiFinanceiro.post(FINANCEIRO_ENDPOINTS.despesasRecorrentes.executar(id), payload),
   },
 };
 

@@ -12,6 +12,7 @@ import { Checkbox } from 'primereact/checkbox';
 
 import apiEstoque from '../services/apiEstoque';
 import apiAuth from '../services/apiAuth';
+import PedidosApi from '../api/pedidosApi';
 
 import ProdutoImportadoCard from './importacaoPedido/ProdutoImportadoCard';
 import ProdutoImportadoListItem from './importacaoPedido/ProdutoImportadoListItem';
@@ -124,15 +125,13 @@ export default function ImportacaoPedidoPDF() {
     setUploadStatus('uploading');
 
     try {
-      const response = await apiEstoque.post('/pedidos/import', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const response = await PedidosApi.importarArquivo(formData);
 
       const payload = response.data?.dados;
       if (!payload) throw new Error('Resposta inesperada da API');
 
       // ================================
-      // 📌 PEDIDO
+      // PEDIDO
       // ================================
       const p = payload.pedido || {};
 
@@ -148,7 +147,7 @@ export default function ImportacaoPedidoPDF() {
       };
 
       // ================================
-      // 📌 ITENS (normaliza + mescla refs iguais)
+      // ITENS (normaliza + mescla refs iguais)
       // ================================
       const itensNormalizadosBase = (payload.itens || []).map((item) => ({
         ref: item.ref || item.codigo || '',
@@ -178,7 +177,7 @@ export default function ImportacaoPedidoPDF() {
       const itensNormalizados = mesclarProdutosRepetidos(itensNormalizadosBase);
 
       // ================================
-      // ✔️ Atribuir ao estado
+      // Atribuir ao estado
       // ================================
       setDados(payload);
       setCliente({});
@@ -408,8 +407,8 @@ export default function ImportacaoPedidoPDF() {
     }
 
     try {
-      const response = await apiEstoque.post('/pedidos/import/pdf/confirm', {
-        cliente: tipo === 'venda' ? cliente : {}, // <<< importante
+      const response = await PedidosApi.confirmarImportacaoPdf({
+        cliente: tipo === 'venda' ? cliente : {},
         pedido: { ...pedido, tipo },
         itens: itens.map((item) => ({
           ...item,

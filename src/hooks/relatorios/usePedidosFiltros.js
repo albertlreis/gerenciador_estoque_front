@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import api from '../../services/apiEstoque';
-import apiAuth from '../../services/apiAuth';
+import AuthApi from '../../api/authApi';
 import { ensureArray } from '../../utils/array/ensureArray';
 
 export function usePedidosFiltros({ enabled, toastRef }) {
@@ -16,10 +16,11 @@ export function usePedidosFiltros({ enabled, toastRef }) {
     (async () => {
       try {
         setLoadingFiltrosPedidos(true);
+
         const [resClientes, resParceiros, resVendedores] = await Promise.all([
           api.get('/clientes'),
           api.get('/parceiros'),
-          apiAuth.get('/usuarios/vendedores'),
+          AuthApi.usuarios.opcoes.vendedores(),
         ]);
 
         if (!alive) return;

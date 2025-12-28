@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiMail, FiLock } from 'react-icons/fi';
-import apiAuth from '../services/apiAuth';
-import apiEstoque from '../services/apiEstoque';
-import { isTokenValid } from '../helper';
+
+import AuthApi from '../api/authApi';
+import { isTokenValid } from '../helper/isTokenValid';
 import { useAuth } from '../context/AuthContext';
+
 import '../Login.css';
 import InputWithIcon from '../components/InputWithIcon';
 
@@ -30,18 +31,33 @@ const Login = () => {
     setErro('');
 
     try {
-      const response = await apiAuth.post('/login', { email, senha });
-      const { access_token, expires_in, user } = response.data;
+      const response = await AuthApi.login({ email, senha });
 
-      if (!access_token || !user) return setErro('Credenciais inválidas');
-      if (!user.ativo) return setErro('Usuário inativo, contate o administrador');
+      // Mantém compatível com o que seu back já entrega
+      const accessToken = response.data?.access_token || response.data?.token || response.data?.accessToken;
+      const expiresIn = Number(response.data?.expires_in ?? response.data?.expiresIn ?? 0);
+      const user = response.data?.user || response.data?.usuario;
 
-      const expiresAt = new Date().getTime() + expires_in * 1000;
-      login({ token: access_token, expiresAt, ...user });
+      if (!accessToken || !user) {
+        setErro('Credenciais inválidas');
+        return;
+      }
+      if (user?.ativo === false) {
+        setErro('Usuário inativo, contate o administrador');
+        return;
+      }
 
-      apiEstoque.defaults.headers.common['X-Permissoes'] = JSON.stringify(user.permissoes || []);
+      const expiresAt = expiresIn ? (new Date().getTime() + expiresIn * 1000) : null;
+
+      login({
+        token: accessToken,
+        expiresAt,
+        ...user,
+      });
+
       navigate('/');
     } catch (err) {
+      console.error(err);
       setErro('E-mail ou senha inválidos');
     } finally {
       setLoading(false);
@@ -102,7 +118,10 @@ const Login = () => {
             }}
             aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
           >
-            <i className={`pi ${mostrarSenha ? 'pi-eye-slash' : 'pi-eye'}`} style={{ fontSize: '1.2rem', color: '#666' }} />
+            <i
+              className={`pi ${mostrarSenha ? 'pi-eye-slash' : 'pi-eye'}`}
+              style={{ fontSize: '1.2rem', color: '#666' }}
+            />
           </button>
         </div>
 

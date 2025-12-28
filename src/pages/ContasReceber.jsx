@@ -2,7 +2,9 @@ import React, { useEffect, useRef, useState } from "react";
 import { Toast } from "primereact/toast";
 import { ConfirmPopup } from "primereact/confirmpopup";
 import SakaiLayout from '../layouts/SakaiLayout';
-import apiFinanceiro from "../services/apiFinanceiro";
+
+import FinanceiroApi from "../api/financeiroApi";
+
 import FiltroContasReceber from "../components/contasReceber/FiltroContasReceber";
 import KpiContasReceber from "../components/contasReceber/KpiContasReceber";
 import TabelaContasReceber from "../components/contasReceber/TabelaContasReceber";
@@ -16,40 +18,46 @@ export default function ContasReceber() {
   const [kpis, setKpis] = useState(null);
   const [baixaDialog, setBaixaDialog] = useState({ visible: false, conta: null });
 
-  // 🔄 carregar contas
+  // carregar contas
   const carregarContas = async (params = {}) => {
     setLoading(true);
     try {
-      const { data } = await apiFinanceiro.get("/financeiro/contas-receber", { params });
-      setContas(data.data || []);
+      const { data } = await FinanceiroApi.contasReceber.listar(params);
+
+      // suporte a retornos diferentes (lista simples ou {data: []})
+      const list = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
+      setContas(list);
     } catch {
-      toast.current.show({ severity: "error", summary: "Erro", detail: "Falha ao carregar contas" });
+      toast.current?.show({ severity: "error", summary: "Erro", detail: "Falha ao carregar contas" });
     } finally {
       setLoading(false);
     }
   };
 
-  // 📊 carregar KPIs
+  // carregar KPIs
   const carregarKpis = async () => {
     try {
-      const { data } = await apiFinanceiro.get("/financeiro/contas-receber/kpis");
+      const { data } = await FinanceiroApi.contasReceber.kpis();
       setKpis(data);
     } catch (err) {
       console.error(err);
     }
   };
 
-  // 💰 baixa de pagamento
+  // baixa de pagamento (agora é "pagar")
   const onBaixar = (conta) => setBaixaDialog({ visible: true, conta });
+
   const onConfirmBaixa = async (payload) => {
     try {
-      await apiFinanceiro.post(`/financeiro/contas-receber/${payload.id}/baixa`, payload);
-      toast.current.show({ severity: "success", summary: "Baixa registrada com sucesso!" });
+      await FinanceiroApi.contasReceber.pagar(payload.id, payload);
+
+      toast.current?.show({ severity: "success", summary: "Baixa registrada com sucesso!" });
       setBaixaDialog({ visible: false, conta: null });
+
       carregarContas(filtros);
       carregarKpis();
     } catch {
-      toast.current.show({ severity: "error", summary: "Erro ao registrar baixa" });
+      toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao registrar baixa" });
     }
   };
 

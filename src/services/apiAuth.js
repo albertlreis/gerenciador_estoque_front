@@ -9,18 +9,19 @@ const apiAuth = axios.create({
   }
 });
 
-// Interceptor para adicionar o token à requisição
 apiAuth.interceptors.request.use(
   (config) => {
-    // Se a URL for da rota de login (ou outras rotas livres), ignora a injeção do token.
-    if (config.url && (config.url.includes('/login') || config.url.includes('/register'))) {
+    // Rotas públicas novas
+    if (
+      config.url &&
+      (config.url.includes('/auth/login') || config.url.includes('/auth/register'))
+    ) {
       return config;
     }
 
     const userStr = localStorage.getItem('user');
     if (userStr) {
       try {
-        // Tenta fazer o parse apenas se houver um valor e que comece com "{" (indicando JSON)
         if (userStr.trim().startsWith('{')) {
           const parsedUser = JSON.parse(userStr);
           if (parsedUser.token) {
@@ -31,10 +32,10 @@ apiAuth.interceptors.request.use(
         console.error('Erro ao parsear usuário do localStorage', err);
       }
     }
+
     return config;
   },
   (error) => Promise.reject(error)
 );
-
 
 export default apiAuth;

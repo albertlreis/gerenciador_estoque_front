@@ -1,14 +1,12 @@
-import React, {createContext, useContext, useEffect, useMemo, useState} from 'react';
-import {useNavigate} from 'react-router-dom';
-import {isTokenValid} from '../helper/isTokenValid';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { isTokenValid } from '../helper/isTokenValid';
 import apiEstoque from '../services/apiEstoque';
+import AuthApi from '../api/authApi';
 
 const AuthContext = createContext();
 
-/**
- * Provedor global de autenticação.
- */
-export const AuthProvider = ({children}) => {
+export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const navigate = useNavigate();
@@ -32,13 +30,17 @@ export const AuthProvider = ({children}) => {
   const login = (userData) => {
     localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
+
     apiEstoque.defaults.headers.common['X-Permissoes'] = JSON.stringify(userData.permissoes || []);
   };
 
   const logout = () => {
+    // tenta invalidar no back (rota nova)
+    AuthApi.logout().catch(() => {});
+
     localStorage.removeItem('user');
     setUser(null);
-    navigate('/login', {replace: true});
+    navigate('/login', { replace: true });
   };
 
   const permissionsSet = useMemo(() => {
@@ -60,7 +62,7 @@ export const AuthProvider = ({children}) => {
         logout,
         isAuthenticated: !!user,
         isLoadingUser,
-        has
+        has,
       }}
     >
       {children}
@@ -68,7 +70,4 @@ export const AuthProvider = ({children}) => {
   );
 };
 
-/**
- * Hook para acesso ao contexto de autenticação.
- */
 export const useAuth = () => useContext(AuthContext);

@@ -1,12 +1,5 @@
-/**
- * Catálogo central de endpoints (paths) da API.
- * - Os axios instances já apontam para /api/v1, então aqui usamos paths relativos (começando com "/").
- * - Builders sempre retornam string.
- */
-export const ENDPOINTS = Object.freeze({
-  // ==========================================================
+export const ESTOQUE_ENDPOINTS = Object.freeze({
   // SISTEMA
-  // ==========================================================
   dashboard: Object.freeze({
     resumo: '/dashboard/resumo',
   }),
@@ -16,9 +9,7 @@ export const ENDPOINTS = Object.freeze({
     atualizar: (chave) => `/configuracoes/${encodeURIComponent(chave)}`,
   }),
 
-  // ==========================================================
   // CATÁLOGO
-  // ==========================================================
   categorias: Object.freeze({
     base: '/categorias',
     byId: (id) => `/categorias/${id}`,
@@ -28,6 +19,19 @@ export const ENDPOINTS = Object.freeze({
     base: '/atributos',
     sugestoes: '/atributos/sugestoes',
     valores: (nome) => `/atributos/${encodeURIComponent(nome)}/valores`,
+  }),
+
+  variacoes: Object.freeze({
+    buscar: '/variacoes',
+    outlets: Object.freeze({
+      base: (variacaoId) => `/variacoes/${variacaoId}/outlets`,
+      byId: (variacaoId, outletId) => `/variacoes/${variacaoId}/outlets/${outletId}`,
+    }),
+  }),
+
+  outletCatalogo: Object.freeze({
+    motivos: '/outlet/motivos',
+    formasPagamento: '/outlet/formas-pagamento',
   }),
 
   produtos: Object.freeze({
@@ -56,22 +60,7 @@ export const ENDPOINTS = Object.freeze({
     }),
   }),
 
-  variacoes: Object.freeze({
-    buscar: '/variacoes',
-    outlets: Object.freeze({
-      base: (variacaoId) => `/variacoes/${variacaoId}/outlets`,
-      byId: (variacaoId, outletId) => `/variacoes/${variacaoId}/outlets/${outletId}`,
-    }),
-  }),
-
-  outletCatalogo: Object.freeze({
-    motivos: '/outlet/motivos',
-    formasPagamento: '/outlet/formas-pagamento',
-  }),
-
-  // ==========================================================
   // ESTOQUE
-  // ==========================================================
   estoque: Object.freeze({
     atual: '/estoque/atual',
     resumo: '/estoque/resumo',
@@ -97,7 +86,6 @@ export const ENDPOINTS = Object.freeze({
   depositos: Object.freeze({
     base: '/depositos',
     byId: (id) => `/depositos/${id}`,
-
     estoques: Object.freeze({
       base: (depositoId) => `/depositos/${depositoId}/estoques`,
       byId: (depositoId, estoqueId) => `/depositos/${depositoId}/estoques/${estoqueId}`,
@@ -115,13 +103,11 @@ export const ENDPOINTS = Object.freeze({
     processar: (id) => `/importacoes/estoque/${id}/processar`,
   }),
 
-  // ==========================================================
   // PESSOAS
-  // ==========================================================
   clientes: Object.freeze({
     base: '/clientes',
     byId: (id) => `/clientes/${id}`,
-    verificarDocumento: '/clientes/verificar-documento', // usar query params
+    verificarDocumento: '/clientes/verificar-documento', // query string
   }),
 
   fornecedores: Object.freeze({
@@ -137,15 +123,14 @@ export const ENDPOINTS = Object.freeze({
     restaurar: (id) => `/parceiros/${id}/restaurar`,
   }),
 
-  // ==========================================================
   // PEDIDOS
-  // ==========================================================
   pedidos: Object.freeze({
     base: '/pedidos',
     byId: (id) => `/pedidos/${id}`,
 
     export: '/pedidos/export',
     stats: '/pedidos/stats',
+
     import: '/pedidos/import',
     importPdfConfirm: '/pedidos/import/pdf/confirm',
 
@@ -169,15 +154,12 @@ export const ENDPOINTS = Object.freeze({
     itens: Object.freeze({
       nested: (pedidoId) => `/pedidos/${pedidoId}/itens`,
       nestedById: (pedidoId, itemId) => `/pedidos/${pedidoId}/itens/${itemId}`,
-
       global: '/pedidos/itens',
       liberarEntrega: (itemId) => `/pedidos/itens/${itemId}/liberar-entrega`,
     }),
   }),
 
-  // ==========================================================
   // CARRINHOS
-  // ==========================================================
   carrinhos: Object.freeze({
     base: '/carrinhos',
     byId: (id) => `/carrinhos/${id}`,
@@ -190,9 +172,7 @@ export const ENDPOINTS = Object.freeze({
     }),
   }),
 
-  // ==========================================================
   // CONSIGNAÇÕES
-  // ==========================================================
   consignacoes: Object.freeze({
     base: '/consignacoes',
     byId: (id) => `/consignacoes/${id}`,
@@ -205,18 +185,14 @@ export const ENDPOINTS = Object.freeze({
     devolucoes: (id) => `/consignacoes/${id}/devolucoes`,
   }),
 
-  // ==========================================================
   // DEVOLUÇÕES
-  // ==========================================================
   devolucoes: Object.freeze({
     base: '/devolucoes',
     aprovar: (id) => `/devolucoes/${id}/aprovar`,
     reprovar: (id) => `/devolucoes/${id}/reprovar`,
   }),
 
-  // ==========================================================
   // RELATÓRIOS
-  // ==========================================================
   relatorios: Object.freeze({
     estoqueAtual: '/relatorios/estoque/atual',
     pedidos: '/relatorios/pedidos',
@@ -228,17 +204,13 @@ export const ENDPOINTS = Object.freeze({
     devedoresPdf: '/relatorios/devedores/export/pdf',
   }),
 
-  // ==========================================================
   // FERIADOS
-  // ==========================================================
   feriados: Object.freeze({
     base: '/feriados',
     sincronizar: '/feriados/sincronizar',
   }),
 
-  // ==========================================================
   // ASSISTÊNCIAS
-  // ==========================================================
   assistencias: Object.freeze({
     autorizadas: Object.freeze({
       base: '/assistencias/autorizadas',
@@ -284,60 +256,7 @@ export const ENDPOINTS = Object.freeze({
     }),
   }),
 
-  // ==========================================================
-  // FINANCEIRO
-  // ==========================================================
-  financeiro: Object.freeze({
-    dashboard: '/financeiro/dashboard',
-
-    catalogos: Object.freeze({
-      categoriasFinanceiras: '/financeiro/catalogos/categorias-financeiras',
-      contasFinanceiras: '/financeiro/catalogos/contas-financeiras',
-    }),
-
-    centrosCusto: '/financeiro/centros-custo',
-
-    lancamentos: Object.freeze({
-      base: '/financeiro/lancamentos',
-      totais: '/financeiro/lancamentos/totais',
-      byId: (id) => `/financeiro/lancamentos/${id}`,
-    }),
-
-    contasPagar: Object.freeze({
-      base: '/financeiro/contas-pagar',
-      byId: (id) => `/financeiro/contas-pagar/${id}`,
-      kpis: '/financeiro/contas-pagar/kpis',
-      exportExcel: '/financeiro/contas-pagar/export/excel',
-      exportPdf: '/financeiro/contas-pagar/export/pdf',
-      pagar: (id) => `/financeiro/contas-pagar/${id}/pagar`,
-      estornar: (contaId, pagamentoId) =>
-        `/financeiro/contas-pagar/${contaId}/pagamentos/${pagamentoId}`,
-    }),
-
-    contasReceber: Object.freeze({
-      base: '/financeiro/contas-receber',
-      byId: (id) => `/financeiro/contas-receber/${id}`,
-      kpis: '/financeiro/contas-receber/kpis',
-      exportExcel: '/financeiro/contas-receber/export/excel',
-      exportPdf: '/financeiro/contas-receber/export/pdf',
-      pagar: (id) => `/financeiro/contas-receber/${id}/pagar`,
-      estornar: (contaId, pagamentoId) =>
-        `/financeiro/contas-receber/${contaId}/pagamentos/${pagamentoId}`,
-    }),
-
-    despesasRecorrentes: Object.freeze({
-      base: '/financeiro/despesas-recorrentes',
-      byId: (id) => `/financeiro/despesas-recorrentes/${id}`,
-      pausar: (id) => `/financeiro/despesas-recorrentes/${id}/pausar`,
-      ativar: (id) => `/financeiro/despesas-recorrentes/${id}/ativar`,
-      cancelar: (id) => `/financeiro/despesas-recorrentes/${id}/cancelar`,
-      executar: (id) => `/financeiro/despesas-recorrentes/${id}/executar`,
-    }),
-  }),
-
-  // ==========================================================
   // COMUNICAÇÃO
-  // ==========================================================
   comunicacao: Object.freeze({
     templates: Object.freeze({
       base: '/comunicacao/templates',
@@ -359,4 +278,4 @@ export const ENDPOINTS = Object.freeze({
   }),
 });
 
-export default ENDPOINTS;
+export default ESTOQUE_ENDPOINTS;
