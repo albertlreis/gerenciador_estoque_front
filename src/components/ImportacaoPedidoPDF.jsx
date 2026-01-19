@@ -384,6 +384,7 @@ export default function ImportacaoPedidoPDF() {
   };
 
   /** 💾 Confirma importação e salva no banco */
+  /** 💾 Confirma importação e salva no banco */
   const confirmarImportacao = async () => {
     const tipo = pedido?.tipo ?? 'venda';
 
@@ -431,14 +432,12 @@ export default function ImportacaoPedidoPDF() {
         ? response.data.itens
         : [];
 
-      // Monta pedido para fábrica
-      const tipo = pedido?.tipo ?? 'venda';
-
+      // ✅ NÃO redeclare "tipo" aqui (isso causava TDZ)
       const fabrica = itens
         .filter((i) => i.enviar_fabrica)
         .map((item) => {
           const encontrado = variacoesConfirmadas.find(
-            (v) => v.referencia === item.ref && v.nome_produto === item.nome,
+            (v) => v.referencia === item.ref && v.nome_produto === item.nome
           );
 
           const vincularVenda = (tipo === 'venda');
