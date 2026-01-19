@@ -84,14 +84,13 @@ const ConsignacaoModal = ({ id, visible, onHide, onAtualizar }) => {
   const confirmarCompra = async (consignacao) => {
     setSaving(true);
     try {
-      await api.patch(`/consignacoes/${consignacao.id}`, {
-        status: 'comprado',
-      });
+      await api.patch(`/consignacoes/${consignacao.id}/status`, { status: 'comprado' });
       toastRef.current.show({ severity: 'success', summary: 'Sucesso', detail: 'Compra confirmada com sucesso.' });
       await carregar();
       onAtualizar?.();
     } catch (err) {
-      toastRef.current.show({ severity: 'error', summary: 'Erro', detail: 'Não foi possível confirmar a compra.' });
+      const msg = err?.response?.data?.erro || 'Não foi possível confirmar a compra.';
+      toastRef.current.show({ severity: 'error', summary: 'Erro', detail: msg });
     } finally {
       setSaving(false);
     }

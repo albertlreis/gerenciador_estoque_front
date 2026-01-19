@@ -154,30 +154,30 @@ const menuItems = (navigate, has) => {
           icon: 'pi pi-fw pi-sort-alt',
           command: () => navigate('/movimentacoes-estoque')
         },
-        has(PERMISSOES.ESTOQUE?.MOVIMENTAR) && {
-          label: 'Leitura de Estoque',
-          key: 'estoque-leitura',
-          icon: 'pi pi-fw pi-barcode',
-          command: () => navigate('/estoque/leitura')
-        },
+        // has(PERMISSOES.ESTOQUE?.MOVIMENTAR) && {
+        //   label: 'Leitura de Estoque',
+        //   key: 'estoque-leitura',
+        //   icon: 'pi pi-fw pi-barcode',
+        //   command: () => navigate('/estoque/leitura')
+        // },
         has(PERMISSOES.ESTOQUE?.MOVIMENTAR) && {
           label: 'Transferir entre Depósitos',
           key: 'estoque-transferir',
           icon: 'pi pi-fw pi-external-link',
           command: () => navigate('/estoque/leitura?mode=transfer')
         },
-        {
-          label: 'Reservas Pendentes',
-          key: 'estoque-reservas',
-          icon: 'pi pi-fw pi-clock',
-          command: () => navigate('/reservas')
-        },
-        has(PERMISSOES.PRODUTOS?.IMPORTAR) && {
-          label: 'Importar Nota Fiscal',
-          key: 'produtos-importar',
-          icon: 'pi pi-fw pi-upload',
-          command: () => navigate('/produtos/importar')
-        }
+        // {
+        //   label: 'Reservas Pendentes',
+        //   key: 'estoque-reservas',
+        //   icon: 'pi pi-fw pi-clock',
+        //   command: () => navigate('/reservas')
+        // },
+        // has(PERMISSOES.PRODUTOS?.IMPORTAR) && {
+        //   label: 'Importar Nota Fiscal',
+        //   key: 'produtos-importar',
+        //   icon: 'pi pi-fw pi-upload',
+        //   command: () => navigate('/produtos/importar')
+        // }
       ].filter(Boolean)
     },
 

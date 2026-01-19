@@ -6,8 +6,18 @@ import { Tag } from 'primereact/tag';
 import formatarPreco from '../utils/formatarPreco';
 import getImageSrc from '../utils/getImageSrc';
 
+// ✅ precisa estar no escopo do módulo (usado em mais de um lugar)
+const estoqueDaVariacao = (v) => {
+  if (!v) return 0;
+  if (typeof v.estoque_total === 'number') return v.estoque_total;
+  if (v.estoque && typeof v.estoque.quantidade === 'number') return v.estoque.quantidade;
+  if (Array.isArray(v.estoques)) return v.estoques.reduce((s, e) => s + Number(e.quantidade || 0), 0);
+  return 0;
+};
+
 const agruparPorReferencia = (produtos) => {
   const grupos = [];
+
   for (const p of produtos) {
     const vs = Array.isArray(p.variacoes) ? p.variacoes : [];
     const byRef = vs.reduce((acc, v) => {
@@ -15,10 +25,20 @@ const agruparPorReferencia = (produtos) => {
       (acc[ref] ||= []).push(v);
       return acc;
     }, {});
+
     Object.entries(byRef).forEach(([referencia, variacoes]) => {
-      const estoqueTotal = variacoes.reduce((sum, v) => sum + (v.estoque?.quantidade || 0), 0);
-      const outletRestante = variacoes.reduce((sum, v) => sum + (v.outlets?.reduce?.((s, o) => s + (o.quantidade_restante || 0), 0) || 0), 0);
-      const hasOutlet = outletRestante > 0 || variacoes.some((v) => v.outlet_restante_total > 0);
+      const estoqueTotal = variacoes.reduce((sum, v) => sum + estoqueDaVariacao(v), 0);
+
+      const outletRestante = variacoes.reduce(
+        (sum, v) =>
+          sum +
+          (v.outlets?.reduce?.((s, o) => s + (o.quantidade_restante || 0), 0) || 0),
+        0
+      );
+
+      const hasOutlet =
+        outletRestante > 0 || variacoes.some((v) => (v.outlet_restante_total || 0) > 0);
+
       grupos.push({
         id: `${p.id}|${referencia}`,
         produto: p,
@@ -30,6 +50,7 @@ const agruparPorReferencia = (produtos) => {
       });
     });
   }
+
   return grupos;
 };
 
@@ -54,7 +75,6 @@ const CatalogoGrid = ({ produtos, onAdicionarAoCarrinho }) => {
               grupo={g}
               onDetalhes={() => openDetalhes(g)}
               onAdicionar={() => {
-                // para o diálogo de variações: passamos as variações do grupo
                 onAdicionarAoCarrinho &&
                 onAdicionarAoCarrinho({ ...g.produto, variacoes: g.variacoes });
               }}
@@ -64,7 +84,11 @@ const CatalogoGrid = ({ produtos, onAdicionarAoCarrinho }) => {
       </div>
 
       <Dialog
-        header={selectedGroup ? `${selectedGroup.produto?.nome || ''} — Ref. ${selectedGroup.referencia}` : ''}
+        header={
+          selectedGroup
+            ? `${selectedGroup.produto?.nome || ''} — Ref. ${selectedGroup.referencia}`
+            : ''
+        }
         visible={!!selectedGroup}
         style={{ width: '640px' }}
         modal
@@ -83,7 +107,6 @@ const CatalogoGrid = ({ produtos, onAdicionarAoCarrinho }) => {
               className="mb-3 border-round"
             />
 
-            {/* Dimensões do produto */}
             <div className="grid text-sm mb-3">
               <div className="col-6">
                 <strong>Referência:</strong> {selectedGroup.referencia || 'N/A'}
@@ -104,26 +127,40 @@ const CatalogoGrid = ({ produtos, onAdicionarAoCarrinho }) => {
 
             <Divider />
 
-            <p><strong>Variações desta referência:</strong></p>
+            <p>
+              <strong>Variações desta referência:</strong>
+            </p>
 
             {selectedGroup.variacoes.map((variacao, idx) => {
               const preco = Number(variacao.preco || 0);
-              const quantidade = variacao.estoque?.quantidade ?? 0;
+              const quantidade = estoqueDaVariacao(variacao);
 
               const renderPreco = () => {
                 const outletsValidos = Array.isArray(variacao.outlets)
                   ? variacao.outlets.filter((o) => (o.quantidade_restante || 0) > 0)
                   : [];
+
                 if (!selectedGroup.is_outlet || outletsValidos.length === 0) {
                   return <span>{formatarPreco(preco)}</span>;
                 }
-                const melhorOutlet = outletsValidos.reduce((menor, atual) =>
-                  (atual.percentual_desconto || 0) > (menor.percentual_desconto || 0) ? atual : menor
+
+                const melhorOutlet = outletsValidos.reduce((melhor, atual) =>
+                  (atual.percentual_desconto || 0) > (melhor.percentual_desconto || 0)
+                    ? atual
+                    : melhor
                 );
+
                 const precoOutlet = preco * (1 - (melhorOutlet.percentual_desconto || 0) / 100);
+
                 return (
                   <>
-                    <span style={{ textDecoration: 'line-through', marginRight: '0.5rem', color: '#999' }}>
+                    <span
+                      style={{
+                        textDecoration: 'line-through',
+                        marginRight: '0.5rem',
+                        color: '#999',
+                      }}
+                    >
                       {formatarPreco(preco)}
                     </span>
                     <span style={{ fontWeight: 'bold', marginRight: '0.5rem' }}>
@@ -136,7 +173,6 @@ const CatalogoGrid = ({ produtos, onAdicionarAoCarrinho }) => {
                 );
               };
 
-              // Ordena atributos alfabeticamente
               const atributosOrdenados = Array.isArray(variacao.atributos)
                 ? [...variacao.atributos].sort((a, b) => {
                   const ka = `${a.atributo || ''} ${a.valor || ''}`.toLowerCase();
@@ -147,23 +183,36 @@ const CatalogoGrid = ({ produtos, onAdicionarAoCarrinho }) => {
 
               return (
                 <div key={idx} className="mb-3 border-bottom-1 surface-border pb-2">
-                  <p className="m-0"><strong>Nome:</strong> {variacao.nome}</p>
-                  <p className="m-0"><strong>Referência:</strong> {variacao.referencia || 'N/A'}</p>
-                  <p className="m-0"><strong>Preço:</strong> {renderPreco()}</p>
+                  <p className="m-0">
+                    <strong>Nome:</strong> {variacao.nome}
+                  </p>
+                  <p className="m-0">
+                    <strong>Referência:</strong> {variacao.referencia || 'N/A'}
+                  </p>
+                  <p className="m-0">
+                    <strong>Preço:</strong> {renderPreco()}
+                  </p>
                   <p className="m-0 mt-1">
                     <strong>Estoque:</strong>{' '}
-                    <Tag value={`${quantidade} un.`} severity={quantidade > 0 ? 'success' : 'danger'} />
+                    <Tag
+                      value={`${quantidade} un.`}
+                      severity={quantidade > 0 ? 'success' : 'danger'}
+                    />
                   </p>
 
-                  <p className="m-0 mt-2"><strong>Atributos:</strong></p>
+                  <p className="m-0 mt-2">
+                    <strong>Atributos:</strong>
+                  </p>
                   <ul className="pl-3 mt-1">
-                    {atributosOrdenados.length
-                      ? atributosOrdenados.map((attr, i) => (
+                    {atributosOrdenados.length ? (
+                      atributosOrdenados.map((attr, i) => (
                         <li key={i}>
                           {attr.atributo}: {attr.valor}
                         </li>
                       ))
-                      : <li>Nenhum atributo</li>}
+                    ) : (
+                      <li>Nenhum atributo</li>
+                    )}
                   </ul>
                 </div>
               );
