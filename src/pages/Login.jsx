@@ -47,11 +47,13 @@ const Login = () => {
         return;
       }
 
-      const expiresAt = expiresIn ? (new Date().getTime() + expiresIn * 1000) : null;
+      const nowSec = Math.floor(Date.now() / 1000);
+      const exp = expiresIn ? (nowSec + expiresIn) : null;
 
       login({
         token: accessToken,
-        expiresAt,
+        exp, // <<< padrão validado pelo helper
+        expiresAt: exp ? exp * 1000 : null, // opcional (ms), compat
         ...user,
       });
 

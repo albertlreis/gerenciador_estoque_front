@@ -3,6 +3,7 @@ import axios from 'axios';
 const apiAuth = axios.create({
   baseURL: `${process.env.REACT_APP_BASE_URL_AUTH}/api/v1`,
   timeout: Number(process.env.REACT_APP_TIMEOUT),
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
@@ -11,22 +12,19 @@ const apiAuth = axios.create({
 
 apiAuth.interceptors.request.use(
   (config) => {
-    // Rotas públicas novas
-    if (
-      config.url &&
-      (config.url.includes('/auth/login') || config.url.includes('/auth/register'))
-    ) {
+    const url = config.url || '';
+
+    // Rotas públicas
+    if (url.includes('/auth/login') || url.includes('/auth/refresh')) {
       return config;
     }
 
     const userStr = localStorage.getItem('user');
     if (userStr) {
       try {
-        if (userStr.trim().startsWith('{')) {
-          const parsedUser = JSON.parse(userStr);
-          if (parsedUser.token) {
-            config.headers['Authorization'] = `Bearer ${parsedUser.token}`;
-          }
+        const parsedUser = JSON.parse(userStr);
+        if (parsedUser?.token) {
+          config.headers['Authorization'] = `Bearer ${parsedUser.token}`;
         }
       } catch (err) {
         console.error('Erro ao parsear usuário do localStorage', err);

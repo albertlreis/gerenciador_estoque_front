@@ -19,6 +19,7 @@ export const AuthProvider = ({ children }) => {
         setUser(parsed);
 
         apiEstoque.defaults.headers.common['X-Permissoes'] = JSON.stringify(parsed.permissoes || []);
+        apiEstoque.defaults.headers.common['Authorization'] = `Bearer ${parsed.token}`;
       } catch {
         localStorage.removeItem('user');
         setUser(null);
@@ -32,6 +33,7 @@ export const AuthProvider = ({ children }) => {
     setUser(userData);
 
     apiEstoque.defaults.headers.common['X-Permissoes'] = JSON.stringify(userData.permissoes || []);
+    apiEstoque.defaults.headers.common['Authorization'] = `Bearer ${userData.token}`;
   };
 
   const logout = () => {

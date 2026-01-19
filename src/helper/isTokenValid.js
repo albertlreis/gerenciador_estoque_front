@@ -1,6 +1,8 @@
 /**
- * Verifica se o token do usuário salvo no localStorage ainda é válido.
- * Exige que o campo `exp` (timestamp UNIX) esteja presente em `user`.
+ * Verifica se o token salvo no localStorage ainda está dentro da validade.
+ * Aceita:
+ * - user.exp (timestamp UNIX em segundos)
+ * - user.expiresAt (timestamp em ms)
  */
 export const isTokenValid = () => {
   const stored = localStorage.getItem('user');
@@ -9,10 +11,22 @@ export const isTokenValid = () => {
   try {
     const user = JSON.parse(stored);
 
-    if (!user?.exp) return !!user?.id;
+    // Sem token, não tem sessão
+    if (!user?.token) return false;
 
-    const now = Math.floor(Date.now() / 1000);
-    return user.exp > now;
+    // Preferência: exp (segundos)
+    if (typeof user.exp === 'number' && user.exp > 0) {
+      const now = Math.floor(Date.now() / 1000);
+      return user.exp > now;
+    }
+
+    // Compat: expiresAt (ms)
+    if (typeof user.expiresAt === 'number' && user.expiresAt > 0) {
+      return user.expiresAt > Date.now();
+    }
+
+    // Se não tem expiração, considera inválido (com access curto isso evita “falso logado”)
+    return false;
   } catch {
     return false;
   }
