@@ -92,7 +92,7 @@ export default function ImportacaoPedidoPDF() {
           apiEstoque.get('/categorias'),
           apiEstoque.get('/depositos'),
           apiEstoque.get('/parceiros'),
-          apiAuth.get('/usuarios/vendedores'),
+          apiAuth.get('/usuarios?perfil_id=2'),
           apiEstoque.get('/clientes'),
         ]);
 
