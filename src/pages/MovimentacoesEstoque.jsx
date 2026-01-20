@@ -219,6 +219,54 @@ const MovimentacoesEstoque = () => {
     }
   };
 
+  const baixarPdfTransferencia = async (rowData) => {
+    const transferenciaId =
+      rowData?.tipo === 'transferencia' && rowData?.ref_type === 'transferencia'
+        ? rowData?.ref_id
+        : null;
+
+    if (!transferenciaId) {
+      toast.current?.show({
+        severity: 'warn',
+        summary: 'Atenção',
+        detail: 'PDF indisponível para esta movimentação.',
+        life: 3000,
+      });
+      return;
+    }
+
+    try {
+      const response = await apiEstoque.get(`/estoque/transferencias/${transferenciaId}/pdf`, {
+        responseType: 'blob',
+      });
+
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+
+      // usa lote_id se existir (melhor identificação)
+      const nome = rowData?.lote_id
+        ? `transferencia-${rowData.lote_id}.pdf`
+        : `transferencia-${transferenciaId}.pdf`;
+
+      a.download = nome;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Erro',
+        detail: 'Erro ao baixar PDF da transferência.',
+        life: 3000,
+      });
+    }
+  };
+
   const fetchDepositos = async () => {
     try {
       const res = await apiEstoque.get('/depositos');
@@ -385,6 +433,7 @@ const MovimentacoesEstoque = () => {
               loading={loadingMovs}
               total={totalMovs}
               first={firstMovs}
+              onDownloadTransferPdf={baixarPdfTransferencia}
               onPage={(e) => {
                 setPaginaMovs(e.page + 1);
                 setFirstMovs(e.first);
@@ -411,6 +460,7 @@ const MovimentacoesEstoque = () => {
             loading={loadingDialog}
             total={movsProduto.length}
             first={0}
+            onDownloadTransferPdf={baixarPdfTransferencia}
             onPage={() => {}}
           />
         </Dialog>

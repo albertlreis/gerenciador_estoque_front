@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Tag } from 'primereact/tag';
+import { Button } from 'primereact/button';
 import { format } from 'date-fns';
 
-const EstoqueMovimentacoes = ({ data, loading, total, first, onPage }) => {
+const EstoqueMovimentacoes = ({ data, loading, total, first, onPage, onDownloadTransferPdf }) => {
   const [sortField, setSortField] = useState(null);
   const [sortOrder, setSortOrder] = useState(null);
   const [rows, setRows] = useState(10);
@@ -110,6 +111,36 @@ const EstoqueMovimentacoes = ({ data, loading, total, first, onPage }) => {
     });
   };
 
+  const [downloadingRowId, setDownloadingRowId] = useState(null);
+
+  const pdfTemplate = (rowData) => {
+    const isTransfer = rowData?.tipo === 'transferencia';
+    const transferenciaId = rowData?.ref_type === 'transferencia' ? rowData?.ref_id : null;
+
+    if (!isTransfer) return <span className="text-500">—</span>;
+
+    const disabled = !transferenciaId || !onDownloadTransferPdf || downloadingRowId === rowData.id;
+
+    return (
+      <Button
+        icon={downloadingRowId === rowData.id ? 'pi pi-spin pi-spinner' : 'pi pi-download'}
+        className="p-button-text p-button-sm"
+        tooltip={transferenciaId ? 'Baixar PDF da transferência' : 'PDF indisponível'}
+        tooltipOptions={{ position: 'top' }}
+        disabled={disabled}
+        onClick={async () => {
+          if (disabled) return;
+          setDownloadingRowId(rowData.id);
+          try {
+            await onDownloadTransferPdf(rowData);
+          } finally {
+            setDownloadingRowId(null);
+          }
+        }}
+      />
+    );
+  };
+
   return (
     <div className="mb-6">
       <h3 className="mb-3">Movimentações Recentes</h3>
@@ -158,6 +189,7 @@ const EstoqueMovimentacoes = ({ data, loading, total, first, onPage }) => {
         <Column header="Movimentação" body={movimentacaoTemplate} />
         <Column header="Tipo" body={(row) => tipoTemplate(row.tipo)} sortable field="tipo" />
         <Column field="quantidade" header="Quantidade" sortable />
+        <Column header="PDF" body={pdfTemplate} style={{ width: '70px', textAlign: 'center' }} />
       </DataTable>
     </div>
   );

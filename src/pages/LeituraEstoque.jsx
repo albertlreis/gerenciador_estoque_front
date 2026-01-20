@@ -407,6 +407,22 @@ export default function LeituraEstoque() {
         detail: res.data?.mensagem || 'Movimentação registrada com sucesso.',
       });
 
+      const url = res.data.transferencia_pdf;
+      if (url) {
+        const response = await apiEstoque.get(url, { responseType: 'blob' }); // ou axios direto
+        const blobUrl = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = `transferencia_${res.data.transferencia_id}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        window.URL.revokeObjectURL(blobUrl);
+      }
+
+
       setItens([]);
       setLastScan(null);
       localStorage.removeItem(STORAGE_KEY);
