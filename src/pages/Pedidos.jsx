@@ -45,6 +45,7 @@ export default function PedidosListagem() {
   const [pedidoParaDevolucao, setPedidoParaDevolucao] = useState(null);
   const [detalhesVisivel, setDetalhesVisivel] = useState(false);
   const [loadingDetalhes, setLoadingDetalhes] = useState(false);
+  const [loadingPdfId, setLoadingPdfId] = useState(null);
 
   const { pedidos, total, paginaAtual, loading, fetchPedidos, setPaginaAtual } = usePedidos(filtros);
 
@@ -109,11 +110,10 @@ export default function PedidosListagem() {
     { field: 'valor_total', header: 'Total', body: (row) => formatarReal(row.valor_total) },
     { field: 'status', header: 'Status', body: (row) => statusTemplate(row) },
     { field: 'data_ultimo_status', header: 'Última Atualização', body: (row) => dataStatusBody(row) },
-    // NOVO: Prazo/Entrega
     { field: 'prazo_dias_uteis', header: 'Prazo (úteis)', body: prazoBody },
     { field: 'data_limite_entrega', header: 'Entrega prevista', body: entregaPrevistaBody },
     { field: 'dias_uteis_restantes', header: 'Situação da entrega', body: situacaoEntregaBody },
-  ], []); // eslint-disable-line react-hooks/exhaustive-deps
+  ], []);
 
   const [colunasVisiveis, setColunasVisiveis] = useState(colunasDisponiveis);
 
@@ -169,6 +169,34 @@ export default function PedidosListagem() {
       setDetalhesVisivel(false);
     } finally {
       setLoadingDetalhes(false);
+    }
+  };
+
+  const gerarPdfPedido = async (pedidoId) => {
+    try {
+      setLoadingPdfId(pedidoId);
+
+      const response = await api.get(`/pedidos/${pedidoId}/pdf/roteiro`, {
+        responseType: 'blob'
+      });
+
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `roteiro_pedido_${pedidoId}.pdf`;
+      link.click();
+
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Erro ao gerar PDF',
+        detail: err.response?.data?.message || err.message
+      });
+    } finally {
+      setLoadingPdfId(null);
     }
   };
 
@@ -279,6 +307,26 @@ export default function PedidosListagem() {
                 tooltip="Ver detalhes"
               />
             )}
+          />
+
+          <Column
+            header=""
+            body={(row) => {
+              const disabled = loading || loadingPdfId === row.id;
+
+              if (row.status !== 'consignado') return null;
+
+              return (
+                <Button
+                  icon={loadingPdfId === row.id ? 'pi pi-spin pi-spinner' : 'pi pi-file-pdf'}
+                  severity="danger"
+                  onClick={() => gerarPdfPedido(row.id)}
+                  tooltip={row.status === 'consignado' ? 'Roteiro de consignação (PDF)' : 'Roteiro do pedido (PDF)'}
+                  loading={loadingPdfId === row.id}
+                  disabled={disabled}
+                />
+              );
+            }}
           />
 
           {colunasVisiveis.map((col) => (
