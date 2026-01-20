@@ -14,7 +14,7 @@ const severityEntrega = (diasUteisRestantes, atrasado) => {
 };
 
 const isEstadoFinal = (status) =>
-  ['entrega_cliente','finalizado','consignado','devolucao_consignacao'].includes(status ?? '');
+  ['entrega_cliente', 'finalizado', 'consignado', 'devolucao_consignacao'].includes(status ?? '');
 
 const PedidoDetalhado = ({ visible, onHide, pedido }) => {
   if (!pedido) return null;
@@ -34,6 +34,13 @@ const PedidoDetalhado = ({ visible, onHide, pedido }) => {
   const atrasadoEntrega = !!pedido.atrasado_entrega;
   const estadoFinal = isEstadoFinal(pedido.status);
 
+  // ✅ Totais reutilizáveis
+  const produtosCount = Array.isArray(pedido.itens) ? pedido.itens.length : 0;
+  const itensCount = Array.isArray(pedido.itens)
+    ? pedido.itens.reduce((s, i) => s + (Number(i.quantidade) || 0), 0)
+    : 0;
+  const totalPedido = pedido.valor_total;
+
   const badgeEstadoFinal = () => {
     const map = {
       entrega_cliente: { label: 'Entregue', severity: 'success', icon: 'pi pi-check-circle' },
@@ -48,7 +55,12 @@ const PedidoDetalhado = ({ visible, onHide, pedido }) => {
 
   return (
     <Dialog
-      header={<> <i className="pi pi-box mr-2" /> Detalhes do Pedido <strong>{numeroExterno}</strong></>}
+      header={
+        <>
+          {' '}
+          <i className="pi pi-box mr-2" /> Detalhes do Pedido <strong>{numeroExterno}</strong>
+        </>
+      }
       visible={visible}
       onHide={onHide}
       modal
@@ -77,11 +89,23 @@ const PedidoDetalhado = ({ visible, onHide, pedido }) => {
     >
       <div className="mb-4">
         <h3 className="mb-1">{pedido.cliente?.nome ?? 'Cliente não informado'}</h3>
+
         <div className="text-sm text-gray-700 mb-2">
-          <div><i className="pi pi-user mr-1" /> <strong>Vendedor:</strong> {pedido.usuario?.nome ?? '—'}</div>
-          <div><i className="pi pi-bookmark mr-1" /> <strong>Parceiro:</strong> {pedido.parceiro?.nome ?? '—'}</div>
-          <div><i className="pi pi-calendar mr-1" /> <strong>Data:</strong> {dataPedido}</div>
-          <div><i className="pi pi-dollar mr-1" /> <strong>Valor Total:</strong> {formatarReal(pedido.valor_total)}</div>
+          <div>
+            <i className="pi pi-user mr-1" /> <strong>Vendedor:</strong>{' '}
+            {pedido.usuario?.nome ?? '—'}
+          </div>
+          <div>
+            <i className="pi pi-bookmark mr-1" /> <strong>Parceiro:</strong>{' '}
+            {pedido.parceiro?.nome ?? '—'}
+          </div>
+          <div>
+            <i className="pi pi-calendar mr-1" /> <strong>Data:</strong> {dataPedido}
+          </div>
+          <div>
+            <i className="pi pi-dollar mr-1" /> <strong>Valor Total:</strong>{' '}
+            {formatarReal(pedido.valor_total)}
+          </div>
 
           {/* Bloco de Entrega */}
           <div className="mt-2 flex flex-wrap align-items-center gap-3">
@@ -107,7 +131,30 @@ const PedidoDetalhado = ({ visible, onHide, pedido }) => {
             )}
           </div>
 
-          <div className="flex align-items-center gap-2 mt-2">
+          {/* ✅ Card de resumo logo após "Entrega prevista" */}
+          <div className="mt-3 surface-card border-1 surface-border border-round p-3 shadow-1">
+            <div className="flex flex-wrap justify-content-between align-items-center gap-3">
+              <div className="flex align-items-center gap-2">
+                <i className="pi pi-tags text-gray-600" />
+                <div className="text-sm text-gray-600">Produtos</div>
+                <div className="font-semibold text-gray-800">{produtosCount}</div>
+              </div>
+
+              <div className="flex align-items-center gap-2">
+                <i className="pi pi-shopping-cart text-gray-600" />
+                <div className="text-sm text-gray-600">Itens</div>
+                <div className="font-semibold text-gray-800">{itensCount}</div>
+              </div>
+
+              <div className="flex align-items-center gap-2">
+                <i className="pi pi-dollar text-gray-600" />
+                <div className="text-sm text-gray-600">Total</div>
+                <div className="font-bold text-gray-900">{formatarReal(totalPedido)}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex align-items-center gap-2 mt-3">
             <strong>Status:</strong>
             <Tag value={status.label} severity={status.color} icon={status.icon} />
           </div>
@@ -132,7 +179,12 @@ const PedidoDetalhado = ({ visible, onHide, pedido }) => {
                       src={item.imagem ?? 'https://placehold.co/500x300?text=Sem+Imagem'}
                       alt={item.nome_produto}
                       className="shadow-1"
-                      style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '6px' }}
+                      style={{
+                        width: '80px',
+                        height: '80px',
+                        objectFit: 'cover',
+                        borderRadius: '6px',
+                      }}
                     />
                     <div>
                       <div className="font-semibold">{item.nome_produto}</div>
@@ -159,14 +211,15 @@ const PedidoDetalhado = ({ visible, onHide, pedido }) => {
               </div>
             ))}
 
+            {/* ✅ Mantido no final do componente */}
             <div className="col-12 mt-4">
               <div className="flex justify-content-end border-top pt-3">
                 <div className="text-right">
                   <div className="text-sm text-gray-600">
-                    Total de Itens: {pedido.itens.reduce((s, i) => s + i.quantidade, 0)}
+                    Produtos: {produtosCount} • Itens: {itensCount}
                   </div>
                   <div className="text-xl font-bold text-gray-800">
-                    Total do Pedido: {formatarReal(pedido.valor_total)}
+                    Total do Pedido: {formatarReal(totalPedido)}
                   </div>
                 </div>
               </div>
@@ -181,38 +234,49 @@ const PedidoDetalhado = ({ visible, onHide, pedido }) => {
 
       <h4 className="mt-4 mb-2">🔁 Trocas e Créditos</h4>
 
-      {pedido.devolucoes?.length > 0 ? pedido.devolucoes.map((dev, i) => (
-        <div key={i} className="mb-3 border-1 p-3 border-round surface-border">
-          <div className="mb-1 text-sm">
-            <strong>Tipo:</strong> {dev.tipo === 'troca' ? 'Troca' : 'Crédito em loja'}<br/>
-            <strong>Status:</strong> {dev.status}<br/>
-            <strong>Motivo:</strong> {dev.motivo}
+      {pedido.devolucoes?.length > 0 ? (
+        pedido.devolucoes.map((dev, i) => (
+          <div key={i} className="mb-3 border-1 p-3 border-round surface-border">
+            <div className="mb-1 text-sm">
+              <strong>Tipo:</strong> {dev.tipo === 'troca' ? 'Troca' : 'Crédito em loja'}
+              <br />
+              <strong>Status:</strong> {dev.status}
+              <br />
+              <strong>Motivo:</strong> {dev.motivo}
+            </div>
+
+            {dev.itens.map((item, j) => (
+              <div key={j} className="text-sm pl-2 mb-2">
+                • Devolvido: <strong>{item.nome_produto}</strong> ({item.quantidade})
+                {item.trocas?.length > 0 && (
+                  <div className="ml-3">
+                    {item.trocas.map((troca, k) => (
+                      <div key={k}>
+                        → Trocado por: <strong>{troca.nome_completo}</strong> ({troca.quantidade})
+                        — {formatarReal(troca.preco_unitario)}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {dev.credito && (
+              <div className="mt-2 text-sm text-green-700">
+                💰 Crédito gerado: <strong>{formatarReal(dev.credito.valor)}</strong>
+                {dev.credito.utilizado ? ' (utilizado)' : ' (disponível)'}
+                {dev.credito.data_validade && (
+                  <>
+                    {' '}
+                    — válido até{' '}
+                    {new Date(dev.credito.data_validade).toLocaleDateString('pt-BR')}
+                  </>
+                )}
+              </div>
+            )}
           </div>
-
-          {dev.itens.map((item, j) => (
-            <div key={j} className="text-sm pl-2 mb-2">
-              • Devolvido: <strong>{item.nome_produto}</strong> ({item.quantidade})
-              {item.trocas?.length > 0 && (
-                <div className="ml-3">
-                  {item.trocas.map((troca, k) => (
-                    <div key={k}>
-                      → Trocado por: <strong>{troca.nome_completo}</strong> ({troca.quantidade}) — {formatarReal(troca.preco_unitario)}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-
-          {dev.credito && (
-            <div className="mt-2 text-sm text-green-700">
-              💰 Crédito gerado: <strong>{formatarReal(dev.credito.valor)}</strong>
-              {dev.credito.utilizado ? ' (utilizado)' : ' (disponível)'}
-              {dev.credito.data_validade && <> — válido até {new Date(dev.credito.data_validade).toLocaleDateString('pt-BR')}</>}
-            </div>
-          )}
-        </div>
-      )) : (
+        ))
+      ) : (
         <div className="text-sm text-gray-500">Nenhuma devolução registrada.</div>
       )}
 
@@ -229,7 +293,9 @@ const PedidoDetalhado = ({ visible, onHide, pedido }) => {
                     {STATUS_MAP[item.status]?.label ?? item.label ?? item.status}
                   </div>
                   <div className="text-xs text-gray-500 mb-1">
-                    {item.data_status ? new Date(item.data_status).toLocaleDateString('pt-BR') : ''}
+                    {item.data_status
+                      ? new Date(item.data_status).toLocaleDateString('pt-BR')
+                      : ''}
                   </div>
                   {item.observacoes && (
                     <div className="text-xs text-gray-600">{item.observacoes}</div>
