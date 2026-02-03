@@ -51,6 +51,9 @@ import UsuariosTab from "./pages/acessos/UsuariosTab";
 import PerfisTab from "./pages/acessos/PerfisTab";
 import PermissoesTab from "./pages/acessos/PermissoesTab";
 import AcessosIndex from "./pages/acessos/AcessosIndex";
+import CentrosCusto from "./pages/financeiro/CentrosCusto";
+import CategoriasFinanceiras from "./pages/financeiro/CategoriasFinanceiras";
+import ContasFinanceiras from "./pages/financeiro/ContasFinanceiras";
 
 const renderProtectedRoute = (element, permissoes) => (
   <PrivateRoute element={<PermissaoRoute element={element} permissoes={permissoes}/>}/>
@@ -194,6 +197,30 @@ const App = () => {
         element={renderProtectedRoute(
           <FinanceiroDespesasRecorrentes />,
           PERMISSOES.FINANCEIRO.DESPESAS_RECORRENTES.VISUALIZAR
+        )}
+      />
+
+      <Route
+        path="/financeiro/centros-custo"
+        element={renderProtectedRoute(
+          <CentrosCusto />,
+          PERMISSOES.FINANCEIRO?.LANCAMENTOS?.VISUALIZAR
+        )}
+      />
+
+      <Route
+        path="/financeiro/categorias-financeiras"
+        element={renderProtectedRoute(
+          <CategoriasFinanceiras />,
+          PERMISSOES.FINANCEIRO?.LANCAMENTOS?.VISUALIZAR
+        )}
+      />
+
+      <Route
+        path="/financeiro/contas-financeiras"
+        element={renderProtectedRoute(
+          <ContasFinanceiras />,
+          PERMISSOES.FINANCEIRO?.LANCAMENTOS?.VISUALIZAR
         )}
       />
 

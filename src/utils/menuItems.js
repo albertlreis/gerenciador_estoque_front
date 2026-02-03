@@ -110,6 +110,31 @@ const menuItems = (navigate, has) => {
           icon: 'pi pi-fw pi-chart-line',
           command: () => navigate('/financeiro/dashboard')
         },
+        {
+          label: 'Dados Básicos',
+          key: 'financeiro-dados-basicos',
+          icon: 'pi pi-fw pi-database',
+          items: [
+            {
+              label: 'Centros de Custo',
+              key: 'financeiro-centros-custo',
+              icon: 'pi pi-fw pi-sitemap',
+              command: () => navigate('/financeiro/centros-custo')
+            },
+            {
+              label: 'Categorias Financeiras',
+              key: 'financeiro-categorias-financeiras',
+              icon: 'pi pi-fw pi-list',
+              command: () => navigate('/financeiro/categorias-financeiras')
+            },
+            {
+              label: 'Contas Financeiras',
+              key: 'financeiro-contas-financeiras',
+              icon: 'pi pi-fw pi-credit-card',
+              command: () => navigate('/financeiro/contas-financeiras')
+            },
+          ]
+        },
         has(PERMISSOES.FINANCEIRO?.LANCAMENTOS?.VISUALIZAR) && {
           label: 'Lançamentos',
           key: 'financeiro-lancamentos',
