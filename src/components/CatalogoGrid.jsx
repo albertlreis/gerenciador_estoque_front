@@ -15,6 +15,46 @@ const estoqueDaVariacao = (v) => {
   return 0;
 };
 
+const resumirDepositos = (variacoes) => {
+  const mapa = new Map();
+
+  (variacoes || []).forEach((v) => {
+    const estoques = Array.isArray(v?.estoques) ? v.estoques : [];
+    estoques.forEach((e) => {
+      const qtd = Number(e?.quantidade || 0);
+      if (qtd <= 0) return;
+      const id = e?.deposito_id ?? e?.deposito?.id;
+      const nome = e?.deposito?.nome || (id ? `Depósito #${id}` : 'Depósito');
+      if (!id && !nome) return;
+      const atual = mapa.get(id || nome) || { id, nome, saldo: 0 };
+      atual.saldo += qtd;
+      mapa.set(id || nome, atual);
+    });
+  });
+
+  const lista = Array.from(mapa.values()).sort((a, b) =>
+    String(a.nome).localeCompare(String(b.nome))
+  );
+
+  const totalSaldo = lista.reduce((s, d) => s + Number(d.saldo || 0), 0);
+  if (!lista.length || totalSaldo <= 0) {
+    return {
+      lista: [],
+      resumo: 'Sem estoque',
+      tooltip: null,
+    };
+  }
+
+  const maxMostrar = 2;
+  const nomes = lista.map((d) => d.nome);
+  const exibidos = nomes.slice(0, maxMostrar);
+  const restantes = nomes.length - exibidos.length;
+  const resumo = `Disponivel em: ${exibidos.join(', ')}${restantes > 0 ? ` +${restantes}` : ''}`;
+  const tooltip = lista.map((d) => `${d.nome}: ${d.saldo} un.`).join('\n');
+
+  return { lista, resumo, tooltip };
+};
+
 const agruparPorReferencia = (produtos) => {
   const grupos = [];
 
@@ -28,6 +68,7 @@ const agruparPorReferencia = (produtos) => {
 
     Object.entries(byRef).forEach(([referencia, variacoes]) => {
       const estoqueTotal = variacoes.reduce((sum, v) => sum + estoqueDaVariacao(v), 0);
+      const depositosResumo = resumirDepositos(variacoes);
 
       const outletRestante = variacoes.reduce(
         (sum, v) =>
@@ -39,16 +80,19 @@ const agruparPorReferencia = (produtos) => {
       const hasOutlet =
         outletRestante > 0 || variacoes.some((v) => (v.outlet_restante_total || 0) > 0);
 
-      grupos.push({
-        id: `${p.id}|${referencia}`,
-        produto: p,
-        referencia,
-        variacoes,
-        estoque_total: estoqueTotal,
-        is_outlet: !!hasOutlet,
-        imagem_principal: p.imagem_principal,
+        grupos.push({
+          id: `${p.id}|${referencia}`,
+          produto: p,
+          referencia,
+          variacoes,
+          estoque_total: estoqueTotal,
+          depositos_resumo: depositosResumo.resumo,
+          depositos_tooltip: depositosResumo.tooltip,
+          depositos_lista: depositosResumo.lista,
+          is_outlet: !!hasOutlet,
+          imagem_principal: p.imagem_principal,
+        });
       });
-    });
   }
 
   return grupos;

@@ -88,6 +88,10 @@ const ProdutoCard = ({ grupo, onDetalhes, onAdicionar }) => {
                 <Tag value={`${grupo?.estoque_total} un.`} severity={grupo?.estoque_total > 0 ? 'success' : 'danger'} />
               </p>
             </div>
+
+            <div className="mb-3 text-xs text-600" title={grupo?.depositos_tooltip || ''}>
+              {grupo?.estoque_total > 0 ? (grupo?.depositos_resumo || 'Disponivel em: —') : 'Sem estoque'}
+            </div>
           </>
         )}
       </div>
