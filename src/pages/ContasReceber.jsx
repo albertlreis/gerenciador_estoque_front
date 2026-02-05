@@ -1,9 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Toast } from "primereact/toast";
 import { ConfirmPopup } from "primereact/confirmpopup";
+import { Button } from "primereact/button";
 import SakaiLayout from '../layouts/SakaiLayout';
 
 import FinanceiroApi from "../api/financeiroApi";
+import { useAuth } from "../context/AuthContext";
+import { PERMISSOES } from "../constants/permissoes";
 
 import FiltroContasReceber from "../components/contasReceber/FiltroContasReceber";
 import KpiContasReceber from "../components/contasReceber/KpiContasReceber";
@@ -12,6 +16,8 @@ import DialogBaixaReceber from "../components/contasReceber/DialogBaixaReceber";
 
 export default function ContasReceber() {
   const toast = useRef(null);
+  const navigate = useNavigate();
+  const { has } = useAuth();
   const [contas, setContas] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filtros, setFiltros] = useState({});
@@ -70,6 +76,12 @@ export default function ContasReceber() {
     <SakaiLayout title="Contas a Receber">
       <Toast ref={toast} />
       <ConfirmPopup />
+
+      <div className="flex justify-content-end mb-2">
+        {has(PERMISSOES.FINANCEIRO.CONTAS_RECEBER.CRIAR) && (
+          <Button icon="pi pi-plus" label="Nova Conta" onClick={() => navigate('/financeiro/contas-receber/nova')} />
+        )}
+      </div>
 
       <KpiContasReceber kpis={kpis} />
       <FiltroContasReceber

@@ -55,6 +55,7 @@ import CentrosCusto from "./pages/financeiro/CentrosCusto";
 import CategoriasFinanceiras from "./pages/financeiro/CategoriasFinanceiras";
 import ContasFinanceiras from "./pages/financeiro/ContasFinanceiras";
 import TransferenciasEntreContas from "./pages/financeiro/TransferenciasEntreContas";
+import ContaReceberNova from "./pages/financeiro/ContaReceberNova";
 
 const renderProtectedRoute = (element, permissoes) => (
   <PrivateRoute element={<PermissaoRoute element={element} permissoes={permissoes}/>}/>
@@ -181,6 +182,11 @@ const App = () => {
       <Route
         path="/financeiro/contas-receber"
         element={renderProtectedRoute(<ContasReceber/>, PERMISSOES.FINANCEIRO.CONTAS_RECEBER.VISUALIZAR)}
+      />
+
+      <Route
+        path="/financeiro/contas-receber/nova"
+        element={renderProtectedRoute(<ContaReceberNova />, PERMISSOES.FINANCEIRO.CONTAS_RECEBER.CRIAR)}
       />
 
       <Route

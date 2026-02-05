@@ -18,8 +18,8 @@ export default function TabelaContasReceber({ contas, loading, onBaixar }) {
     <div className="card">
       <DataTable value={contas} paginator rows={10} loading={loading} dataKey="id" emptyMessage="Nenhuma conta encontrada.">
         <Column field="id" header="#" style={{ width: "4rem" }} />
-        <Column field="pedido.numero" header="Pedido" />
-        <Column field="pedido.cliente" header="Cliente" />
+        <Column field="pedido.numero" header="Pedido" body={(r) => r?.pedido?.numero || '-'} />
+        <Column field="pedido.cliente" header="Cliente" body={(r) => r?.pedido?.cliente || '-'} />
         <Column field="descricao" header="Descrição" />
         <Column field="data_vencimento" header="Vencimento" />
         <Column field="valor_liquido" header="Valor Líquido" body={(r) => valorFmt(r.valor_liquido)} />
