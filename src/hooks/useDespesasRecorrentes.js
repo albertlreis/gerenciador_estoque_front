@@ -13,6 +13,8 @@ export function useDespesasRecorrentes(filtros) {
       tipo: f?.tipo || undefined,
       frequencia: f?.frequencia || undefined,
       fornecedor_id: f?.fornecedor_id || undefined,
+      categoria_id: f?.categoria_id || undefined,
+      centro_custo_id: f?.centro_custo_id || undefined,
       data_inicio_de: f?.data_inicio_de || undefined,
       data_inicio_ate: f?.data_inicio_ate || undefined,
       per_page: f?.per_page || 25,

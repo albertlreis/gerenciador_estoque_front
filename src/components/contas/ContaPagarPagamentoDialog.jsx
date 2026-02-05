@@ -38,7 +38,7 @@ export default function ContaPagarPagamentoDialog({ visible, onHide, conta, onAf
 
     (async () => {
       try {
-        const { data } = await apiFinanceiro.get('/financeiro/catalogos/contas-financeiras', { params: { ativo: true } });
+        const { data } = await apiFinanceiro.get('/financeiro/contas-financeiras', { params: { ativo: true } });
         const arr = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
         const opts = arr.map((c) => ({ label: c.nome, value: c.id, raw: c }));
         setContas(opts);

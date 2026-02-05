@@ -2,8 +2,8 @@ export const FINANCEIRO_ENDPOINTS = Object.freeze({
   dashboard: '/financeiro/dashboard',
 
   catalogos: Object.freeze({
-    categoriasFinanceiras: '/financeiro/catalogos/categorias-financeiras',
-    contasFinanceiras: '/financeiro/catalogos/contas-financeiras',
+    categoriasFinanceiras: '/financeiro/categorias-financeiras',
+    contasFinanceiras: '/financeiro/contas-financeiras',
   }),
 
   centrosCusto: '/financeiro/centros-custo',

@@ -12,6 +12,7 @@ import { PERMISSOES } from '../constants/permissoes';
 import apiFinanceiro from '../services/apiFinanceiro';
 
 import { useDespesasRecorrentes } from '../hooks/useDespesasRecorrentes';
+import { useFinanceiroCatalogos } from '../hooks/useFinanceiroCatalogos';
 import DespesaRecorrenteFiltro from '../components/financeiro/DespesaRecorrenteFiltro';
 import DespesaRecorrenteFormDialog from '../components/financeiro/DespesaRecorrenteFormDialog';
 import DespesaRecorrenteExecutarDialog from '../components/financeiro/DespesaRecorrenteExecutarDialog';
@@ -28,6 +29,8 @@ export default function FinanceiroDespesasRecorrentes() {
     tipo: null,
     frequencia: null,
     fornecedor_id: null,
+    categoria_id: null,
+    centro_custo_id: null,
     per_page: 25,
   });
 
@@ -37,6 +40,34 @@ export default function FinanceiroDespesasRecorrentes() {
   const [dialogExec, setDialogExec] = useState(false);
   const [editando, setEditando] = useState(null);
   const [executando, setExecutando] = useState(null);
+
+  const { loadCategorias } = useFinanceiroCatalogos();
+  const [categoriasMap, setCategoriasMap] = useState(new Map());
+  const [centrosMap, setCentrosMap] = useState(new Map());
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const cats = await loadCategorias({ ativo: true, tree: false });
+        const map = new Map();
+        (cats || []).forEach((c) => map.set(c.value, c.label));
+        setCategoriasMap(map);
+      } catch {
+        setCategoriasMap(new Map());
+      }
+
+      try {
+        const res = await apiFinanceiro.get('/financeiro/centros-custo', { params: { ativo: true } });
+        const list = res?.data?.data || [];
+        const map = new Map();
+        list.forEach((c) => map.set(c.id, c.nome));
+        setCentrosMap(map);
+      } catch {
+        setCentrosMap(new Map());
+      }
+    })();
+    // eslint-disable-next-line
+  }, []);
 
   const podeCriar = has(PERMISSOES.FINANCEIRO.DESPESAS_RECORRENTES.CRIAR);
   const podeEditar = has(PERMISSOES.FINANCEIRO.DESPESAS_RECORRENTES.EDITAR);
@@ -122,9 +153,11 @@ export default function FinanceiroDespesasRecorrentes() {
     { field: 'tipo', header: 'Tipo', body: (r) => <Tag value={r.tipo} className="text-xs" rounded /> },
     { field: 'frequencia', header: 'Frequência', body: (r) => <Tag value={r.frequencia} className="text-xs" rounded /> },
     { field: 'valor_bruto', header: 'Valor', body: (r) => `R$ ${fmtMoney(r.valor_bruto)}` },
+    { field: 'categoria_id', header: 'Categoria', body: (r) => categoriasMap.get(r.categoria_id) || '-' },
+    { field: 'centro_custo_id', header: 'Centro de Custo', body: (r) => centrosMap.get(r.centro_custo_id) || '-' },
     { field: 'dia_vencimento', header: 'Dia venc.', body: (r) => r.dia_vencimento ?? '-' },
     { field: 'status', header: 'Status', body: (r) => statusTag(r) },
-  ]), []);
+  ]), [categoriasMap, centrosMap]);
 
   return (
     <SakaiLayout>

@@ -45,9 +45,9 @@ export default function DespesaRecorrenteFormDialog({ visible, onHide, onSaved, 
   const [saving, setSaving] = useState(false);
 
   // catálogo financeiro (já existente no seu projeto)
-  const { loadCategorias, loadContas } = useFinanceiroCatalogos();
+  const { loadCategorias } = useFinanceiroCatalogos();
   const [categoriaOpts, setCategoriaOpts] = useState([]);
-  const [contaOpts, setContaOpts] = useState([]);
+  const [centroCustoOpts, setCentroCustoOpts] = useState([]);
 
   // fornecedores (autocomplete)
   const { search: searchFornecedores, loading: fornecedoresLoading } = useFornecedoresLookup();
@@ -56,16 +56,15 @@ export default function DespesaRecorrenteFormDialog({ visible, onHide, onSaved, 
   // selection objects
   const [fornecedorSel, setFornecedorSel] = useState(null); // {label,value,raw}
   const [categoriaSel, setCategoriaSel] = useState(null);   // {label,value,raw}
-  const [contaSel, setContaSel] = useState(null);           // {label,value,raw}
+  const [centroCustoSel, setCentroCustoSel] = useState(null); // {label,value,raw}
 
   const [form, setForm] = useState({
     fornecedor_id: null,
     descricao: '',
     numero_documento: '',
 
-    // hoje seu back persiste strings nesses campos
-    categoria: null,
-    centro_custo: null,
+    categoria_id: null,
+    centro_custo_id: null,
 
     tipo: 'FIXA',
     frequencia: 'MENSAL',
@@ -99,15 +98,11 @@ export default function DespesaRecorrenteFormDialog({ visible, onHide, onSaved, 
         setCategoriaOpts([]);
       }
       try {
-        const contas = await loadContas({}); // se tiver filtro por tipo, adicione
-        // normalize: seu hook provavelmente já retorna {label,value,raw} ou parecido
-        setContaOpts((contas || []).map((c) => ({
-          label: c.label || c.nome || c.raw?.nome,
-          value: c.value || c.id || c.raw?.id,
-          raw: c.raw || c,
-        })));
+        const res = await apiFinanceiro.get('/financeiro/centros-custo', { params: { ativo: true } });
+        const list = res?.data?.data || [];
+        setCentroCustoOpts(list.map((c) => ({ label: c.nome, value: c.id, raw: c })));
       } catch {
-        setContaOpts([]);
+        setCentroCustoOpts([]);
       }
     })();
     // eslint-disable-next-line
@@ -120,7 +115,7 @@ export default function DespesaRecorrenteFormDialog({ visible, onHide, onSaved, 
     if (!isEdit) {
       setFornecedorSel(null);
       setCategoriaSel(null);
-      setContaSel(null);
+      setCentroCustoSel(null);
       return;
     }
 
@@ -131,14 +126,14 @@ export default function DespesaRecorrenteFormDialog({ visible, onHide, onSaved, 
       data_fim: despesa?.data_fim ? new Date(despesa.data_fim) : null,
     }));
 
-    // tentar mapear categoria/conta já salvas (string) para option
-    if (despesa?.categoria && categoriaOpts?.length) {
-      const found = categoriaOpts.find((o) => o?.label === despesa.categoria || o?.raw?.nome === despesa.categoria);
+    // tentar mapear categoria/centro de custo por id
+    if (despesa?.categoria_id && categoriaOpts?.length) {
+      const found = categoriaOpts.find((o) => o?.value === despesa.categoria_id);
       setCategoriaSel(found || null);
     }
-    if (despesa?.centro_custo && contaOpts?.length) {
-      const found = contaOpts.find((o) => o?.label === despesa.centro_custo || o?.raw?.nome === despesa.centro_custo);
-      setContaSel(found || null);
+    if (despesa?.centro_custo_id && centroCustoOpts?.length) {
+      const found = centroCustoOpts.find((o) => o?.value === despesa.centro_custo_id);
+      setCentroCustoSel(found || null);
     }
 
     // fornecedor (se vier fornecedor carregado)
@@ -149,7 +144,7 @@ export default function DespesaRecorrenteFormDialog({ visible, onHide, onSaved, 
       setFornecedorSel({ label: `#${despesa.fornecedor_id}`, value: despesa.fornecedor_id, raw: null });
     }
     // eslint-disable-next-line
-  }, [visible, isEdit, despesa, categoriaOpts, contaOpts]);
+  }, [visible, isEdit, despesa, categoriaOpts, centroCustoOpts]);
 
   const footer = useMemo(() => (
     <div className="flex gap-2 justify-content-end">
@@ -165,8 +160,8 @@ export default function DespesaRecorrenteFormDialog({ visible, onHide, onSaved, 
               fornecedor_id: fornecedorSel?.value || null,
 
               // persistindo nome (compatível com back atual)
-              categoria: categoriaSel?.label || null,
-              centro_custo: contaSel?.label || null,
+              categoria_id: categoriaSel?.value || null,
+              centro_custo_id: centroCustoSel?.value || null,
 
               data_inicio: toYmd(form.data_inicio),
               data_fim: toYmd(form.data_fim),
@@ -187,7 +182,7 @@ export default function DespesaRecorrenteFormDialog({ visible, onHide, onSaved, 
         disabled={saving}
       />
     </div>
-  ), [form, saving, isEdit, despesa, onHide, onSaved, fornecedorSel, categoriaSel, contaSel]);
+  ), [form, saving, isEdit, despesa, onHide, onSaved, fornecedorSel, categoriaSel, centroCustoSel]);
 
   return (
     <Dialog
@@ -253,12 +248,12 @@ export default function DespesaRecorrenteFormDialog({ visible, onHide, onSaved, 
         </div>
 
         <div className="col-12 md:col-3">
-          <label className="block mb-1">Conta Financeira (Centro custo)</label>
+          <label className="block mb-1">Centro de Custo</label>
           <Dropdown
             className="w-full"
-            value={contaSel}
-            options={contaOpts}
-            onChange={(e) => setContaSel(e.value)}
+            value={centroCustoSel}
+            options={centroCustoOpts}
+            onChange={(e) => setCentroCustoSel(e.value)}
             optionLabel="label"
             placeholder="Selecione"
             showClear

@@ -5,8 +5,8 @@ import apiFinanceiro from '../services/apiFinanceiro';
  * Catálogos do Financeiro (para dropdowns)
  *
  * Endpoints:
- * - GET /financeiro/catalogos/categorias-financeiras?tipo=&ativo=true&tree=
- * - GET /financeiro/catalogos/contas-financeiras?tipo=&ativo=true
+ * - GET /financeiro/categorias-financeiras?tipo=&ativo=true&tree=
+ * - GET /financeiro/contas-financeiras?tipo=&ativo=true
  *
  * Retorno esperado: { data: [...] }
  */
@@ -26,7 +26,7 @@ export function useFinanceiroCatalogos() {
 
     setLoading(true);
     try {
-      const { data } = await apiFinanceiro.get('/financeiro/catalogos/categorias-financeiras', {
+      const { data } = await apiFinanceiro.get('/financeiro/categorias-financeiras', {
         params: {
           tipo: tipo || undefined,
           ativo: ativo === null ? undefined : ativo,
@@ -64,7 +64,7 @@ export function useFinanceiroCatalogos() {
 
     setLoading(true);
     try {
-      const { data } = await apiFinanceiro.get('/financeiro/catalogos/contas-financeiras', {
+      const { data } = await apiFinanceiro.get('/financeiro/contas-financeiras', {
         params: {
           tipo: tipo || undefined,
           ativo: ativo === null ? undefined : ativo,

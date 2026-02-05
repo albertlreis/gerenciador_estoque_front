@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { InputText } from 'primereact/inputtext';
 import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
+import apiFinanceiro from '../../services/apiFinanceiro';
+import { useFinanceiroCatalogos } from '../../hooks/useFinanceiroCatalogos';
 
 const statusOpts = [
   { label: 'Todos', value: null },
@@ -26,6 +28,30 @@ const freqOpts = [
 ];
 
 export default function DespesaRecorrenteFiltro({ filtros, setFiltros, onBuscar }) {
+  const { loadCategorias } = useFinanceiroCatalogos();
+  const [categoriaOpts, setCategoriaOpts] = useState([]);
+  const [centroCustoOpts, setCentroCustoOpts] = useState([]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const cats = await loadCategorias({ tipo: 'despesa', ativo: true });
+        setCategoriaOpts(cats || []);
+      } catch {
+        setCategoriaOpts([]);
+      }
+
+      try {
+        const res = await apiFinanceiro.get('/financeiro/centros-custo', { params: { ativo: true } });
+        const list = res?.data?.data || [];
+        setCentroCustoOpts(list.map((c) => ({ label: c.nome, value: c.id, raw: c })));
+      } catch {
+        setCentroCustoOpts([]);
+      }
+    })();
+    // eslint-disable-next-line
+  }, []);
+
   return (
     <div className="flex flex-wrap gap-2 align-items-center">
       <span className="p-input-icon-left">
@@ -61,6 +87,26 @@ export default function DespesaRecorrenteFiltro({ filtros, setFiltros, onBuscar 
         onChange={(e) => setFiltros((s) => ({ ...s, frequencia: e.value }))}
         placeholder="Frequência"
         showClear
+        className="w-16rem"
+      />
+
+      <Dropdown
+        value={filtros.categoria_id || null}
+        options={categoriaOpts}
+        onChange={(e) => setFiltros((s) => ({ ...s, categoria_id: e.value }))}
+        placeholder="Categoria"
+        showClear
+        filter
+        className="w-16rem"
+      />
+
+      <Dropdown
+        value={filtros.centro_custo_id || null}
+        options={centroCustoOpts}
+        onChange={(e) => setFiltros((s) => ({ ...s, centro_custo_id: e.value }))}
+        placeholder="Centro de custo"
+        showClear
+        filter
         className="w-16rem"
       />
 

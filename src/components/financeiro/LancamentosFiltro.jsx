@@ -15,13 +15,15 @@ export default function LancamentosFiltro({ filtros, setFiltros, onBuscar }) {
   useEffect(() => setLocal(filtros), [filtros]);
 
   const tipos = [
-    { label: 'Receita', value: 'RECEITA' },
-    { label: 'Despesa', value: 'DESPESA' },
+    { label: 'Receita', value: 'receita' },
+    { label: 'Despesa', value: 'despesa' },
+    { label: 'Transferência', value: 'transferencia' },
+    { label: 'Ajuste', value: 'ajuste' },
   ];
 
   const status = [
-    { label: 'Confirmado', value: 'CONFIRMADO' },
-    { label: 'Cancelado', value: 'CANCELADO' },
+    { label: 'Confirmado', value: 'confirmado' },
+    { label: 'Cancelado', value: 'cancelado' },
   ];
 
   useEffect(() => {

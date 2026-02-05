@@ -1,10 +1,12 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Dialog } from 'primereact/dialog';
 import { Calendar } from 'primereact/calendar';
 import { InputNumber } from 'primereact/inputnumber';
 import { Button } from 'primereact/button';
+import { Dropdown } from 'primereact/dropdown';
 
 import apiFinanceiro from '../../services/apiFinanceiro';
+import { useFinanceiroCatalogos } from '../../hooks/useFinanceiroCatalogos';
 
 const toYmd = (d) => {
   if (!d) return null;
@@ -20,6 +22,36 @@ export default function DespesaRecorrenteExecutarDialog({ visible, onHide, onExe
   const [competencia, setCompetencia] = useState(new Date());
   const [dataVenc, setDataVenc] = useState(null);
   const [valor, setValor] = useState(null);
+  const [categoriaId, setCategoriaId] = useState(null);
+  const [centroCustoId, setCentroCustoId] = useState(null);
+
+  const { loadCategorias } = useFinanceiroCatalogos();
+  const [categoriaOpts, setCategoriaOpts] = useState([]);
+  const [centroCustoOpts, setCentroCustoOpts] = useState([]);
+
+  useEffect(() => {
+    if (!visible) return;
+
+    (async () => {
+      try {
+        const cats = await loadCategorias({ tipo: 'despesa', ativo: true, tree: false });
+        setCategoriaOpts(cats || []);
+      } catch {
+        setCategoriaOpts([]);
+      }
+
+      try {
+        const res = await apiFinanceiro.get('/financeiro/centros-custo', { params: { ativo: true } });
+        const list = res?.data?.data || [];
+        setCentroCustoOpts(list.map((c) => ({ label: c.nome, value: c.id, raw: c })));
+      } catch {
+        setCentroCustoOpts([]);
+      }
+    })();
+
+    setCategoriaId(null);
+    setCentroCustoId(null);
+  }, [visible]);
 
   const footer = useMemo(() => (
     <div className="flex gap-2 justify-content-end">
@@ -34,6 +66,8 @@ export default function DespesaRecorrenteExecutarDialog({ visible, onHide, onExe
               competencia: toYmd(competencia),
               data_vencimento: dataVenc ? toYmd(dataVenc) : null,
               valor_bruto: valor ?? null,
+              categoria_id: categoriaId || null,
+              centro_custo_id: centroCustoId || null,
             };
             await apiFinanceiro.post(`/financeiro/despesas-recorrentes/${despesa.id}/executar`, payload);
             onHide();
@@ -103,6 +137,32 @@ export default function DespesaRecorrenteExecutarDialog({ visible, onHide, onExe
             mode="decimal"
             minFractionDigits={2}
             maxFractionDigits={2}
+          />
+        </div>
+
+        <div className="col-12 md:col-6">
+          <label className="block mb-1">Categoria (override)</label>
+          <Dropdown
+            className="w-full"
+            value={categoriaId}
+            options={categoriaOpts}
+            onChange={(e) => setCategoriaId(e.value)}
+            placeholder="Manter da recorrência"
+            showClear
+            filter
+          />
+        </div>
+
+        <div className="col-12 md:col-6">
+          <label className="block mb-1">Centro de custo (override)</label>
+          <Dropdown
+            className="w-full"
+            value={centroCustoId}
+            options={centroCustoOpts}
+            onChange={(e) => setCentroCustoId(e.value)}
+            placeholder="Manter da recorrência"
+            showClear
+            filter
           />
         </div>
       </div>

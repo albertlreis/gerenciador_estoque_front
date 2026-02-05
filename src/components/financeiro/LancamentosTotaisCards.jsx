@@ -28,8 +28,8 @@ export default function LancamentosTotaisCards({ totais }) {
 
       <div className="col-12 md:col-3">
         <div className="p-3 border-round surface-0 shadow-1">
-          <div className="text-500 text-sm">Cancelados</div>
-          <div className="text-2xl font-bold">{Number(totais?.cancelados || 0)}</div>
+          <div className="text-500 text-sm">Cancelados (valor)</div>
+          <div className="text-2xl font-bold">R$ {money(totais?.cancelados)}</div>
         </div>
       </div>
     </div>
