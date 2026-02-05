@@ -54,6 +54,7 @@ import AcessosIndex from "./pages/acessos/AcessosIndex";
 import CentrosCusto from "./pages/financeiro/CentrosCusto";
 import CategoriasFinanceiras from "./pages/financeiro/CategoriasFinanceiras";
 import ContasFinanceiras from "./pages/financeiro/ContasFinanceiras";
+import TransferenciasEntreContas from "./pages/financeiro/TransferenciasEntreContas";
 
 const renderProtectedRoute = (element, permissoes) => (
   <PrivateRoute element={<PermissaoRoute element={element} permissoes={permissoes}/>}/>
@@ -221,6 +222,14 @@ const App = () => {
         element={renderProtectedRoute(
           <ContasFinanceiras />,
           PERMISSOES.FINANCEIRO?.LANCAMENTOS?.VISUALIZAR
+        )}
+      />
+
+      <Route
+        path="/financeiro/transferencias"
+        element={renderProtectedRoute(
+          <TransferenciasEntreContas />,
+          PERMISSOES.FINANCEIRO.LANCAMENTOS.VISUALIZAR
         )}
       />
 

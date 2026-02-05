@@ -145,16 +145,15 @@ export default function FinanceiroLancamentos() {
   };
 
   const tipoTag = (tipo) => {
-    const t = String(tipo || '').toUpperCase();
-    const isReceita = t === 'RECEITA';
-    return (
-      <Tag
-        value={isReceita ? 'Receita' : 'Despesa'}
-        severity={isReceita ? 'success' : 'danger'}
-        className="text-xs"
-        rounded
-      />
-    );
+    const t = String(tipo || '').toLowerCase();
+    const map = {
+      receita: { label: 'Receita', severity: 'success' },
+      despesa: { label: 'Despesa', severity: 'danger' },
+      transferencia: { label: 'Transferência', severity: 'info' },
+      ajuste: { label: 'Ajuste', severity: 'warning' },
+    };
+    const cfg = map[t] || { label: tipo || '-', severity: 'secondary' };
+    return <Tag value={cfg.label} severity={cfg.severity} className="text-xs" rounded />;
   };
 
   const abrirNovo = () => {

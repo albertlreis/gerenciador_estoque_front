@@ -110,6 +110,36 @@ const menuItems = (navigate, has) => {
           icon: 'pi pi-fw pi-chart-line',
           command: () => navigate('/financeiro/dashboard')
         },
+        has(PERMISSOES.FINANCEIRO?.LANCAMENTOS?.VISUALIZAR) && {
+          label: 'Lançamentos',
+          key: 'financeiro-lancamentos',
+          icon: 'pi pi-fw pi-list',
+          command: () => navigate('/financeiro/lancamentos')
+        },
+        has(PERMISSOES.FINANCEIRO?.CONTAS_PAGAR?.VISUALIZAR) && {
+          label: 'Contas a Pagar',
+          key: 'financeiro-contas-pagar',
+          icon: 'pi pi-fw pi-arrow-down-left',
+          command: () => navigate('/financeiro/contas-pagar')
+        },
+        has(PERMISSOES.FINANCEIRO?.CONTAS_RECEBER?.VISUALIZAR) && {
+          label: 'Contas a Receber',
+          key: 'financeiro-contas-receber',
+          icon: 'pi pi-fw pi-arrow-up-right',
+          command: () => navigate('/financeiro/contas-receber')
+        },
+        has(PERMISSOES.FINANCEIRO?.DESPESAS_RECORRENTES?.VISUALIZAR) && {
+          label: 'Despesas Recorrentes',
+          key: 'financeiro-despesas-recorrentes',
+          icon: 'pi pi-fw pi-refresh',
+          command: () => navigate('/financeiro/despesas-recorrentes')
+        },
+        has(PERMISSOES.FINANCEIRO?.LANCAMENTOS?.VISUALIZAR) && {
+          label: 'Transferências entre Contas',
+          key: 'financeiro-transferencias',
+          icon: 'pi pi-fw pi-arrow-right-arrow-left',
+          command: () => navigate('/financeiro/transferencias')
+        },
         {
           label: 'Dados Básicos',
           key: 'financeiro-dados-basicos',
@@ -134,30 +164,6 @@ const menuItems = (navigate, has) => {
               command: () => navigate('/financeiro/contas-financeiras')
             },
           ]
-        },
-        has(PERMISSOES.FINANCEIRO?.LANCAMENTOS?.VISUALIZAR) && {
-          label: 'Lançamentos',
-          key: 'financeiro-lancamentos',
-          icon: 'pi pi-fw pi-list',
-          command: () => navigate('/financeiro/lancamentos')
-        },
-        has(PERMISSOES.FINANCEIRO?.CONTAS_PAGAR?.VISUALIZAR) && {
-          label: 'Contas a Pagar',
-          key: 'financeiro-contas-pagar',
-          icon: 'pi pi-fw pi-arrow-down-left',
-          command: () => navigate('/financeiro/contas-pagar')
-        },
-        has(PERMISSOES.FINANCEIRO?.CONTAS_RECEBER?.VISUALIZAR) && {
-          label: 'Contas a Receber',
-          key: 'financeiro-contas-receber',
-          icon: 'pi pi-fw pi-arrow-up-right',
-          command: () => navigate('/financeiro/contas-receber')
-        },
-        has(PERMISSOES.FINANCEIRO?.DESPESAS_RECORRENTES?.VISUALIZAR) && {
-          label: 'Despesas Recorrentes',
-          key: 'financeiro-despesas-recorrentes',
-          icon: 'pi pi-fw pi-refresh',
-          command: () => navigate('/financeiro/despesas-recorrentes')
         },
       ].filter(Boolean)
     },
