@@ -62,6 +62,7 @@ export default function ImportacaoPedidoPDF() {
 
   const [pedido, setPedido] = useState({});
   const [itens, setItens] = useState([]);
+  const [importacaoId, setImportacaoId] = useState(null);
   const [categorias, setCategorias] = useState([]);
   const [depositos, setDepositos] = useState([]);
   const [parceiros, setParceiros] = useState([]);
@@ -186,6 +187,7 @@ export default function ImportacaoPedidoPDF() {
       setItens(itensNormalizados);
       setItensSelecionados([]);
       setUploadStatus('done');
+      setImportacaoId(response.data?.importacao_id ?? null);
 
       toast.current?.show({
         severity: 'success',
@@ -370,6 +372,7 @@ export default function ImportacaoPedidoPDF() {
     setPedidoSalvoId(null);
     setItensParaFabrica([]);
     setAbrirPedidoFabrica(false);
+    setImportacaoId(null);
   };
 
   const confirmarRemocaoArquivo = () => {
@@ -409,6 +412,7 @@ export default function ImportacaoPedidoPDF() {
 
     try {
       const response = await PedidosApi.confirmarImportacaoPdf({
+        importacao_id: importacaoId,
         cliente: tipo === 'venda' ? cliente : {},
         pedido: { ...pedido, tipo },
         itens: itens.map((item) => ({
