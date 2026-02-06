@@ -37,6 +37,11 @@ const MovimentacoesEstoque = () => {
   const [searchParams] = useSearchParams();
   const estoqueRequestSeq = useRef(0);
   const movsRequestSeq = useRef(0);
+  const movsProdutoRequestSeq = useRef(0);
+  const produtoDebounceRef = useRef(null);
+  const estoqueAbortRef = useRef(null);
+  const movsAbortRef = useRef(null);
+  const movsProdutoAbortRef = useRef(null);
 
   const [firstEstoque, setFirstEstoque] = useState(0);
   const [totalEstoque, setTotalEstoque] = useState(0);
@@ -77,6 +82,8 @@ const MovimentacoesEstoque = () => {
     periodo: null,
     zerados: false,
   });
+  const filtrosRef = useRef(filtros);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   const tipos = [
     { label: 'Entrada', value: 'entrada' },
@@ -109,6 +116,21 @@ const MovimentacoesEstoque = () => {
       life: 3000,
     });
   };
+  const isRequestAborted = (error) =>
+    error?.code === 'ERR_CANCELED' || error?.name === 'CanceledError';
+  const abortInFlightRequest = (abortRef) => {
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
+  };
+  const persistFiltros = (nextFiltros) => {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(nextFiltros));
+  };
+
+  useEffect(() => {
+    filtrosRef.current = filtros;
+  }, [filtros]);
 
   useEffect(() => {
     const depositoId = searchParams.get('deposito');
@@ -127,6 +149,7 @@ const MovimentacoesEstoque = () => {
     } else if (depositoId) {
       setFiltros((prev) => ({ ...prev, deposito: parseInt(depositoId) }));
     }
+    setIsHydrated(true);
   }, [searchParams]);
 
   useEffect(() => {
@@ -136,26 +159,42 @@ const MovimentacoesEstoque = () => {
   }, []);
 
   useEffect(() => {
+    if (!isHydrated) return;
     fetchEstoqueAtual();
     fetchMovimentacoes();
+  }, [isHydrated]);
+
+  useEffect(() => () => {
+    if (produtoDebounceRef.current) {
+      clearTimeout(produtoDebounceRef.current);
+      produtoDebounceRef.current = null;
+    }
+    abortInFlightRequest(estoqueAbortRef);
+    abortInFlightRequest(movsAbortRef);
+    abortInFlightRequest(movsProdutoAbortRef);
   }, []);
 
   const fetchEstoqueAtual = async ({
                                      first = 0,
                                      rows = 10,
                                      sortField = null,
-                                     sortOrder = null
+                                     sortOrder = null,
+                                     filtrosOverride = null,
                                    } = {}) => {
+    abortInFlightRequest(estoqueAbortRef);
+    const controller = new AbortController();
+    estoqueAbortRef.current = controller;
+    const filtrosAtuais = filtrosOverride ?? filtrosRef.current;
     const requestId = ++estoqueRequestSeq.current;
     setLoadingEstoque(true);
     try {
       const formatDate = (d) => d instanceof Date ? d.toISOString().split('T')[0] : null;
 
       const filtroParams = {
-        ...filtros,
-        zerados: filtros.zerados ? 1 : 0,
-        periodo: filtros.periodo?.length === 2 && filtros.periodo[1]
-          ? [formatDate(filtros.periodo[0]), formatDate(filtros.periodo[1])]
+        ...filtrosAtuais,
+        zerados: filtrosAtuais.zerados ? 1 : 0,
+        periodo: filtrosAtuais.periodo?.length === 2 && filtrosAtuais.periodo[1]
+          ? [formatDate(filtrosAtuais.periodo[0]), formatDate(filtrosAtuais.periodo[1])]
           : null,
         page: Math.floor(first / rows) + 1,
         per_page: rows,
@@ -164,8 +203,8 @@ const MovimentacoesEstoque = () => {
       };
 
       const [estoqueRes, resumoRes] = await Promise.all([
-        apiEstoque.get(ESTOQUE_ENDPOINTS.estoque.atual, { params: filtroParams }),
-        apiEstoque.get(ESTOQUE_ENDPOINTS.estoque.resumo, { params: filtroParams }),
+        apiEstoque.get(ESTOQUE_ENDPOINTS.estoque.atual, { params: filtroParams, signal: controller.signal }),
+        apiEstoque.get(ESTOQUE_ENDPOINTS.estoque.resumo, { params: filtroParams, signal: controller.signal }),
       ]);
 
       if (requestId !== estoqueRequestSeq.current) return;
@@ -176,8 +215,12 @@ const MovimentacoesEstoque = () => {
       setResumo(resumoRes.data?.data ?? resumoRes.data);
     } catch (err) {
       if (requestId !== estoqueRequestSeq.current) return;
+      if (isRequestAborted(err)) return;
       showToast('error', 'Erro ao carregar estoque atual');
     } finally {
+      if (estoqueAbortRef.current === controller) {
+        estoqueAbortRef.current = null;
+      }
       if (requestId !== estoqueRequestSeq.current) return;
       setLoadingEstoque(false);
     }
@@ -187,18 +230,23 @@ const MovimentacoesEstoque = () => {
                                       first = 0,
                                       rows = 10,
                                       sortField = null,
-                                      sortOrder = null
+                                      sortOrder = null,
+                                      filtrosOverride = null,
                                     } = {}) => {
+    abortInFlightRequest(movsAbortRef);
+    const controller = new AbortController();
+    movsAbortRef.current = controller;
+    const filtrosAtuais = filtrosOverride ?? filtrosRef.current;
     const requestId = ++movsRequestSeq.current;
     setLoadingMovs(true);
     try {
       const formatDate = (d) => d instanceof Date ? d.toISOString().split('T')[0] : null;
 
       const filtroParams = {
-        ...filtros,
+        ...filtrosAtuais,
         periodo:
-          filtros.periodo?.length === 2 && filtros.periodo[1]
-            ? [formatDate(filtros.periodo[0]), formatDate(filtros.periodo[1])]
+          filtrosAtuais.periodo?.length === 2 && filtrosAtuais.periodo[1]
+            ? [formatDate(filtrosAtuais.periodo[0]), formatDate(filtrosAtuais.periodo[1])]
             : null,
         page: Math.floor(first / rows) + 1,
         per_page: rows,
@@ -206,15 +254,22 @@ const MovimentacoesEstoque = () => {
         sort_order: sortOrder === 1 ? 'asc' : sortOrder === -1 ? 'desc' : undefined
       };
 
-      const movsRes = await apiEstoque.get(ESTOQUE_ENDPOINTS.estoque.movimentacoes.base, { params: filtroParams });
+      const movsRes = await apiEstoque.get(ESTOQUE_ENDPOINTS.estoque.movimentacoes.base, {
+        params: filtroParams,
+        signal: controller.signal,
+      });
       if (requestId !== movsRequestSeq.current) return;
       const movRows = toCollectionRows(movsRes.data);
       setMovimentacoes(movRows);
       setTotalMovs(toCollectionMetaTotal(movsRes.data, movRows.length));
     } catch (err) {
       if (requestId !== movsRequestSeq.current) return;
+      if (isRequestAborted(err)) return;
       showToast('error', 'Erro ao carregar movimentações');
     } finally {
+      if (movsAbortRef.current === controller) {
+        movsAbortRef.current = null;
+      }
       if (requestId !== movsRequestSeq.current) return;
       setLoadingMovs(false);
     }
@@ -228,13 +283,14 @@ const MovimentacoesEstoque = () => {
     try {
       const formatDate = (d) =>
         d instanceof Date ? d.toISOString().split('T')[0] : null;
+      const filtrosAtuais = filtrosRef.current;
 
       const params = {
-        ...filtros,
-        zerados: filtros.zerados ? 1 : 0,
+        ...filtrosAtuais,
+        zerados: filtrosAtuais.zerados ? 1 : 0,
         periodo:
-          filtros.periodo?.length === 2 && filtros.periodo[1]
-            ? [formatDate(filtros.periodo[0]), formatDate(filtros.periodo[1])]
+          filtrosAtuais.periodo?.length === 2 && filtrosAtuais.periodo[1]
+            ? [formatDate(filtrosAtuais.periodo[0]), formatDate(filtrosAtuais.periodo[1])]
             : null,
         export: 'pdf',
       };
@@ -333,15 +389,50 @@ const MovimentacoesEstoque = () => {
     }
   };
 
+  const triggerSearch = ({
+                           filtrosOverride = filtrosRef.current,
+                           firstEstoqueValue = 0,
+                           firstMovsValue = 0,
+                         } = {}) => {
+    persistFiltros(filtrosOverride);
+    setFirstEstoque(firstEstoqueValue);
+    setFirstMovs(firstMovsValue);
+    fetchEstoqueAtual({ first: firstEstoqueValue, filtrosOverride });
+    fetchMovimentacoes({ first: firstMovsValue, filtrosOverride });
+  };
+
   const handleBuscar = () => {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(filtros));
-    setFirstEstoque(0);
-    setFirstMovs(0);
-    fetchEstoqueAtual();
-    fetchMovimentacoes();
+    if (produtoDebounceRef.current) {
+      clearTimeout(produtoDebounceRef.current);
+      produtoDebounceRef.current = null;
+    }
+    triggerSearch({ filtrosOverride: filtrosRef.current });
+  };
+
+  const handleProdutoChange = (produto) => {
+    const filtrosAtualizados = { ...filtrosRef.current, produto };
+    setFiltros(filtrosAtualizados);
+
+    if (produtoDebounceRef.current) {
+      clearTimeout(produtoDebounceRef.current);
+      produtoDebounceRef.current = null;
+    }
+
+    const termo = String(produto ?? '').trim();
+    if (termo.length !== 0 && termo.length < 3) return;
+
+    produtoDebounceRef.current = setTimeout(() => {
+      triggerSearch({ filtrosOverride: filtrosAtualizados });
+    }, 400);
   };
 
   const handleLimpar = () => {
+    if (produtoDebounceRef.current) {
+      clearTimeout(produtoDebounceRef.current);
+      produtoDebounceRef.current = null;
+    }
+    abortInFlightRequest(estoqueAbortRef);
+    abortInFlightRequest(movsAbortRef);
     setMovimentacoes([]);
     setEstoqueAtual([]);
     setResumo({ totalProdutos: 0, totalPecas: 0, totalDepositos: 0 });
@@ -358,22 +449,37 @@ const MovimentacoesEstoque = () => {
 
     setFiltros(reset);
     localStorage.removeItem(LOCAL_STORAGE_KEY);
+    setFirstEstoque(0);
+    setFirstMovs(0);
   };
 
   const verMovimentacoes = async (rowData) => {
+    abortInFlightRequest(movsProdutoAbortRef);
+    const controller = new AbortController();
+    movsProdutoAbortRef.current = controller;
+    const requestId = ++movsProdutoRequestSeq.current;
+
     try {
       setShowMovDialog(true);
       setProdutoSelecionado(rowData);
       setLoadingDialog(true);
 
       const res = await apiEstoque.get(ESTOQUE_ENDPOINTS.estoque.movimentacoes.base, {
-        params: { variacao: rowData.variacao_id, page: 1, per_page: 10 }
+        params: { variacao: rowData.variacao_id, page: 1, per_page: 10 },
+        signal: controller.signal,
       });
 
+      if (requestId !== movsProdutoRequestSeq.current) return;
       setMovsProduto(toCollectionRows(res.data));
     } catch (err) {
+      if (requestId !== movsProdutoRequestSeq.current) return;
+      if (isRequestAborted(err)) return;
       showToast('error', 'Erro ao carregar movimentações da variação');
     } finally {
+      if (movsProdutoAbortRef.current === controller) {
+        movsProdutoAbortRef.current = null;
+      }
+      if (requestId !== movsProdutoRequestSeq.current) return;
       setLoadingDialog(false);
     }
   };
@@ -404,6 +510,7 @@ const MovimentacoesEstoque = () => {
         <EstoqueFiltro
           filtros={filtros}
           setFiltros={setFiltros}
+          onProdutoChange={handleProdutoChange}
           depositos={depositos}
           categorias={categorias}
           fornecedores={fornecedores}
@@ -480,7 +587,10 @@ const MovimentacoesEstoque = () => {
         <Dialog
           header={`Movimentações – ${produtoSelecionado?.produto_nome || 'Produto'}`}
           visible={showMovDialog}
-          onHide={() => setShowMovDialog(false)}
+          onHide={() => {
+            abortInFlightRequest(movsProdutoAbortRef);
+            setShowMovDialog(false);
+          }}
           style={{ width: '80vw' }}
           modal
         >

@@ -7,7 +7,17 @@ import { Tooltip } from 'primereact/tooltip';
 import { motion } from 'framer-motion';
 import CalendarBR from "./CalendarBR";
 
-const EstoqueFiltro = ({ filtros, setFiltros, depositos, categorias, fornecedores, tipos, onBuscar, onLimpar }) => {
+const EstoqueFiltro = ({
+  filtros,
+  setFiltros,
+  onProdutoChange,
+  depositos,
+  categorias,
+  fornecedores,
+  tipos,
+  onBuscar,
+  onLimpar,
+}) => {
   return (
     <motion.div
       className="surface-card border-round shadow-1 p-4 mb-4"
@@ -83,7 +93,13 @@ const EstoqueFiltro = ({ filtros, setFiltros, depositos, categorias, fornecedore
           <InputText
             id="produto"
             value={filtros.produto}
-            onChange={(e) => setFiltros({ ...filtros, produto: e.target.value })}
+            onChange={(e) => {
+              if (onProdutoChange) {
+                onProdutoChange(e.target.value);
+                return;
+              }
+              setFiltros({ ...filtros, produto: e.target.value });
+            }}
             placeholder="Nome ou referência"
             className="w-full"
           />
