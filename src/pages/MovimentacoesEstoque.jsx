@@ -66,6 +66,8 @@ const MovimentacoesEstoque = () => {
   const [showMovDialog, setShowMovDialog] = useState(false);
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
   const [movsProduto, setMovsProduto] = useState([]);
+  const [movsProdutoFirst, setMovsProdutoFirst] = useState(0);
+  const [movsProdutoTotal, setMovsProdutoTotal] = useState(0);
   const [loadingDialog, setLoadingDialog] = useState(false);
   const [loadingExportPdf, setLoadingExportPdf] = useState(false);
 
@@ -493,24 +495,44 @@ const MovimentacoesEstoque = () => {
     setFirstMovs(0);
   };
 
-  const verMovimentacoes = async (rowData) => {
+  const fetchMovimentacoesProduto = async ({
+                                             variacaoId,
+                                             produtoData = null,
+                                             first = 0,
+                                             rows = 10,
+                                             sortField = null,
+                                             sortOrder = null,
+                                           }) => {
+    if (!variacaoId) return;
     abortInFlightRequest(movsProdutoAbortRef);
     const controller = new AbortController();
     movsProdutoAbortRef.current = controller;
     const requestId = ++movsProdutoRequestSeq.current;
 
     try {
-      setShowMovDialog(true);
-      setProdutoSelecionado(rowData);
+      if (produtoData) {
+        setProdutoSelecionado(produtoData);
+      }
+      setMovsProdutoFirst(first);
       setLoadingDialog(true);
 
+      const params = {
+        variacao: variacaoId,
+        page: Math.floor(first / rows) + 1,
+        per_page: rows,
+        sort_field: sortField ? (sortFieldMovsMap[sortField] ?? sortField) : null,
+        sort_order: sortOrder === 1 ? 'asc' : sortOrder === -1 ? 'desc' : undefined,
+      };
+
       const res = await apiEstoque.get(ESTOQUE_ENDPOINTS.estoque.movimentacoes.base, {
-        params: { variacao: rowData.variacao_id, page: 1, per_page: 10 },
+        params,
         signal: controller.signal,
       });
 
       if (requestId !== movsProdutoRequestSeq.current) return;
-      setMovsProduto(toCollectionRows(res.data));
+      const rowsData = toCollectionRows(res.data);
+      setMovsProduto(rowsData);
+      setMovsProdutoTotal(toCollectionMetaTotal(res.data, rowsData.length));
     } catch (err) {
       if (requestId !== movsProdutoRequestSeq.current) return;
       if (isRequestAborted(err)) return;
@@ -522,6 +544,16 @@ const MovimentacoesEstoque = () => {
       if (requestId !== movsProdutoRequestSeq.current) return;
       setLoadingDialog(false);
     }
+  };
+
+  const verMovimentacoes = (rowData) => {
+    setShowMovDialog(true);
+    fetchMovimentacoesProduto({
+      variacaoId: rowData?.variacao_id,
+      produtoData: rowData,
+      first: 0,
+      rows: 10,
+    });
   };
 
   const abrirDialogLocalizacao = (estoqueId, localizacaoId = null) => {
@@ -629,6 +661,10 @@ const MovimentacoesEstoque = () => {
           visible={showMovDialog}
           onHide={() => {
             abortInFlightRequest(movsProdutoAbortRef);
+            setMovsProduto([]);
+            setMovsProdutoFirst(0);
+            setMovsProdutoTotal(0);
+            setProdutoSelecionado(null);
             setShowMovDialog(false);
           }}
           style={{ width: '80vw' }}
@@ -637,10 +673,18 @@ const MovimentacoesEstoque = () => {
           <EstoqueMovimentacoes
             data={movsProduto}
             loading={loadingDialog}
-            total={movsProduto.length}
-            first={0}
+            total={movsProdutoTotal}
+            first={movsProdutoFirst}
             onDownloadTransferPdf={baixarPdfTransferencia}
-            onPage={() => {}}
+            onPage={(e) => {
+              fetchMovimentacoesProduto({
+                variacaoId: produtoSelecionado?.variacao_id,
+                first: e.first,
+                rows: e.rows,
+                sortField: e.sortField,
+                sortOrder: e.sortOrder,
+              });
+            }}
           />
         </Dialog>
       </div>
