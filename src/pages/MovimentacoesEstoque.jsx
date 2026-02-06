@@ -37,10 +37,12 @@ const MovimentacoesEstoque = () => {
   const [searchParams] = useSearchParams();
   const estoqueRequestSeq = useRef(0);
   const movsRequestSeq = useRef(0);
+  const resumoRequestSeq = useRef(0);
   const movsProdutoRequestSeq = useRef(0);
   const produtoDebounceRef = useRef(null);
   const estoqueAbortRef = useRef(null);
   const movsAbortRef = useRef(null);
+  const resumoAbortRef = useRef(null);
   const movsProdutoAbortRef = useRef(null);
 
   const [firstEstoque, setFirstEstoque] = useState(0);
@@ -160,8 +162,10 @@ const MovimentacoesEstoque = () => {
 
   useEffect(() => {
     if (!isHydrated) return;
-    fetchEstoqueAtual();
-    fetchMovimentacoes();
+    const filtrosAtuais = filtrosRef.current;
+    fetchResumo({ filtrosOverride: filtrosAtuais });
+    fetchEstoqueAtual({ filtrosOverride: filtrosAtuais });
+    fetchMovimentacoes({ filtrosOverride: filtrosAtuais });
   }, [isHydrated]);
 
   useEffect(() => () => {
@@ -171,8 +175,43 @@ const MovimentacoesEstoque = () => {
     }
     abortInFlightRequest(estoqueAbortRef);
     abortInFlightRequest(movsAbortRef);
+    abortInFlightRequest(resumoAbortRef);
     abortInFlightRequest(movsProdutoAbortRef);
   }, []);
+
+  const fetchResumo = async ({ filtrosOverride = null } = {}) => {
+    abortInFlightRequest(resumoAbortRef);
+    const controller = new AbortController();
+    resumoAbortRef.current = controller;
+    const filtrosAtuais = filtrosOverride ?? filtrosRef.current;
+    const requestId = ++resumoRequestSeq.current;
+    try {
+      const formatDate = (d) => d instanceof Date ? d.toISOString().split('T')[0] : null;
+      const filtroParams = {
+        ...filtrosAtuais,
+        zerados: filtrosAtuais.zerados ? 1 : 0,
+        periodo:
+          filtrosAtuais.periodo?.length === 2 && filtrosAtuais.periodo[1]
+            ? [formatDate(filtrosAtuais.periodo[0]), formatDate(filtrosAtuais.periodo[1])]
+            : null,
+      };
+
+      const resumoRes = await apiEstoque.get(ESTOQUE_ENDPOINTS.estoque.resumo, {
+        params: filtroParams,
+        signal: controller.signal,
+      });
+      if (requestId !== resumoRequestSeq.current) return;
+      setResumo(resumoRes.data?.data ?? resumoRes.data);
+    } catch (err) {
+      if (requestId !== resumoRequestSeq.current) return;
+      if (isRequestAborted(err)) return;
+      showToast('error', 'Erro ao carregar resumo do estoque');
+    } finally {
+      if (resumoAbortRef.current === controller) {
+        resumoAbortRef.current = null;
+      }
+    }
+  };
 
   const fetchEstoqueAtual = async ({
                                      first = 0,
@@ -202,17 +241,16 @@ const MovimentacoesEstoque = () => {
         sort_order: sortOrder === 1 ? 'asc' : sortOrder === -1 ? 'desc' : undefined
       };
 
-      const [estoqueRes, resumoRes] = await Promise.all([
-        apiEstoque.get(ESTOQUE_ENDPOINTS.estoque.atual, { params: filtroParams, signal: controller.signal }),
-        apiEstoque.get(ESTOQUE_ENDPOINTS.estoque.resumo, { params: filtroParams, signal: controller.signal }),
-      ]);
+      const estoqueRes = await apiEstoque.get(ESTOQUE_ENDPOINTS.estoque.atual, {
+        params: filtroParams,
+        signal: controller.signal,
+      });
 
       if (requestId !== estoqueRequestSeq.current) return;
 
       const estoqueRows = toCollectionRows(estoqueRes.data);
       setEstoqueAtual(estoqueRows);
       setTotalEstoque(toCollectionMetaTotal(estoqueRes.data, estoqueRows.length));
-      setResumo(resumoRes.data?.data ?? resumoRes.data);
     } catch (err) {
       if (requestId !== estoqueRequestSeq.current) return;
       if (isRequestAborted(err)) return;
@@ -397,6 +435,7 @@ const MovimentacoesEstoque = () => {
     persistFiltros(filtrosOverride);
     setFirstEstoque(firstEstoqueValue);
     setFirstMovs(firstMovsValue);
+    fetchResumo({ filtrosOverride });
     fetchEstoqueAtual({ first: firstEstoqueValue, filtrosOverride });
     fetchMovimentacoes({ first: firstMovsValue, filtrosOverride });
   };
@@ -433,6 +472,7 @@ const MovimentacoesEstoque = () => {
     }
     abortInFlightRequest(estoqueAbortRef);
     abortInFlightRequest(movsAbortRef);
+    abortInFlightRequest(resumoAbortRef);
     setMovimentacoes([]);
     setEstoqueAtual([]);
     setResumo({ totalProdutos: 0, totalPecas: 0, totalDepositos: 0 });
