@@ -23,12 +23,12 @@ const MovimentacoesEstoque = () => {
 
   const toast = useRef(null);
   const [searchParams] = useSearchParams();
+  const estoqueRequestSeq = useRef(0);
+  const movsRequestSeq = useRef(0);
 
-  const [paginaEstoque, setPaginaEstoque] = useState(1);
   const [firstEstoque, setFirstEstoque] = useState(0);
   const [totalEstoque, setTotalEstoque] = useState(0);
 
-  const [paginaMovs, setPaginaMovs] = useState(1);
   const [firstMovs, setFirstMovs] = useState(0);
   const [totalMovs, setTotalMovs] = useState(0);
 
@@ -89,11 +89,8 @@ const MovimentacoesEstoque = () => {
 
   useEffect(() => {
     fetchEstoqueAtual();
-  }, [paginaEstoque]);
-
-  useEffect(() => {
     fetchMovimentacoes();
-  }, [paginaMovs]);
+  }, []);
 
   const fetchEstoqueAtual = async ({
                                      first = 0,
@@ -101,6 +98,7 @@ const MovimentacoesEstoque = () => {
                                      sortField = null,
                                      sortOrder = null
                                    } = {}) => {
+    const requestId = ++estoqueRequestSeq.current;
     setLoadingEstoque(true);
     try {
       const formatDate = (d) => d instanceof Date ? d.toISOString().split('T')[0] : null;
@@ -122,10 +120,13 @@ const MovimentacoesEstoque = () => {
         apiEstoque.get('/estoque/resumo', { params: filtroParams }),
       ]);
 
+      if (requestId !== estoqueRequestSeq.current) return;
+
       setEstoqueAtual(estoqueRes.data.data);
       setTotalEstoque(estoqueRes.data.meta?.total || 0);
       setResumo(resumoRes.data);
     } catch (err) {
+      if (requestId !== estoqueRequestSeq.current) return;
       toast.current?.show({
         severity: 'error',
         summary: 'Erro',
@@ -133,6 +134,7 @@ const MovimentacoesEstoque = () => {
         life: 3000,
       });
     } finally {
+      if (requestId !== estoqueRequestSeq.current) return;
       setLoadingEstoque(false);
     }
   };
@@ -143,6 +145,7 @@ const MovimentacoesEstoque = () => {
                                       sortField = null,
                                       sortOrder = null
                                     } = {}) => {
+    const requestId = ++movsRequestSeq.current;
     setLoadingMovs(true);
     try {
       const formatDate = (d) => d instanceof Date ? d.toISOString().split('T')[0] : null;
@@ -160,9 +163,11 @@ const MovimentacoesEstoque = () => {
       };
 
       const movsRes = await apiEstoque.get('/estoque/movimentacoes', { params: filtroParams });
+      if (requestId !== movsRequestSeq.current) return;
       setMovimentacoes(movsRes.data.data);
       setTotalMovs(movsRes.data.meta?.total || 0);
     } catch (err) {
+      if (requestId !== movsRequestSeq.current) return;
       toast.current?.show({
         severity: 'error',
         summary: 'Erro',
@@ -170,6 +175,7 @@ const MovimentacoesEstoque = () => {
         life: 3000,
       });
     } finally {
+      if (requestId !== movsRequestSeq.current) return;
       setLoadingMovs(false);
     }
   };
@@ -296,8 +302,6 @@ const MovimentacoesEstoque = () => {
 
   const handleBuscar = () => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(filtros));
-    setPaginaEstoque(1);
-    setPaginaMovs(1);
     setFirstEstoque(0);
     setFirstMovs(0);
     fetchEstoqueAtual();
@@ -308,7 +312,6 @@ const MovimentacoesEstoque = () => {
     setMovimentacoes([]);
     setEstoqueAtual([]);
     setResumo({ totalProdutos: 0, totalPecas: 0, totalDepositos: 0 });
-    setPaginaEstoque(1);
 
     const reset = {
       tipo: null,
@@ -410,7 +413,6 @@ const MovimentacoesEstoque = () => {
               total={totalEstoque}
               first={firstEstoque}
               onPage={(e) => {
-                setPaginaEstoque(e.page + 1);
                 setFirstEstoque(e.first);
                 fetchEstoqueAtual({
                   first: e.first,
@@ -435,7 +437,6 @@ const MovimentacoesEstoque = () => {
               first={firstMovs}
               onDownloadTransferPdf={baixarPdfTransferencia}
               onPage={(e) => {
-                setPaginaMovs(e.page + 1);
                 setFirstMovs(e.first);
                 fetchMovimentacoes({
                   first: e.first,
