@@ -81,6 +81,13 @@ const MovimentacoesEstoque = () => {
     { label: 'Entrada', value: 'entrada' },
     { label: 'Saída', value: 'saida' },
   ];
+  const sortFieldEstoqueMap = {
+    produto_referencia: 'referencia',
+    quantidade: 'quantidade_estoque',
+  };
+  const sortFieldMovsMap = {
+    produto_referencia: 'id',
+  };
 
   useEffect(() => {
     const depositoId = searchParams.get('deposito');
@@ -131,7 +138,7 @@ const MovimentacoesEstoque = () => {
           : null,
         page: Math.floor(first / rows) + 1,
         per_page: rows,
-        sort_field: sortField,
+        sort_field: sortField ? (sortFieldEstoqueMap[sortField] ?? sortField) : null,
         sort_order: sortOrder === 1 ? 'asc' : sortOrder === -1 ? 'desc' : undefined
       };
 
@@ -178,7 +185,7 @@ const MovimentacoesEstoque = () => {
             : null,
         page: Math.floor(first / rows) + 1,
         per_page: rows,
-        sort_field: sortField,
+        sort_field: sortField ? (sortFieldMovsMap[sortField] ?? sortField) : null,
         sort_order: sortOrder === 1 ? 'asc' : sortOrder === -1 ? 'desc' : undefined
       };
 
