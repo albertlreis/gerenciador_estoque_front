@@ -20,6 +20,17 @@ import EstoqueMovimentacoes from '../components/EstoqueMovimentacoes';
  */
 const MovimentacoesEstoque = () => {
   const LOCAL_STORAGE_KEY = 'filtros_movimentacoes_estoque';
+  const toPeriodoDateRange = (periodo) => {
+    if (!Array.isArray(periodo) || periodo.length !== 2) return null;
+
+    const parsed = periodo.map((item) => {
+      if (!item) return null;
+      const date = item instanceof Date ? item : new Date(item);
+      return Number.isNaN(date.getTime()) ? null : date;
+    });
+
+    return parsed[0] && parsed[1] ? parsed : null;
+  };
 
   const toast = useRef(null);
   const [searchParams] = useSearchParams();
@@ -75,7 +86,16 @@ const MovimentacoesEstoque = () => {
     const depositoId = searchParams.get('deposito');
     const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (saved) {
-      setFiltros(JSON.parse(saved));
+      try {
+        const parsed = JSON.parse(saved);
+        setFiltros((prev) => ({
+          ...prev,
+          ...parsed,
+          periodo: toPeriodoDateRange(parsed?.periodo),
+        }));
+      } catch {
+        localStorage.removeItem(LOCAL_STORAGE_KEY);
+      }
     } else if (depositoId) {
       setFiltros((prev) => ({ ...prev, deposito: parseInt(depositoId) }));
     }
