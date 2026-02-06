@@ -81,6 +81,12 @@ export const ESTOQUE_ENDPOINTS = Object.freeze({
       base: '/estoque/dimensoes',
       byId: (id) => `/estoque/dimensoes/${id}`,
     }),
+
+    transferencias: Object.freeze({
+      base: '/estoque/transferencias',
+      byId: (id) => `/estoque/transferencias/${id}`,
+      pdf: (id) => `/estoque/transferencias/${id}/pdf`,
+    }),
   }),
 
   depositos: Object.freeze({

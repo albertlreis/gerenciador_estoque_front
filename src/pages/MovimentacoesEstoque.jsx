@@ -10,6 +10,7 @@ import LocalizacaoEstoqueDialog from '../components/LocalizacaoEstoqueDialog';
 import EstoqueFiltro from '../components/EstoqueFiltro';
 import EstoqueAtual from '../components/EstoqueAtual';
 import EstoqueMovimentacoes from '../components/EstoqueMovimentacoes';
+import { ESTOQUE_ENDPOINTS } from '../constants/endpointsEstoque';
 
 /**
  * Página de Estoque + Movimentações com editor de localização.
@@ -88,6 +89,26 @@ const MovimentacoesEstoque = () => {
   const sortFieldMovsMap = {
     produto_referencia: 'id',
   };
+  const toCollectionRows = (payload) => {
+    if (Array.isArray(payload?.data)) return payload.data;
+    if (Array.isArray(payload?.dados?.results)) return payload.dados.results;
+    if (Array.isArray(payload?.dados)) return payload.dados;
+    if (Array.isArray(payload?.results)) return payload.results;
+    if (Array.isArray(payload)) return payload;
+    return [];
+  };
+  const toCollectionMetaTotal = (payload, fallbackLength = 0) =>
+    Number(payload?.meta?.total ?? payload?.dados?.total ?? fallbackLength);
+  const toSelectOptions = (payload) =>
+    toCollectionRows(payload).map((item) => ({ label: item.nome, value: item.id }));
+  const showToast = (severity, detail, summary = 'Erro') => {
+    toast.current?.show({
+      severity,
+      summary,
+      detail,
+      life: 3000,
+    });
+  };
 
   useEffect(() => {
     const depositoId = searchParams.get('deposito');
@@ -143,23 +164,19 @@ const MovimentacoesEstoque = () => {
       };
 
       const [estoqueRes, resumoRes] = await Promise.all([
-        apiEstoque.get('/estoque/atual', { params: filtroParams }),
-        apiEstoque.get('/estoque/resumo', { params: filtroParams }),
+        apiEstoque.get(ESTOQUE_ENDPOINTS.estoque.atual, { params: filtroParams }),
+        apiEstoque.get(ESTOQUE_ENDPOINTS.estoque.resumo, { params: filtroParams }),
       ]);
 
       if (requestId !== estoqueRequestSeq.current) return;
 
-      setEstoqueAtual(estoqueRes.data.data);
-      setTotalEstoque(estoqueRes.data.meta?.total || 0);
-      setResumo(resumoRes.data);
+      const estoqueRows = toCollectionRows(estoqueRes.data);
+      setEstoqueAtual(estoqueRows);
+      setTotalEstoque(toCollectionMetaTotal(estoqueRes.data, estoqueRows.length));
+      setResumo(resumoRes.data?.data ?? resumoRes.data);
     } catch (err) {
       if (requestId !== estoqueRequestSeq.current) return;
-      toast.current?.show({
-        severity: 'error',
-        summary: 'Erro',
-        detail: 'Erro ao carregar estoque atual',
-        life: 3000,
-      });
+      showToast('error', 'Erro ao carregar estoque atual');
     } finally {
       if (requestId !== estoqueRequestSeq.current) return;
       setLoadingEstoque(false);
@@ -189,18 +206,14 @@ const MovimentacoesEstoque = () => {
         sort_order: sortOrder === 1 ? 'asc' : sortOrder === -1 ? 'desc' : undefined
       };
 
-      const movsRes = await apiEstoque.get('/estoque/movimentacoes', { params: filtroParams });
+      const movsRes = await apiEstoque.get(ESTOQUE_ENDPOINTS.estoque.movimentacoes.base, { params: filtroParams });
       if (requestId !== movsRequestSeq.current) return;
-      setMovimentacoes(movsRes.data.data);
-      setTotalMovs(movsRes.data.meta?.total || 0);
+      const movRows = toCollectionRows(movsRes.data);
+      setMovimentacoes(movRows);
+      setTotalMovs(toCollectionMetaTotal(movsRes.data, movRows.length));
     } catch (err) {
       if (requestId !== movsRequestSeq.current) return;
-      toast.current?.show({
-        severity: 'error',
-        summary: 'Erro',
-        detail: 'Erro ao carregar movimentações',
-        life: 3000,
-      });
+      showToast('error', 'Erro ao carregar movimentações');
     } finally {
       if (requestId !== movsRequestSeq.current) return;
       setLoadingMovs(false);
@@ -226,7 +239,7 @@ const MovimentacoesEstoque = () => {
         export: 'pdf',
       };
 
-      const response = await apiEstoque.get('/estoque/atual', {
+      const response = await apiEstoque.get(ESTOQUE_ENDPOINTS.estoque.atual, {
         params,
         responseType: 'blob',
       });
@@ -241,12 +254,7 @@ const MovimentacoesEstoque = () => {
 
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      toast.current?.show({
-        severity: 'error',
-        summary: 'Erro',
-        detail: 'Erro ao exportar estoque em PDF',
-        life: 3000,
-      });
+      showToast('error', 'Erro ao exportar estoque em PDF');
     } finally {
       setLoadingExportPdf(false);
     }
@@ -259,17 +267,12 @@ const MovimentacoesEstoque = () => {
         : null;
 
     if (!transferenciaId) {
-      toast.current?.show({
-        severity: 'warn',
-        summary: 'Atenção',
-        detail: 'PDF indisponível para esta movimentação.',
-        life: 3000,
-      });
+      showToast('warn', 'PDF indisponível para esta movimentação.', 'Atenção');
       return;
     }
 
     try {
-      const response = await apiEstoque.get(`/estoque/transferencias/${transferenciaId}/pdf`, {
+      const response = await apiEstoque.get(ESTOQUE_ENDPOINTS.estoque.transferencias.pdf(transferenciaId), {
         responseType: 'blob',
       });
 
@@ -291,36 +294,31 @@ const MovimentacoesEstoque = () => {
 
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      toast.current?.show({
-        severity: 'error',
-        summary: 'Erro',
-        detail: 'Erro ao baixar PDF da transferência.',
-        life: 3000,
-      });
+      showToast('error', 'Erro ao baixar PDF da transferência.');
     }
   };
 
   const fetchDepositos = async () => {
     try {
-      const res = await apiEstoque.get('/depositos');
-      setDepositos(res.data.map((dep) => ({ label: dep.nome, value: dep.id })));
+      const res = await apiEstoque.get(ESTOQUE_ENDPOINTS.depositos.base);
+      setDepositos(toSelectOptions(res.data));
     } catch (err) {
-      console.error('Erro ao carregar depósitos');
+      showToast('error', 'Erro ao carregar depósitos');
     }
   };
 
   const fetchCategorias = async () => {
     try {
-      const res = await apiEstoque.get('/categorias');
-      setCategorias(res.data.map((c) => ({ label: c.nome, value: c.id })));
+      const res = await apiEstoque.get(ESTOQUE_ENDPOINTS.categorias.base);
+      setCategorias(toSelectOptions(res.data));
     } catch (err) {
-      console.error('Erro ao carregar categorias');
+      showToast('error', 'Erro ao carregar categorias');
     }
   };
 
   const fetchFornecedores = async () => {
     try {
-      const res = await apiEstoque.get('/fornecedores', {
+      const res = await apiEstoque.get(ESTOQUE_ENDPOINTS.fornecedores.base, {
         params: {
           per_page: 200,
           page: 1,
@@ -329,15 +327,9 @@ const MovimentacoesEstoque = () => {
         },
       });
 
-      const rows = Array.isArray(res.data?.data)
-        ? res.data.data
-        : Array.isArray(res.data)
-          ? res.data
-          : [];
-
-      setFornecedores(rows.map((f) => ({ label: f.nome, value: f.id })));
+      setFornecedores(toSelectOptions(res.data));
     } catch (err) {
-      console.error('Erro ao carregar fornecedores');
+      showToast('error', 'Erro ao carregar fornecedores');
     }
   };
 
@@ -374,18 +366,13 @@ const MovimentacoesEstoque = () => {
       setProdutoSelecionado(rowData);
       setLoadingDialog(true);
 
-      const res = await apiEstoque.get('/estoque/movimentacoes', {
+      const res = await apiEstoque.get(ESTOQUE_ENDPOINTS.estoque.movimentacoes.base, {
         params: { variacao: rowData.variacao_id, page: 1, per_page: 10 }
       });
 
-      setMovsProduto(res.data.data);
+      setMovsProduto(toCollectionRows(res.data));
     } catch (err) {
-      toast.current?.show({
-        severity: 'error',
-        summary: 'Erro',
-        detail: 'Erro ao carregar movimentações da variação',
-        life: 3000,
-      });
+      showToast('error', 'Erro ao carregar movimentações da variação');
     } finally {
       setLoadingDialog(false);
     }
