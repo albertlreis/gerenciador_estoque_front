@@ -313,8 +313,22 @@ const MovimentacoesEstoque = () => {
 
   const fetchFornecedores = async () => {
     try {
-      const res = await apiEstoque.get('/fornecedores');
-      setFornecedores(res.data.map((f) => ({ label: f.nome, value: f.id })));
+      const res = await apiEstoque.get('/fornecedores', {
+        params: {
+          per_page: 200,
+          page: 1,
+          order_by: 'nome',
+          order_dir: 'asc',
+        },
+      });
+
+      const rows = Array.isArray(res.data?.data)
+        ? res.data.data
+        : Array.isArray(res.data)
+          ? res.data
+          : [];
+
+      setFornecedores(rows.map((f) => ({ label: f.nome, value: f.id })));
     } catch (err) {
       console.error('Erro ao carregar fornecedores');
     }
