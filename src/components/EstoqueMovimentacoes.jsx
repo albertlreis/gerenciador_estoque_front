@@ -10,8 +10,6 @@ const EstoqueMovimentacoes = ({ data, loading, total, first, onPage, onDownloadT
   const [sortOrder, setSortOrder] = useState(null);
   const [rows, setRows] = useState(10);
 
-  const dataFiltrada = data.filter((row) => row.tipo !== 'consignacao_compra');
-
   const tipoTemplate = (tipo) => {
     const map = {
       entrada:               { label: 'Entrada',            icon: 'pi pi-arrow-down',  severity: 'success' },
@@ -145,7 +143,7 @@ const EstoqueMovimentacoes = ({ data, loading, total, first, onPage, onDownloadT
     <div className="mb-6">
       <h3 className="mb-3">Movimentações Recentes</h3>
       <DataTable
-        value={dataFiltrada}
+        value={data}
         loading={loading}
         paginator
         rows={rows}
