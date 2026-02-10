@@ -28,6 +28,13 @@ export const useCatalogoProdutos = (filtros) => {
     }
   };
 
+  const atualizarProdutoNaLista = (produtoAtualizado) => {
+    if (!produtoAtualizado?.id) return;
+    setProdutos((prev) =>
+      prev.map((p) => (p?.id === produtoAtualizado.id ? { ...p, ...produtoAtualizado } : p))
+    );
+  };
+
   useEffect(() => {
     setPagina(1);
     setTemMais(true);
@@ -53,5 +60,13 @@ export const useCatalogoProdutos = (filtros) => {
     return () => target && observer.unobserve(target);
   }, [sentinelaRef, temMais, loading]);
 
-  return { produtos, loading, pagina, setPagina, temMais, sentinelaRef };
+  return {
+    produtos,
+    loading,
+    pagina,
+    setPagina,
+    temMais,
+    sentinelaRef,
+    atualizarProdutoNaLista,
+  };
 };

@@ -17,7 +17,8 @@ const ProdutoVariacoes = ({
                             confirmarExcluirOutlet,
                             toastRef,
                             loading,
-                            setLoading
+                            setLoading,
+                            onAlterado
                           }) => {
   const { has } = usePermissions();
 
@@ -133,6 +134,8 @@ const ProdutoVariacoes = ({
         detail: `Foram ${novas.length} adicionadas e ${existentes.length} atualizadas.`,
         life: 3000
       });
+
+      onAlterado && onAlterado();
     } catch (error) {
       toastRef.current?.show({
         severity: 'error',

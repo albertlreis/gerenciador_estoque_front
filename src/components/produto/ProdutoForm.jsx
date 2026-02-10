@@ -1,3 +1,4 @@
+// src/components/produto/ProdutoForm.jsx
 import React, { useState, useEffect } from 'react';
 import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
@@ -21,7 +22,13 @@ const toNumberOrNull = (v) => {
   return Number.isNaN(n) ? null : n;
 };
 
-const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
+const ProdutoForm = ({
+                       initialData = {},
+                       onSubmit,
+                       onCancel,
+                       somenteImagens = false, // ✅ novo
+                       onAlterado,             // ✅ novo
+                     }) => {
   const [produto, setProduto] = useState(initialData);
   const [showOutletDialog, setShowOutletDialog] = useState(false);
   const [variacaoSelecionada, setVariacaoSelecionada] = useState(null);
@@ -105,25 +112,6 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
     setOutletSelecionado(null);
   };
 
-  const confirmarExcluirOutlet = (variacao, outlet) => {
-    confirmDialog({
-      message: 'Tem certeza que deseja excluir este outlet?',
-      header: 'Confirmação',
-      icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Sim',
-      rejectLabel: 'Não',
-      accept: async () => {
-        try {
-          await apiEstoque.delete(`/variacoes/${variacao.id}/outlets/${outlet.id}`);
-          toastRef.current?.show({ severity: 'success', summary: 'Outlet excluído', life: 3000 });
-          await atualizarProduto(true);
-        } catch {
-          toastRef.current?.show({ severity: 'error', summary: 'Erro ao excluir outlet', life: 3000 });
-        }
-      }
-    });
-  };
-
   const atualizarProduto = async (silent = false) => {
     try {
       const response = await apiEstoque.get(`/produtos/${produto.id}`);
@@ -162,6 +150,26 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
     }
   };
 
+  const confirmarExcluirOutlet = (variacao, outlet) => {
+    confirmDialog({
+      message: 'Tem certeza que deseja excluir este outlet?',
+      header: 'Confirmação',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sim',
+      rejectLabel: 'Não',
+      accept: async () => {
+        try {
+          await apiEstoque.delete(`/variacoes/${variacao.id}/outlets/${outlet.id}`);
+          toastRef.current?.show({ severity: 'success', summary: 'Outlet excluído', life: 3000 });
+          await atualizarProduto(true);
+          onAlterado && onAlterado(); // ✅ novo
+        } catch {
+          toastRef.current?.show({ severity: 'error', summary: 'Erro ao excluir outlet', life: 3000 });
+        }
+      }
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -190,6 +198,8 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
         detail: 'Informações gerais salvas com sucesso.',
         life: 3000
       });
+
+      onAlterado && onAlterado(); // ✅ novo
     } catch (error) {
       toastRef.current?.show({
         severity: 'error',
@@ -216,6 +226,7 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
       }
 
       await atualizarProduto(true);
+      onAlterado && onAlterado(); // ✅ novo
       return true;
     } catch (error) {
       toastRef.current?.show({
@@ -227,6 +238,44 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
       return false;
     }
   };
+
+  // ✅ modo vendedor (somente imagens)
+  if (somenteImagens) {
+    return (
+      <>
+        <Toast ref={toastRef} position="top-center" />
+
+        <Panel header="Imagens do Produto">
+          <p className="text-sm text-color-secondary mb-3">
+            Você pode alterar apenas as imagens deste produto.
+          </p>
+
+          {produto?.id ? (
+            <ProdutoImagens
+              produtoId={produto.id}
+              existingImages={existingImages}
+              setExistingImages={setExistingImages}
+              toastRef={toastRef}
+              fileUploadRef={fileUploadRef}
+              onChanged={onAlterado} // ✅ novo
+            />
+          ) : (
+            <div className="text-center p-4 text-color-secondary">Carregando...</div>
+          )}
+
+          <div className="mt-3 flex justify-content-end">
+            <Button
+              label="Fechar"
+              type="button"
+              icon="pi pi-times"
+              className="p-button-secondary"
+              onClick={onCancel}
+            />
+          </div>
+        </Panel>
+      </>
+    );
+  }
 
   return (
     <>
@@ -392,6 +441,7 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
             setVariacoes={setVariacoes}
             abrirDialogOutlet={abrirDialogOutlet}
             confirmarExcluirOutlet={confirmarExcluirOutlet}
+            onAlterado={onAlterado} // ✅ novo
           />
         </Panel>
 
@@ -407,6 +457,7 @@ const ProdutoForm = ({ initialData = {}, onSubmit, onCancel }) => {
               setExistingImages={setExistingImages}
               toastRef={toastRef}
               fileUploadRef={fileUploadRef}
+              onChanged={onAlterado} // ✅ novo
             />
           </Panel>
         )}

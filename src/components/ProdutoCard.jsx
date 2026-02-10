@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Tag } from 'primereact/tag';
 import formatarPreco from '../utils/formatarPreco';
 
-const ProdutoCard = ({ grupo, onDetalhes, onAdicionar }) => {
+const ProdutoCard = ({ grupo, onDetalhes, onAdicionar, onEditar }) => {
   const primeira = grupo?.variacoes?.[0];
   const preco = Number(primeira?.preco || 0);
 
@@ -35,6 +35,20 @@ const ProdutoCard = ({ grupo, onDetalhes, onAdicionar }) => {
       className="p-3 border-1 surface-border border-round surface-card shadow-1 relative h-full flex flex-column justify-between"
       style={{ minHeight: '390px' }}
     >
+      {/* ✅ Editar (visível para todos) */}
+      <button
+        type="button"
+        className="p-button p-button-rounded p-button-text p-button-secondary p-button-sm absolute top-0 left-0 m-1 z-2"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onEditar && onEditar();
+        }}
+        title="Editar produto"
+      >
+        <i className="pi pi-pencil" />
+      </button>
+
       {grupo?.is_outlet && (
         <div className="absolute top-0 right-0 p-1 bg-orange-500 text-white text-xs font-bold z-2 border-round-right">
           OUTLET

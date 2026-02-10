@@ -11,7 +11,8 @@ const ProdutoImagens = ({
                           existingImages,
                           setExistingImages,
                           toastRef,
-                          fileUploadRef
+                          fileUploadRef,
+                          onChanged,
                         }) => {
   const backendUrl = process.env.REACT_APP_BASE_URL_ESTOQUE;
 
@@ -39,6 +40,7 @@ const ProdutoImagens = ({
         detail: 'Imagem removida',
         life: 3000
       });
+      onChanged && onChanged();
     } catch {
       toastRef.current?.show({
         severity: 'error',
@@ -62,6 +64,7 @@ const ProdutoImagens = ({
         summary: 'Imagem principal atualizada',
         life: 3000
       });
+      onChanged && onChanged();
     } catch {
       toastRef.current?.show({
         severity: 'error',
@@ -99,6 +102,7 @@ const ProdutoImagens = ({
           detail: 'Imagem enviada',
           life: 3000
         });
+        onChanged && onChanged();
       } catch {
         toastRef.current?.show({
           severity: 'error',

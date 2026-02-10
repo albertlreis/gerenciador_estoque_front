@@ -49,7 +49,8 @@ const CatalogoProdutos = () => {
   const {
     produtos,
     loading,
-    sentinelaRef
+    sentinelaRef,
+    atualizarProdutoNaLista
   } = useCatalogoProdutos(filtros);
 
   const handleAdicionarAoCarrinho = (produtoComVariacoesDoGrupo) => {
@@ -145,12 +146,17 @@ const CatalogoProdutos = () => {
           </div>
 
           <OverlayLoading visible={loading && produtos.length === 0} message="Carregando produtos do catálogo...">
-            <CatalogoGrid produtos={produtos} onAdicionarAoCarrinho={handleAdicionarAoCarrinho} />
+            <CatalogoGrid
+              produtos={produtos}
+              onAdicionarAoCarrinho={handleAdicionarAoCarrinho}
+              onProdutoAtualizado={atualizarProdutoNaLista}
+            />
             <div ref={sentinelaRef} style={{ height: '1px', marginTop: '80px' }} />
             {loading && produtos.length > 0 && (
               <p className="text-center mt-3 mb-4">Carregando mais produtos...</p>
             )}
           </OverlayLoading>
+
         </div>
       </div>
 
