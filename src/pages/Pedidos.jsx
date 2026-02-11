@@ -264,6 +264,12 @@ export default function PedidosListagem() {
         loading={loadingDetalhes}
         podeEditar={podeEditarPedido(pedidoDetalhado)}
         onEditar={abrirEdicaoPedido}
+        onAtualizar={() => {
+          if (pedidoDetalhado?.id) {
+            carregarDetalhesPedido({ id: pedidoDetalhado.id });
+          }
+        }}
+        toast={toast}
       />
 
       <PedidoEditarDialog
