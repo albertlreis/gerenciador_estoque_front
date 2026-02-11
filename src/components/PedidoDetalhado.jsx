@@ -204,8 +204,15 @@ const PedidoDetalhado = ({ visible, onHide, pedido }) => {
 
                   <div className="text-sm">
                     Qtde: <strong>{item.quantidade}</strong> <br />
-                    Unitário: <strong>{formatarReal(item.preco_unitario)}</strong> <br />
-                    Subtotal: <strong>{formatarReal(item.subtotal)}</strong>
+                    Unitário (venda): <strong>{formatarReal(item.preco_unitario)}</strong> <br />
+                    Subtotal (venda): <strong>{formatarReal(item.subtotal)}</strong>
+                    {(item.custo_unitario !== undefined && item.custo_unitario !== null) && (
+                      <>
+                        <br />
+                        Custo unitário: <strong>{formatarReal(item.custo_unitario)}</strong> <br />
+                        Subtotal custo: <strong>{formatarReal(item.custo_subtotal ?? (item.custo_unitario * item.quantidade))}</strong>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

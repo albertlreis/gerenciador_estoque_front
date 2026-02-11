@@ -1,4 +1,3 @@
-// src/components/produto/ProdutoForm.jsx
 import React, { useState, useEffect } from 'react';
 import { InputText } from 'primereact/inputtext';
 import { InputTextarea } from 'primereact/inputtextarea';
@@ -26,8 +25,8 @@ const ProdutoForm = ({
                        initialData = {},
                        onSubmit,
                        onCancel,
-                       somenteImagens = false, // ✅ novo
-                       onAlterado,             // ✅ novo
+                       somenteImagens = false,
+                       onAlterado,
                      }) => {
   const [produto, setProduto] = useState(initialData);
   const [showOutletDialog, setShowOutletDialog] = useState(false);
@@ -162,7 +161,7 @@ const ProdutoForm = ({
           await apiEstoque.delete(`/variacoes/${variacao.id}/outlets/${outlet.id}`);
           toastRef.current?.show({ severity: 'success', summary: 'Outlet excluído', life: 3000 });
           await atualizarProduto(true);
-          onAlterado && onAlterado(); // ✅ novo
+          onAlterado && onAlterado();
         } catch {
           toastRef.current?.show({ severity: 'error', summary: 'Erro ao excluir outlet', life: 3000 });
         }
@@ -199,7 +198,7 @@ const ProdutoForm = ({
         life: 3000
       });
 
-      onAlterado && onAlterado(); // ✅ novo
+      onAlterado && onAlterado();
     } catch (error) {
       toastRef.current?.show({
         severity: 'error',
@@ -226,7 +225,7 @@ const ProdutoForm = ({
       }
 
       await atualizarProduto(true);
-      onAlterado && onAlterado(); // ✅ novo
+      onAlterado && onAlterado();
       return true;
     } catch (error) {
       toastRef.current?.show({
@@ -257,7 +256,7 @@ const ProdutoForm = ({
               setExistingImages={setExistingImages}
               toastRef={toastRef}
               fileUploadRef={fileUploadRef}
-              onChanged={onAlterado} // ✅ novo
+              onChanged={onAlterado}
             />
           ) : (
             <div className="text-center p-4 text-color-secondary">Carregando...</div>
@@ -441,7 +440,7 @@ const ProdutoForm = ({
             setVariacoes={setVariacoes}
             abrirDialogOutlet={abrirDialogOutlet}
             confirmarExcluirOutlet={confirmarExcluirOutlet}
-            onAlterado={onAlterado} // ✅ novo
+            onAlterado={onAlterado}
           />
         </Panel>
 
@@ -457,7 +456,7 @@ const ProdutoForm = ({
               setExistingImages={setExistingImages}
               toastRef={toastRef}
               fileUploadRef={fileUploadRef}
-              onChanged={onAlterado} // ✅ novo
+              onChanged={onAlterado}
             />
           </Panel>
         )}
