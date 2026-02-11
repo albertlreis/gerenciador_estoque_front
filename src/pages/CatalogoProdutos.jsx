@@ -148,6 +148,7 @@ const CatalogoProdutos = () => {
           <OverlayLoading visible={loading && produtos.length === 0} message="Carregando produtos do catálogo...">
             <CatalogoGrid
               produtos={produtos}
+              estoqueStatus={filtros.estoque_status}
               onAdicionarAoCarrinho={handleAdicionarAoCarrinho}
               onProdutoAtualizado={atualizarProdutoNaLista}
             />
@@ -178,6 +179,7 @@ const CatalogoProdutos = () => {
         onHide={() => setDialogVariacaoVisible(false)}
         variacaoSelecionada={variacaoSelecionada}
         setVariacaoSelecionada={setVariacaoSelecionada}
+        apenasComEstoque={filtros.estoque_status === 'com_estoque'}
         onAdicionar={confirmarVariacao}
       />
     </SakaiLayout>

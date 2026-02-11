@@ -5,13 +5,24 @@ import { Tag } from 'primereact/tag';
 import formatarPreco from '../utils/formatarPreco';
 import getImageSrc from "../utils/getImageSrc";
 
+const estoqueDaVariacao = (variacao) => {
+  if (!variacao) return 0;
+  if (typeof variacao.estoque_total === 'number') return variacao.estoque_total;
+  if (variacao.estoque && typeof variacao.estoque.quantidade === 'number') return variacao.estoque.quantidade;
+  if (Array.isArray(variacao.estoques)) {
+    return variacao.estoques.reduce((sum, e) => sum + Number(e.quantidade || 0), 0);
+  }
+  return 0;
+};
+
 const SelecionarVariacaoDialog = ({
                                     produto,
                                     variacaoSelecionada,
                                     setVariacaoSelecionada,
                                     visible,
                                     onHide,
-                                    onAdicionar
+                                    onAdicionar,
+                                    apenasComEstoque = false,
                                   }) => {
   if (!produto) return null;
 
@@ -20,6 +31,11 @@ const SelecionarVariacaoDialog = ({
 
   const motivoLegivel = (motivo) =>
     motivo.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+  const variacoes = Array.isArray(produto.variacoes) ? produto.variacoes : [];
+  const variacoesExibidas = apenasComEstoque
+    ? variacoes.filter((variacao) => estoqueDaVariacao(variacao) > 0)
+    : variacoes;
 
   return (
     <Dialog
@@ -56,7 +72,7 @@ const SelecionarVariacaoDialog = ({
         {/* Conteúdo de variações */}
         <div className="col-12 md:col-9 p-0">
           <div className="flex flex-wrap -mt-3">
-            {(produto.variacoes || []).map((variacao, idx) => {
+            {variacoesExibidas.map((variacao, idx) => {
               const preco = Number(variacao.preco || 0);
               const isSelecionada = variacaoSelecionada?.id === variacao.id;
               const outletSelecionado = variacaoSelecionada?.outletSelecionado;
@@ -65,7 +81,7 @@ const SelecionarVariacaoDialog = ({
                 const nome = attr.atributo?.toUpperCase();
                 if (nome) atributos.set(nome, attr.valor?.toUpperCase());
               });
-              const estoqueQtd = variacao?.estoque?.quantidade ?? 0;
+              const estoqueQtd = estoqueDaVariacao(variacao);
 
               return (
                 <div key={variacao.id} className="w-full md:w-6 lg:w-6 xl:w-6 p-2">

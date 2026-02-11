@@ -55,7 +55,7 @@ const resumirDepositos = (variacoes) => {
   return { lista, resumo, tooltip };
 };
 
-const agruparPorReferencia = (produtos) => {
+const agruparPorReferencia = (produtos, apenasComEstoque = false) => {
   const grupos = [];
 
   for (const p of produtos) {
@@ -67,10 +67,18 @@ const agruparPorReferencia = (produtos) => {
     }, {});
 
     Object.entries(byRef).forEach(([referencia, variacoes]) => {
-      const estoqueTotal = variacoes.reduce((sum, v) => sum + estoqueDaVariacao(v), 0);
-      const depositosResumo = resumirDepositos(variacoes);
+      const variacoesFiltradas = apenasComEstoque
+        ? variacoes.filter((v) => estoqueDaVariacao(v) > 0)
+        : variacoes;
 
-      const outletRestante = variacoes.reduce(
+      if (!variacoesFiltradas.length) {
+        return;
+      }
+
+      const estoqueTotal = variacoesFiltradas.reduce((sum, v) => sum + estoqueDaVariacao(v), 0);
+      const depositosResumo = resumirDepositos(variacoesFiltradas);
+
+      const outletRestante = variacoesFiltradas.reduce(
         (sum, v) =>
           sum +
           (v.outlets?.reduce?.((s, o) => s + (o.quantidade_restante || 0), 0) || 0),
@@ -78,13 +86,13 @@ const agruparPorReferencia = (produtos) => {
       );
 
       const hasOutlet =
-        outletRestante > 0 || variacoes.some((v) => (v.outlet_restante_total || 0) > 0);
+        outletRestante > 0 || variacoesFiltradas.some((v) => (v.outlet_restante_total || 0) > 0);
 
         grupos.push({
           id: `${p.id}|${referencia}`,
           produto: p,
           referencia,
-          variacoes,
+          variacoes: variacoesFiltradas,
           estoque_total: estoqueTotal,
           depositos_resumo: depositosResumo.resumo,
           depositos_tooltip: depositosResumo.tooltip,
@@ -98,10 +106,14 @@ const agruparPorReferencia = (produtos) => {
   return grupos;
 };
 
-const CatalogoGrid = ({ produtos, onAdicionarAoCarrinho }) => {
+const CatalogoGrid = ({ produtos, onAdicionarAoCarrinho, estoqueStatus }) => {
   const [selectedGroup, setSelectedGroup] = useState(null);
 
-  const grupos = useMemo(() => agruparPorReferencia(produtos), [produtos]);
+  const apenasComEstoque = estoqueStatus === 'com_estoque';
+  const grupos = useMemo(
+    () => agruparPorReferencia(produtos, apenasComEstoque),
+    [produtos, apenasComEstoque]
+  );
 
   const openDetalhes = (grupo) => setSelectedGroup(grupo);
   const closeDetalhes = () => setSelectedGroup(null);
