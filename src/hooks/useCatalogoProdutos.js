@@ -14,7 +14,7 @@ export const useCatalogoProdutos = (filtros) => {
     try {
       const page = pageOverride ?? (append ? pagina : 1);
       const response = await api.get('/produtos', {
-        params: { ...formatarFiltrosParaEnvio(filtros), page, per_page: 20 }
+        params: { ...formatarFiltrosParaEnvio(filtros), page, per_page: 20, view: 'lista' }
       });
 
       const novos = response.data.data || [];

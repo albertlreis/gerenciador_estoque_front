@@ -5,6 +5,7 @@ import { Divider } from 'primereact/divider';
 import { Tag } from 'primereact/tag';
 import formatarPreco from '../utils/formatarPreco';
 import getImageSrc from '../utils/getImageSrc';
+import apiEstoque from '../services/apiEstoque';
 
 // ✅ precisa estar no escopo do módulo (usado em mais de um lugar)
 const estoqueDaVariacao = (v) => {
@@ -115,7 +116,35 @@ const CatalogoGrid = ({ produtos, onAdicionarAoCarrinho, estoqueStatus }) => {
     [produtos, apenasComEstoque]
   );
 
-  const openDetalhes = (grupo) => setSelectedGroup(grupo);
+  const precisaDetalhe = (produto) => {
+    const primeira = produto?.variacoes?.[0];
+    return !primeira || (typeof primeira.atributos === 'undefined' && typeof primeira.outlets === 'undefined');
+  };
+
+  const carregarGrupoDetalhado = async (grupo) => {
+    if (!grupo?.produto?.id) return grupo;
+    if (!precisaDetalhe(grupo.produto)) return grupo;
+
+    try {
+      const response = await apiEstoque.get(`/produtos/${grupo.produto.id}`);
+      const produtoDetalhado = response.data?.data || response.data;
+      const gruposDetalhados = agruparPorReferencia([produtoDetalhado], apenasComEstoque);
+      return gruposDetalhados.find((g) => g.referencia === grupo.referencia) || {
+        ...grupo,
+        produto: produtoDetalhado,
+        variacoes: produtoDetalhado?.variacoes || [],
+      };
+    } catch (error) {
+      console.error('Erro ao carregar detalhes do produto:', error);
+      return grupo;
+    }
+  };
+
+  const openDetalhes = async (grupo) => {
+    setSelectedGroup(grupo);
+    const detalhado = await carregarGrupoDetalhado(grupo);
+    setSelectedGroup(detalhado);
+  };
   const closeDetalhes = () => setSelectedGroup(null);
 
   if (!grupos.length) {
@@ -130,9 +159,14 @@ const CatalogoGrid = ({ produtos, onAdicionarAoCarrinho, estoqueStatus }) => {
             <ProdutoCard
               grupo={g}
               onDetalhes={() => openDetalhes(g)}
-              onAdicionar={() => {
-                onAdicionarAoCarrinho &&
-                onAdicionarAoCarrinho({ ...g.produto, variacoes: g.variacoes });
+              onAdicionar={async () => {
+                if (!onAdicionarAoCarrinho) return;
+                const detalhado = await carregarGrupoDetalhado(g);
+                onAdicionarAoCarrinho({
+                  ...detalhado.produto,
+                  variacoes: detalhado.variacoes,
+                  imagem_principal: detalhado.imagem_principal,
+                });
               }}
             />
           </div>

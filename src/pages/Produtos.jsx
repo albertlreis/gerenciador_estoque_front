@@ -49,6 +49,7 @@ const Produtos = () => {
       const params = {
         page: lazyParams.page + 1,
         per_page: lazyParams.rows,
+        view: 'lista',
       };
 
       if (filtros.nome?.trim()) {
