@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Tag } from 'primereact/tag';
 import formatarPreco from '../utils/formatarPreco';
+import getImageSrc from '../utils/getImageSrc';
 
 const ProdutoCard = ({ grupo, onDetalhes, onAdicionar, onEditar }) => {
   const primeira = grupo?.variacoes?.[0];
@@ -58,7 +59,7 @@ const ProdutoCard = ({ grupo, onDetalhes, onAdicionar, onEditar }) => {
       <img
         src={
           grupo?.imagem_principal
-            ? grupo.imagem_principal
+            ? getImageSrc(grupo.imagem_principal)
             : 'https://placehold.co/500x300?text=Sem+Imagem'
         }
         alt={grupo?.produto?.nome}

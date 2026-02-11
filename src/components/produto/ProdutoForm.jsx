@@ -172,6 +172,17 @@ const ProdutoForm = ({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!nome?.trim() || !idCategoria) {
+      toastRef.current?.show({
+        severity: 'warn',
+        summary: 'Campos obrigat?rios',
+        detail: 'Preencha o nome e a categoria do produto.',
+        life: 4000
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -195,16 +206,50 @@ const ProdutoForm = ({
       toastRef.current?.show({
         severity: 'success',
         summary: 'Salvo',
-        detail: 'Informações gerais salvas com sucesso.',
+        detail: 'Informa??es gerais salvas com sucesso.',
         life: 3000
       });
 
-      onAlterado && onAlterado(); // ✅ novo
+      onAlterado && onAlterado(); // ? novo
     } catch (error) {
+      const status = error?.response?.status;
+      const errors = error?.response?.data?.errors;
+
+      if (errors && typeof errors === 'object') {
+        const mensagens = Object.values(errors).flat().join('\n');
+        toastRef.current?.show({
+          severity: 'error',
+          summary: 'Erro de valida??o',
+          detail: mensagens,
+          life: 5000
+        });
+        return;
+      }
+
+      if (status === 401) {
+        toastRef.current?.show({
+          severity: 'warn',
+          summary: 'Sess?o expirada',
+          detail: 'Fa?a login novamente para continuar.',
+          life: 4000
+        });
+        return;
+      }
+
+      if (status === 403) {
+        toastRef.current?.show({
+          severity: 'warn',
+          summary: 'Sem permiss?o',
+          detail: 'Voc? n?o tem permiss?o para editar este produto.',
+          life: 4000
+        });
+        return;
+      }
+
       toastRef.current?.show({
         severity: 'error',
         summary: 'Erro',
-        detail: 'Erro ao salvar produto',
+        detail: error?.response?.data?.message || 'Erro ao salvar produto',
         life: 3000
       });
     } finally {

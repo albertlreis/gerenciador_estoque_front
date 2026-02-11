@@ -98,7 +98,7 @@ const agruparPorReferencia = (produtos) => {
   return grupos;
 };
 
-const CatalogoGrid = ({ produtos, onAdicionarAoCarrinho }) => {
+const CatalogoGrid = ({ produtos, onAdicionarAoCarrinho, onEditarProduto }) => {
   const [selectedGroup, setSelectedGroup] = useState(null);
 
   const grupos = useMemo(() => agruparPorReferencia(produtos), [produtos]);
@@ -122,6 +122,7 @@ const CatalogoGrid = ({ produtos, onAdicionarAoCarrinho }) => {
                 onAdicionarAoCarrinho &&
                 onAdicionarAoCarrinho({ ...g.produto, variacoes: g.variacoes });
               }}
+              onEditar={() => onEditarProduto && onEditarProduto(g)}
             />
           </div>
         ))}

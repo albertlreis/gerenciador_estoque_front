@@ -65,6 +65,17 @@ const ProdutoVariacoes = ({
     ]);
   };
 
+  const isEmptyValue = (v) => v === null || v === undefined || v === '';
+  const isEmptyText = (v) => !v || String(v).trim() === '';
+
+  const toDecimalOrNull = (v) => {
+    if (isEmptyValue(v)) return null;
+    if (typeof v === 'number') return v;
+    const raw = String(v).trim().replace(',', '.');
+    const n = Number(raw);
+    return Number.isNaN(n) ? null : n;
+  };
+
   /** Verifica duplicidade de nomes de atributos por variação (case-insensitive). */
   const variacaoTemDuplicidadeDeAtributos = (v) => {
     const nomes = (v.atributos || [])
@@ -85,7 +96,7 @@ const ProdutoVariacoes = ({
     const invalidos = [];
     const duplicidade = [];
     lista.forEach((v, i) => {
-      if (!v.preco || !v.referencia) invalidos.push(i + 1);
+      if (isEmptyValue(v.preco) || isEmptyText(v.referencia)) invalidos.push(i + 1);
       if (variacaoTemDuplicidadeDeAtributos(v)) duplicidade.push(i + 1);
     });
 
@@ -117,6 +128,8 @@ const ProdutoVariacoes = ({
       for (const v of lista) {
         const data = {
           ...v,
+          preco: toDecimalOrNull(v.preco),
+          custo: toDecimalOrNull(v.custo),
           atributos: (v.atributos || []).filter(a => (a.atributo || '').trim() && (a.valor || '').trim())
         };
         if (v.id) existentes.push(data);
@@ -165,10 +178,10 @@ const ProdutoVariacoes = ({
     }
   };
 
-  const variacoesIncompletas = lista.some(v => !v.preco || !v.referencia);
+  const variacoesIncompletas = lista.some(v => isEmptyValue(v.preco) || isEmptyText(v.referencia));
 
   const renderHeader = (v, i) => {
-    const invalido = !v.preco || !v.referencia;
+    const invalido = isEmptyValue(v.preco) || isEmptyText(v.referencia);
     const tooltipId = `tooltip-var-${i}`;
     return (
       <div className="flex align-items-center justify-content-between w-full gap-2">
@@ -187,13 +200,13 @@ const ProdutoVariacoes = ({
   };
 
   const ordenadas = [...lista].sort((a, b) => {
-    const aValido = a.preco && a.referencia;
-    const bValido = b.preco && b.referencia;
+    const aValido = !isEmptyValue(a.preco) && !isEmptyText(a.referencia);
+    const bValido = !isEmptyValue(b.preco) && !isEmptyText(b.referencia);
     return aValido === bValido ? 0 : aValido ? 1 : -1;
   });
 
   const activeIndex = ordenadas
-    .map((v, i) => (!v.preco || !v.referencia ? i : null))
+    .map((v, i) => (isEmptyValue(v.preco) || isEmptyText(v.referencia) ? i : null))
     .filter((i) => i !== null);
 
   return (
@@ -207,18 +220,18 @@ const ProdutoVariacoes = ({
                 <div className="field md:col-3">
                   <label>Preço *</label>
                   <InputNumber
-                    value={parseFloat(v.preco) || 0}
+                    value={toDecimalOrNull(v.preco)}
                     onValueChange={(e) => updateVariacao(indexReal, 'preco', e.value)}
                     mode="currency"
                     currency="BRL"
                     locale="pt-BR"
-                    className={!v.preco ? 'p-invalid' : ''}
+                    className={isEmptyValue(v.preco) ? 'p-invalid' : ''}
                   />
                 </div>
                 <div className="field md:col-3">
                   <label>Custo</label>
                   <InputNumber
-                    value={parseFloat(v.custo) || 0}
+                    value={toDecimalOrNull(v.custo)}
                     onValueChange={(e) => updateVariacao(indexReal, 'custo', e.value)}
                     mode="currency"
                     currency="BRL"
@@ -230,7 +243,7 @@ const ProdutoVariacoes = ({
                   <InputText
                     value={v.referencia}
                     onChange={(e) => updateVariacao(indexReal, 'referencia', e.target.value)}
-                    className={!v.referencia ? 'p-invalid' : ''}
+                    className={isEmptyText(v.referencia) ? 'p-invalid' : ''}
                   />
                 </div>
                 <div className="field md:col-2 text-right">
