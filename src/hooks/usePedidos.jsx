@@ -48,7 +48,11 @@ export const usePedidos = (filtros) => {
       const lista = payload?.data ?? [];
       const meta = payload?.meta ?? {};
 
-      setPedidos(lista);
+      const listaFiltrada = Array.isArray(lista)
+        ? lista.filter((pedido) => !['consignado', 'devolucao_consignacao'].includes(pedido?.status))
+        : [];
+
+      setPedidos(listaFiltrada);
       setTotal(meta.total ?? 0);
       setPaginaAtual(meta.current_page ?? pagina);
     } catch (e) {
