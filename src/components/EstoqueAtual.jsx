@@ -3,6 +3,7 @@ import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Tooltip } from 'primereact/tooltip';
+import formatarPreco from '../utils/formatarPreco';
 
 const EstoqueAtual = ({
                         data,
@@ -14,6 +15,7 @@ const EstoqueAtual = ({
                         verMovimentacoes,
                         onExportPdf,
                         loadingExportPdf,
+                        mostrarCusto = false,
                       }) => {
   const [sortField, setSortField] = useState('produto_nome');
   const [sortOrder, setSortOrder] = useState(1);
@@ -29,6 +31,22 @@ const EstoqueAtual = ({
     const isZero = Number(rowData?.quantidade ?? 0) === 0;
     if (isZero) return <span className="text-500">—</span>;
     return rowData.deposito_nome ?? '—';
+  };
+
+  const custoTemplate = (rowData) => {
+    const custo = rowData?.custo_unitario;
+    if (custo === null || custo === undefined) return <span className="text-500">â€”</span>;
+    return formatarPreco(custo);
+  };
+
+  const valorEstoqueTemplate = (rowData) => {
+    const valor = rowData?.valor_estoque_atual ?? (
+      rowData?.custo_unitario !== null && rowData?.custo_unitario !== undefined
+        ? Number(rowData.custo_unitario) * Number(rowData.quantidade || 0)
+        : null
+    );
+    if (valor === null || valor === undefined) return <span className="text-500">â€”</span>;
+    return formatarPreco(valor);
   };
 
   const localizacaoTemplate = (rowData) => {
@@ -121,6 +139,12 @@ const EstoqueAtual = ({
         <Column field="deposito_nome" header="Depósito" body={depositoTemplate} sortable />
 
         <Column field="quantidade" header="Quantidade" body={quantidadeTemplate} sortable />
+        {mostrarCusto && (
+          <Column field="custo_unitario" header="Custo" body={custoTemplate} sortable />
+        )}
+        {mostrarCusto && (
+          <Column field="valor_estoque_atual" header="Valor em Estoque" body={valorEstoqueTemplate} />
+        )}
         <Column
           header={
             <span>
