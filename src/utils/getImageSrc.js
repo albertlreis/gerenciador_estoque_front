@@ -7,9 +7,26 @@
  */
 const getImageSrc = (url) => {
   if (!url) return '';
-  return url.startsWith('http')
-    ? url
-    : `${process.env.REACT_APP_BASE_URL_ESTOQUE}/uploads/produtos/${url}`;
+
+  const base = (process.env.REACT_APP_BASE_URL_ESTOQUE || '').replace(/\/+$/, '');
+  const cleaned = String(url).trim();
+
+  if (cleaned.startsWith('http://') || cleaned.startsWith('https://')) {
+    return cleaned;
+  }
+
+  if (cleaned.startsWith('/storage') || cleaned.startsWith('storage/')) {
+    const path = cleaned.startsWith('/') ? cleaned : `/${cleaned}`;
+    return base ? `${base}${path}` : path;
+  }
+
+  if (cleaned.startsWith('/uploads') || cleaned.startsWith('uploads/') || cleaned.includes('/uploads/')) {
+    const path = cleaned.startsWith('/') ? cleaned : `/${cleaned}`;
+    return base ? `${base}${path}` : path;
+  }
+
+  const legacy = `/uploads/produtos/${cleaned.replace(/^\\/+/, '')}`;
+  return base ? `${base}${legacy}` : legacy;
 };
 
 export default getImageSrc;

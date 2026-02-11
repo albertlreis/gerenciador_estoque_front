@@ -65,6 +65,8 @@ const ProdutoVariacoes = ({
     ]);
   };
 
+  const isVazio = (valor) => valor === null || valor === undefined || valor === '';
+
   /** Verifica duplicidade de nomes de atributos por variação (case-insensitive). */
   const variacaoTemDuplicidadeDeAtributos = (v) => {
     const nomes = (v.atributos || [])
@@ -85,7 +87,7 @@ const ProdutoVariacoes = ({
     const invalidos = [];
     const duplicidade = [];
     lista.forEach((v, i) => {
-      if (!v.preco || !v.referencia) invalidos.push(i + 1);
+      if (isVazio(v.preco) || !v.referencia) invalidos.push(i + 1);
       if (variacaoTemDuplicidadeDeAtributos(v)) duplicidade.push(i + 1);
     });
 
@@ -165,10 +167,10 @@ const ProdutoVariacoes = ({
     }
   };
 
-  const variacoesIncompletas = lista.some(v => !v.preco || !v.referencia);
+  const variacoesIncompletas = lista.some(v => isVazio(v.preco) || !v.referencia);
 
   const renderHeader = (v, i) => {
-    const invalido = !v.preco || !v.referencia;
+    const invalido = isVazio(v.preco) || !v.referencia;
     const tooltipId = `tooltip-var-${i}`;
     return (
       <div className="flex align-items-center justify-content-between w-full gap-2">
@@ -187,13 +189,13 @@ const ProdutoVariacoes = ({
   };
 
   const ordenadas = [...lista].sort((a, b) => {
-    const aValido = a.preco && a.referencia;
-    const bValido = b.preco && b.referencia;
+    const aValido = !isVazio(a.preco) && a.referencia;
+    const bValido = !isVazio(b.preco) && b.referencia;
     return aValido === bValido ? 0 : aValido ? 1 : -1;
   });
 
   const activeIndex = ordenadas
-    .map((v, i) => (!v.preco || !v.referencia ? i : null))
+    .map((v, i) => (isVazio(v.preco) || !v.referencia ? i : null))
     .filter((i) => i !== null);
 
   return (
@@ -212,7 +214,7 @@ const ProdutoVariacoes = ({
                     mode="currency"
                     currency="BRL"
                     locale="pt-BR"
-                    className={!v.preco ? 'p-invalid' : ''}
+                    className={isVazio(v.preco) ? 'p-invalid' : ''}
                   />
                 </div>
                 <div className="field md:col-3">

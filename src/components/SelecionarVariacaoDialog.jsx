@@ -63,7 +63,11 @@ const SelecionarVariacaoDialog = ({
         {/* Imagem do Produto */}
         <div className="col-12 md:col-3 flex justify-content-center align-items-start mb-4 p-0">
           <img
-            src={produto.imagem_principal ?? 'https://placehold.co/500x300?text=Sem+Imagem'}
+            src={
+              produto.imagem_principal
+                ? getImageSrc(produto.imagem_principal)
+                : 'https://placehold.co/500x300?text=Sem+Imagem'
+            }
             alt={produto.nome}
             style={{ maxWidth: '100%', borderRadius: '4px' }}
           />

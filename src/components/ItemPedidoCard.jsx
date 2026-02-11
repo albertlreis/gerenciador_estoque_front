@@ -4,6 +4,7 @@ import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
 import { confirmDialog } from 'primereact/confirmdialog';
 import { formatarValor } from '../utils/formatters';
+import getImageSrc from '../utils/getImageSrc';
 
 const ItemPedidoCard = ({
                           item,
@@ -26,7 +27,11 @@ const ItemPedidoCard = ({
     >
       <div className="col-12 md:col-3 flex justify-content-center">
         <img
-          src={item.variacao?.produto?.imagem_principal || 'https://placehold.co/500x300?text=Sem+Imagem'}
+          src={
+            item.variacao?.produto?.imagem_principal
+              ? getImageSrc(item.variacao.produto.imagem_principal)
+              : 'https://placehold.co/500x300?text=Sem+Imagem'
+          }
           alt={item.variacao?.nome_completo || 'Produto'}
           className="shadow-1 border-round"
           style={{ width: '100%', objectFit: 'cover' }}
