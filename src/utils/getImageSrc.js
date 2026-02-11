@@ -25,7 +25,7 @@ const getImageSrc = (url) => {
     return base ? `${base}${path}` : path;
   }
 
-  const legacy = `/uploads/produtos/${cleaned.replace(/^\\/+/, '')}`;
+  const legacy = `/uploads/produtos/${cleaned.replace(/^\/+/, '')}`;
   return base ? `${base}${legacy}` : legacy;
 };
 

@@ -26,7 +26,7 @@ const ProdutoManualConservacao = ({
       const path = cleaned.startsWith('/') ? cleaned : `/${cleaned}`;
       return backendUrl ? `${backendUrl}${path}` : path;
     }
-    const legacy = `/uploads/manuais/${cleaned.replace(/^\\/+/, '')}`;
+    const legacy = `/uploads/manuais/${cleaned.replace(/^\/+/, '')}`;
     return backendUrl ? `${backendUrl}${legacy}` : legacy;
   })();
 
