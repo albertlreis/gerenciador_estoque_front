@@ -16,7 +16,7 @@ const severityEntrega = (diasUteisRestantes, atrasado) => {
 const isEstadoFinal = (status) =>
   ['entrega_cliente', 'finalizado', 'consignado', 'devolucao_consignacao'].includes(status ?? '');
 
-const PedidoDetalhado = ({ visible, onHide, pedido }) => {
+const PedidoDetalhado = ({ visible, onHide, pedido, onEditar, podeEditar = false }) => {
   if (!pedido) return null;
 
   const status = STATUS_MAP[pedido.status] ?? { label: pedido.status };
@@ -73,6 +73,14 @@ const PedidoDetalhado = ({ visible, onHide, pedido }) => {
             onClick={onHide}
             severity="secondary"
           />
+          {podeEditar && (
+            <Button
+              label="Editar Pedido"
+              icon="pi pi-pencil"
+              severity="info"
+              onClick={() => onEditar?.(pedido)}
+            />
+          )}
           <Button
             label="Solicitar Devolução ou Troca"
             icon="pi pi-sync"

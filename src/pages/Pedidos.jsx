@@ -11,6 +11,7 @@ import PedidosFiltro from '../components/PedidosFiltro';
 import PedidosExportar from '../components/PedidosExportar';
 import PedidoStatusDialog from '../components/PedidoStatusDialog';
 import PedidoDetalhado from '../components/PedidoDetalhado';
+import PedidoEditarDialog from '../components/PedidoEditarDialog';
 import { usePedidos } from '../hooks/usePedidos';
 import { formatarReal } from '../utils/formatters';
 import { STATUS_MAP } from '../constants/statusPedido';
@@ -18,6 +19,8 @@ import api from '../services/apiEstoque';
 import { formatarDataIsoParaBR } from "../utils/formatarData";
 import ColumnSelector from "../components/ColumnSelector";
 import DialogDevolucao from "../components/DialogDevolucao";
+import usePermissions from '../hooks/usePermissions';
+import { PERMISSOES } from '../constants/permissoes';
 
 addLocale('pt-BR', {
   firstDayOfWeek: 0,
@@ -38,11 +41,15 @@ addLocale('pt-BR', {
 
 export default function PedidosListagem() {
   const toast = useRef(null);
+  const { has } = usePermissions();
+  const podeEditar = has(PERMISSOES.PEDIDOS.EDITAR);
   const [filtros, setFiltros] = useState({ texto: '', status: null, tipo: 'todos', periodo: null });
   const [pedidoSelecionado, setPedidoSelecionado] = useState(null);
   const [exibirDialogStatus, setExibirDialogStatus] = useState(false);
   const [pedidoDetalhado, setPedidoDetalhado] = useState(null);
   const [pedidoParaDevolucao, setPedidoParaDevolucao] = useState(null);
+  const [pedidoParaEditar, setPedidoParaEditar] = useState(null);
+  const [editarVisivel, setEditarVisivel] = useState(false);
   const [detalhesVisivel, setDetalhesVisivel] = useState(false);
   const [loadingDetalhes, setLoadingDetalhes] = useState(false);
   const [loadingPdfId, setLoadingPdfId] = useState(null);
@@ -51,6 +58,10 @@ export default function PedidosListagem() {
 
   const isEstadoFinal = (status) => (
     ['entrega_cliente','finalizado','consignado','devolucao_consignacao'].includes(status ?? '')
+  );
+
+  const podeEditarPedido = (pedido) => (
+    podeEditar && !isEstadoFinal(pedido?.status)
   );
 
   const severidadeEntrega = (diasUteisRestantes, atrasadoEntrega) => {
@@ -172,6 +183,12 @@ export default function PedidosListagem() {
     }
   };
 
+  const abrirEdicaoPedido = (pedido) => {
+    if (!podeEditarPedido(pedido)) return;
+    setPedidoParaEditar(pedido);
+    setEditarVisivel(true);
+  };
+
   const gerarPdfPedido = async (pedidoId) => {
     try {
       setLoadingPdfId(pedidoId);
@@ -245,6 +262,23 @@ export default function PedidosListagem() {
         }}
         pedido={pedidoDetalhado}
         loading={loadingDetalhes}
+        podeEditar={podeEditarPedido(pedidoDetalhado)}
+        onEditar={abrirEdicaoPedido}
+      />
+
+      <PedidoEditarDialog
+        visible={editarVisivel}
+        pedidoId={pedidoParaEditar?.id}
+        onHide={() => {
+          setEditarVisivel(false);
+          setPedidoParaEditar(null);
+        }}
+        onSalvo={async () => {
+          await fetchPedidos(paginaAtual);
+          if (detalhesVisivel && pedidoParaEditar?.id) {
+            await carregarDetalhesPedido({ id: pedidoParaEditar.id });
+          }
+        }}
       />
 
       <div className="p-4">
@@ -308,6 +342,20 @@ export default function PedidosListagem() {
               />
             )}
           />
+          {podeEditar && (
+            <Column
+              header=""
+              body={(row) => (
+                <Button
+                  icon="pi pi-pencil"
+                  severity="warning"
+                  onClick={() => abrirEdicaoPedido(row)}
+                  tooltip="Editar pedido"
+                  disabled={!podeEditarPedido(row)}
+                />
+              )}
+            />
+          )}
 
           <Column
             header=""
