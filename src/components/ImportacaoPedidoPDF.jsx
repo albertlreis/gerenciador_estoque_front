@@ -21,6 +21,7 @@ import TabelaParcelas from './importacaoPedido/TabelaParcelas';
 import PedidoFabricaForm from './PedidoFabricaForm';
 import ClienteForm from '../components/cliente/ClienteForm';
 import AdicionarProduto from './produto/AdicionarProduto';
+import { normalizeDateToYmd } from '../utils/date';
 
 /**
  * Mescla produtos com mesma referência, somando quantidades e valores.
@@ -411,10 +412,18 @@ export default function ImportacaoPedidoPDF() {
     }
 
     try {
+      const pedidoPayload = {
+        ...pedido,
+        tipo,
+        data_pedido: normalizeDateToYmd(pedido?.data_pedido),
+        data_inclusao: normalizeDateToYmd(pedido?.data_inclusao),
+        data_entrega: normalizeDateToYmd(pedido?.data_entrega),
+      };
+
       const response = await PedidosApi.confirmarImportacaoPdf({
         importacao_id: importacaoId,
         cliente: tipo === 'venda' ? cliente : {},
-        pedido: { ...pedido, tipo },
+        pedido: pedidoPayload,
         itens: itens.map((item) => ({
           ...item,
           descricao: item.descricao,
