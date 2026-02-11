@@ -70,7 +70,8 @@ const menuItems = (navigate, has) => {
       PERMISSOES.PRODUTOS?.VISUALIZAR,
       PERMISSOES.PRODUTOS?.GERENCIAR,
       PERMISSOES.PRODUTOS?.IMPORTAR,
-      PERMISSOES.PRODUTOS?.CATALOGO
+      PERMISSOES.PRODUTOS?.CATALOGO,
+      PERMISSOES.PRODUTOS?.OUTLET
     ]) && {
       label: 'Produtos',
       key: 'produtos',
@@ -87,6 +88,12 @@ const menuItems = (navigate, has) => {
           key: 'produtos-gerenciar',
           icon: 'pi pi-fw pi-pencil',
           command: () => navigate('/produtos')
+        },
+        has(PERMISSOES.PRODUTOS?.OUTLET) && {
+          label: 'Catalogo Outlet',
+          key: 'produtos-outlet',
+          icon: 'pi pi-fw pi-tag',
+          command: () => navigate('/produtos-outlet')
         }
       ].filter(Boolean)
     },

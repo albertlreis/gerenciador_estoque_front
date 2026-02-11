@@ -1,77 +1,293 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
+import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
-import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
-import { Divider } from 'primereact/divider';
+import { Accordion, AccordionTab } from 'primereact/accordion';
+import { InputText } from 'primereact/inputtext';
+import { Tag } from 'primereact/tag';
 import SakaiLayout from '../layouts/SakaiLayout';
 
 import apiEstoque from '../services/apiEstoque';
+import formatarPreco from '../utils/formatarPreco';
+import { buildOutletExportIds } from '../utils/outletExport';
+
+const filtrosIniciais = {
+  categoria_id: null,
+  referencia: ''
+};
 
 const ProdutosOutlet = () => {
   const [produtos, setProdutos] = useState([]);
+  const [categorias, setCategorias] = useState([]);
+  const [filtros, setFiltros] = useState(filtrosIniciais);
+  const [paginacao, setPaginacao] = useState({ totalRecords: 0, page: 0, rows: 10 });
+  const [expanded, setExpanded] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [loadingExport, setLoadingExport] = useState(false);
+  const [selecionados, setSelecionados] = useState([]);
+
   const toast = useRef(null);
 
-  const carregarProdutos = async () => {
+  const toArray = (res) => {
+    if (!res) return [];
+    if (Array.isArray(res)) return res;
+    if (Array.isArray(res?.data)) return res.data;
+    if (Array.isArray(res?.dados?.results)) return res.dados.results;
+    if (Array.isArray(res?.dados)) return res.dados;
+    if (Array.isArray(res?.results)) return res.results;
+    return [];
+  };
+
+  const fetchCategorias = async () => {
     try {
-      const { data } = await apiEstoque.get('/produtos/outlet');
-      setProdutos(data);
-    } catch (err) {
-      toast.current.show({
-        severity: 'error',
-        summary: 'Erro ao carregar produtos',
-        detail: err.response?.data?.message || err.message,
-        life: 3000
-      });
+      const response = await apiEstoque.get('/categorias');
+      const lista = toArray(response.data).map((c) => ({ label: c.nome, value: c.id }));
+      setCategorias(lista);
+    } catch {
+      toast.current?.show({ severity: 'warn', summary: 'Erro', detail: 'Erro ao buscar categorias' });
     }
   };
 
-  const removerOutlet = async (produtoId) => {
-    try {
-      await apiEstoque.patch(`/produtos/${produtoId}/remover-outlet`);
-      toast.current.show({
-        severity: 'success',
-        summary: 'Sucesso',
-        detail: 'Produto removido do Outlet',
-        life: 3000
-      });
-      carregarProdutos();
-    } catch (err) {
-      toast.current.show({
-        severity: 'error',
-        summary: 'Erro ao remover outlet',
-        detail: err.response?.data?.message || err.message,
-        life: 3000
-      });
-    }
-  };
+  const fetchProdutos = useCallback(
+    async ({ page, rows, filtros: overrideFiltros } = {}) => {
+      setLoading(true);
+      try {
+        const paginaAtual = page ?? paginacao.page;
+        const linhas = rows ?? paginacao.rows;
+        const filtrosAtuais = overrideFiltros ?? filtros;
 
-  const outletBody = () => <Tag value="Outlet" severity="warning" />;
-  const actionBody = (rowData) => (
-    <Button
-      icon="pi pi-times"
-      className="p-button-danger"
-      tooltip="Remover do Outlet"
-      onClick={() => removerOutlet(rowData.id)}
-    />
+        const params = {
+          is_outlet: 1,
+          page: paginaAtual + 1,
+          per_page: linhas,
+        };
+
+        if (filtrosAtuais.categoria_id) {
+          params.id_categoria = filtrosAtuais.categoria_id;
+        }
+
+        if (filtrosAtuais.referencia?.trim()) {
+          params.referencia = filtrosAtuais.referencia.trim();
+        }
+
+        const { data } = await apiEstoque.get('/produtos', { params });
+
+        setProdutos(data?.data ?? []);
+        setPaginacao((prev) => ({
+          ...prev,
+          page: paginaAtual,
+          rows: linhas,
+          totalRecords: Number(data?.meta?.total ?? 0)
+        }));
+      } catch (err) {
+        toast.current?.show({
+          severity: 'error',
+          summary: 'Erro',
+          detail: err.response?.data?.message || 'Falha ao carregar produtos outlet'
+        });
+      } finally {
+        setLoading(false);
+      }
+    },
+    [filtros, paginacao.page, paginacao.rows]
   );
 
   useEffect(() => {
-    carregarProdutos();
+    fetchCategorias();
+    fetchProdutos();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const onPageChange = (e) => {
+    const next = { page: e.page, rows: e.rows };
+    setPaginacao((prev) => ({ ...prev, ...next }));
+    fetchProdutos({ page: e.page, rows: e.rows });
+  };
+
+  const aplicarFiltros = (e) => {
+    e.preventDefault();
+    setPaginacao((prev) => ({ ...prev, page: 0 }));
+    fetchProdutos({ page: 0 });
+  };
+
+  const limparFiltros = () => {
+    setFiltros(filtrosIniciais);
+    setPaginacao((prev) => ({ ...prev, page: 0 }));
+    fetchProdutos({ page: 0, filtros: filtrosIniciais });
+  };
+
+  const exportarSelecionados = async () => {
+    const ids = buildOutletExportIds(selecionados);
+    if (!ids.length) {
+      toast.current?.show({
+        severity: 'warn',
+        summary: 'Nenhum selecionado',
+        detail: 'Selecione ao menos um produto para exportar.'
+      });
+      return;
+    }
+
+    setLoadingExport(true);
+    try {
+      const response = await apiEstoque.post('/produtos/outlet/export', { ids }, { responseType: 'blob' });
+      const blob = new Blob([response.data], {
+        type: response.headers['content-type'] || 'text/csv'
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `catalogo_outlet_${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Erro',
+        detail: err.response?.data?.message || 'Falha ao exportar produtos'
+      });
+    } finally {
+      setLoadingExport(false);
+    }
+  };
+
+  const referenciasBody = (row) => {
+    const refs = (row.variacoes || [])
+      .map((v) => v?.referencia)
+      .filter(Boolean);
+
+    const uniq = Array.from(new Set(refs));
+    return uniq.length ? uniq.join(', ') : '—';
+  };
+
+  const categoriaBody = (row) => row?.categoria?.nome || row?.categoria || '—';
+
+  const precoBody = (row) => {
+    const precos = (row.variacoes || [])
+      .map((v) => v?.preco)
+      .filter((v) => v !== null && v !== undefined);
+
+    if (!precos.length) return '—';
+    const min = Math.min(...precos.map(Number));
+    return formatarPreco(min);
+  };
+
+  const outletRestanteBody = (row) => {
+    const total = (row.variacoes || []).reduce((acc, v) => {
+      const restante = Number(v?.outlet_restante_total ?? 0);
+      return acc + (Number.isNaN(restante) ? 0 : restante);
+    }, 0);
+
+    return <Tag value={`${total} un.`} severity={total > 0 ? 'success' : 'danger'} />;
+  };
 
   return (
     <SakaiLayout>
       <Toast ref={toast} />
-      <div className="produtos-outlet" style={{ margin: '2rem' }}>
-        <h2>Produtos Outlet</h2>
-        <Divider />
-        <DataTable value={produtos} paginator rows={10} dataKey="id" stripedRows responsiveLayout="scroll">
-          <Column field="id" header="ID" sortable />
-          <Column field="nome" header="Nome" sortable />
-          <Column header="Status" body={outletBody} />
-          <Column header="AÃ§Ã£o" body={actionBody} />
+      <div className="p-4">
+        <Accordion className="w-full" activeIndex={expanded ? 0 : null}
+                   onTabChange={(e) => setExpanded(e.index !== null)}>
+          <AccordionTab header="Filtros de Pesquisa">
+            <form onSubmit={aplicarFiltros}>
+              <div className="p-4 mb-4 surface-0 border-round shadow-1">
+                <div className="formgrid grid gap-3">
+                  <div className="field col-12 md:col-4">
+                    <label className="block text-600 mb-1">Categoria</label>
+                    <Dropdown
+                      options={categorias}
+                      placeholder="Selecione a categoria"
+                      value={filtros.categoria_id || null}
+                      onChange={(e) => setFiltros({ ...filtros, categoria_id: e.value })}
+                      className="w-full"
+                      showClear
+                      filter
+                      filterBy="label"
+                      disabled={loading}
+                    />
+                  </div>
+
+                  <div className="field col-12 md:col-5">
+                    <label className="block text-600 mb-1">Referencia</label>
+                    <InputText
+                      value={filtros.referencia}
+                      onChange={(e) => setFiltros({ ...filtros, referencia: e.target.value })}
+                      placeholder="Ex: REF-123"
+                      className="w-full"
+                      disabled={loading}
+                    />
+                  </div>
+
+                  <div className="field col-12 md:col-3 flex align-items-end justify-content-end">
+                    <div className="flex gap-2 w-full justify-content-end">
+                      <Button
+                        label="Limpar"
+                        icon="pi pi-filter-slash"
+                        className="p-button-outlined"
+                        severity="secondary"
+                        type="button"
+                        disabled={loading}
+                        onClick={limparFiltros}
+                      />
+                      <Button
+                        label={loading ? 'Buscando...' : 'Buscar'}
+                        icon={loading ? 'pi pi-spin pi-spinner' : 'pi pi-search'}
+                        type="submit"
+                        className="p-button-primary"
+                        disabled={loading}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </AccordionTab>
+        </Accordion>
+
+        <div className="flex justify-content-between align-items-center mb-3">
+          <h2>Catalogo Outlet</h2>
+          <div className="flex gap-2 align-items-center">
+            <span className="text-sm text-600">Selecionados: {selecionados.length}</span>
+            <Button
+              label="Limpar selecao"
+              icon="pi pi-times"
+              className="p-button-outlined"
+              severity="secondary"
+              onClick={() => setSelecionados([])}
+              disabled={!selecionados.length}
+            />
+            <Button
+              label="Exportar selecionados"
+              icon={loadingExport ? 'pi pi-spin pi-spinner' : 'pi pi-file-excel'}
+              className="p-button-success"
+              onClick={exportarSelecionados}
+              disabled={!selecionados.length || loadingExport}
+            />
+          </div>
+        </div>
+
+        <DataTable
+          value={produtos}
+          paginator
+          rows={paginacao.rows}
+          first={paginacao.page * paginacao.rows}
+          totalRecords={paginacao.totalRecords}
+          onPage={onPageChange}
+          lazy
+          loading={loading}
+          dataKey="id"
+          selection={selecionados}
+          onSelectionChange={(e) => setSelecionados(e.value)}
+          emptyMessage="Nenhum produto outlet encontrado"
+        >
+          <Column selectionMode="multiple" headerStyle={{ width: '3rem' }} />
+          <Column field="id" header="ID" style={{ width: '90px' }} />
+          <Column header="Referencia" body={referenciasBody} />
+          <Column field="nome" header="Nome" />
+          <Column header="Categoria" body={categoriaBody} />
+          <Column header="Preco" body={precoBody} style={{ width: '140px' }} />
+          <Column header="Outlet" body={outletRestanteBody} style={{ width: '120px' }} />
         </DataTable>
       </div>
     </SakaiLayout>
