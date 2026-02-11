@@ -107,7 +107,7 @@ const agruparPorReferencia = (produtos, apenasComEstoque = false) => {
   return grupos;
 };
 
-const CatalogoGrid = ({ produtos, onAdicionarAoCarrinho, estoqueStatus }) => {
+const CatalogoGrid = ({ produtos, onAdicionarAoCarrinho, estoqueStatus, onEditarProduto }) => {
   const [selectedGroup, setSelectedGroup] = useState(null);
 
   const apenasComEstoque = estoqueStatus === 'com_estoque';
@@ -168,6 +168,7 @@ const CatalogoGrid = ({ produtos, onAdicionarAoCarrinho, estoqueStatus }) => {
                   imagem_principal: detalhado.imagem_principal,
                 });
               }}
+              onEditar={() => onEditarProduto && onEditarProduto(g)}
             />
           </div>
         ))}
