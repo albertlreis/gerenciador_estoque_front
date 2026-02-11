@@ -18,11 +18,11 @@ const isEstadoFinal = (status) =>
   ['entrega_cliente', 'finalizado', 'consignado', 'devolucao_consignacao'].includes(status ?? '');
 
 const PedidoDetalhado = ({ visible, onHide, pedido, onEditar, podeEditar = false, onAtualizar, toast }) => {
-  if (!pedido) return null;
-
   const [uploadingXml, setUploadingXml] = useState(false);
   const [downloadingXml, setDownloadingXml] = useState(false);
   const fileInputRef = useRef(null);
+
+  if (!pedido) return null;
 
   const status = STATUS_MAP[pedido.status] ?? { label: pedido.status };
   const dataPedido = pedido.data_pedido ? new Date(pedido.data_pedido).toLocaleDateString('pt-BR') : '—';
