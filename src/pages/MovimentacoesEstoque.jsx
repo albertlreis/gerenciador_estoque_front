@@ -120,6 +120,10 @@ const MovimentacoesEstoque = () => {
   const sortFieldEstoqueMap = {
     produto_referencia: 'referencia',
     quantidade: 'quantidade_estoque',
+    custo_unitario: 'custo_unitario',
+    data_entrada_estoque_atual: 'data_entrada_estoque_atual',
+    ultima_venda_em: 'ultima_venda_em',
+    dias_sem_venda: 'dias_sem_venda',
   };
   const sortFieldMovsMap = {
     produto_referencia: 'id',
