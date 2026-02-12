@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Toast } from 'primereact/toast';
+import { Dialog } from 'primereact/dialog';
 import { Button } from 'primereact/button';
 import { Tag } from 'primereact/tag';
 import { addLocale } from 'primereact/api';
@@ -11,13 +12,17 @@ import PedidosFiltro from '../components/PedidosFiltro';
 import PedidosExportar from '../components/PedidosExportar';
 import PedidoStatusDialog from '../components/PedidoStatusDialog';
 import PedidoDetalhado from '../components/PedidoDetalhado';
+import PedidoForm from '../components/PedidoForm';
 import { usePedidos } from '../hooks/usePedidos';
-import { formatarReal } from '../utils/formatters';
+import { usePedidosFiltros } from '../hooks/relatorios/usePedidosFiltros';
+import { formatarReal, formatarDataParaISO } from '../utils/formatters';
 import { STATUS_MAP } from '../constants/statusPedido';
 import api from '../services/apiEstoque';
 import { formatarDataIsoParaBR } from "../utils/formatarData";
 import ColumnSelector from "../components/ColumnSelector";
 import DialogDevolucao from "../components/DialogDevolucao";
+import usePermissions from '../hooks/usePermissions';
+import { PERMISSOES } from '../constants/permissoes';
 
 addLocale('pt-BR', {
   firstDayOfWeek: 0,
@@ -42,12 +47,24 @@ export default function PedidosListagem() {
   const [pedidoSelecionado, setPedidoSelecionado] = useState(null);
   const [exibirDialogStatus, setExibirDialogStatus] = useState(false);
   const [pedidoDetalhado, setPedidoDetalhado] = useState(null);
+  const [pedidoEmEdicao, setPedidoEmEdicao] = useState(null);
+  const [exibirDialogEdicao, setExibirDialogEdicao] = useState(false);
+  const [loadingEdicao, setLoadingEdicao] = useState(false);
+  const [depositos, setDepositos] = useState([]);
   const [pedidoParaDevolucao, setPedidoParaDevolucao] = useState(null);
   const [detalhesVisivel, setDetalhesVisivel] = useState(false);
   const [loadingDetalhes, setLoadingDetalhes] = useState(false);
   const [loadingPdfId, setLoadingPdfId] = useState(null);
 
   const { pedidos, total, paginaAtual, loading, fetchPedidos, setPaginaAtual } = usePedidos(filtros);
+  const { has } = usePermissions();
+  const podeEditar = has(PERMISSOES.PEDIDOS.EDITAR);
+  const podeSelecionarVendedor = has(PERMISSOES.PEDIDOS.SELECIONAR_VENDEDOR);
+
+  const { clientesOpts, parceirosOpts, vendedoresOpts } = usePedidosFiltros({
+    enabled: exibirDialogEdicao,
+    toastRef: toast,
+  });
 
   const isEstadoFinal = (status) => (
     ['entrega_cliente','finalizado','consignado','devolucao_consignacao'].includes(status ?? '')
@@ -101,6 +118,11 @@ export default function PedidosListagem() {
 
   const prazoBody = (row) => row.prazo_dias_uteis ?? 60;
 
+  const depositosOpts = useMemo(
+    () => (depositos || []).map((d) => ({ label: d.nome ?? d.label ?? `Deposito #${d.id}`, value: d.id })),
+    [depositos]
+  );
+
   const colunasDisponiveis = useMemo(() => [
     { field: 'numero', header: 'Nº Pedido', body: (row) => row.numero_externo || row.id },
     { field: 'data', header: 'Data', body: (row) => row.data ? formatarDataIsoParaBR(row.data) : '-' },
@@ -121,6 +143,32 @@ export default function PedidosListagem() {
     fetchPedidos(1, filtros).catch(r => console.log("Erro: ", r));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!exibirDialogEdicao) return;
+    let alive = true;
+
+    (async () => {
+      try {
+        const { data } = await api.get('/depositos');
+        if (!alive) return;
+        const lista = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
+        setDepositos(lista);
+      } catch (err) {
+        if (!alive) return;
+        toast.current?.show({
+          severity: 'error',
+          summary: 'Erro',
+          detail: 'Erro ao carregar depositos',
+        });
+        setDepositos([]);
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, [exibirDialogEdicao]);
 
   useEffect(() => {
     const listener = (e) => setPedidoParaDevolucao(e.detail);
@@ -151,6 +199,74 @@ export default function PedidosListagem() {
         className="text-sm"
       />
     );
+  };
+
+  const abrirEdicaoPedido = async (pedido) => {
+    setExibirDialogEdicao(true);
+    setLoadingEdicao(true);
+    try {
+      const { data } = await api.get(`/pedidos/${pedido.id}/detalhado`);
+      setPedidoEmEdicao(data?.data ?? data);
+    } catch (err) {
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Erro ao carregar pedido',
+        detail: err.response?.data?.message || err.message,
+      });
+      setPedidoEmEdicao(null);
+      setExibirDialogEdicao(false);
+    } finally {
+      setLoadingEdicao(false);
+    }
+  };
+
+  const fecharEdicaoPedido = () => {
+    setExibirDialogEdicao(false);
+    setPedidoEmEdicao(null);
+  };
+
+  const salvarPedidoEdicao = async (dados) => {
+    if (!pedidoEmEdicao?.id) return;
+
+    const payload = {
+      tipo: dados.tipo,
+      numero_externo: dados.numero_externo,
+      id_cliente: dados.id_cliente,
+      id_parceiro: dados.id_parceiro,
+      data_pedido: formatarDataParaISO(dados.data_pedido),
+      prazo_dias_uteis: dados.prazo_dias_uteis,
+      data_limite_entrega: dados.data_limite_entrega ? formatarDataParaISO(dados.data_limite_entrega) : null,
+      observacoes: dados.observacoes,
+      itens: (dados.itens || []).map((item) => ({
+        id: item.id ?? null,
+        id_variacao: item.id_variacao ?? item.variacao_id ?? null,
+        id_produto: item.produto_id ?? null,
+        quantidade: item.quantidade,
+        preco_unitario: item.preco_unitario,
+        id_deposito: item.id_deposito ?? null,
+        observacoes: item.observacoes ?? null,
+      })),
+    };
+
+    if (podeSelecionarVendedor) {
+      payload.id_usuario = dados.id_usuario ?? null;
+    }
+
+    const response = await api.put(`/pedidos/${pedidoEmEdicao.id}`, payload);
+    const pedidoAtualizado = response?.data?.data ?? response?.data ?? null;
+
+    toast.current?.show({
+      severity: 'success',
+      summary: 'Pedido atualizado',
+    });
+
+    setPedidoEmEdicao(pedidoAtualizado);
+    setExibirDialogEdicao(false);
+
+    await fetchPedidos(paginaAtual);
+    if (detalhesVisivel && pedidoEmEdicao?.id) {
+      await carregarDetalhesPedido({ id: pedidoEmEdicao.id });
+    }
   };
 
   const carregarDetalhesPedido = async (pedido) => {
@@ -247,6 +363,29 @@ export default function PedidosListagem() {
         loading={loadingDetalhes}
       />
 
+      <Dialog
+        header={`Editar Pedido${pedidoEmEdicao?.numero_externo ? ` #${pedidoEmEdicao.numero_externo}` : ''}`}
+        visible={exibirDialogEdicao}
+        onHide={fecharEdicaoPedido}
+        style={{ width: '80vw' }}
+        modal
+      >
+        {loadingEdicao ? (
+          <div>Carregando...</div>
+        ) : (
+          <PedidoForm
+            initialData={pedidoEmEdicao || {}}
+            clientes={clientesOpts}
+            parceiros={parceirosOpts}
+            vendedores={vendedoresOpts}
+            depositos={depositosOpts}
+            permitirSelecionarVendedor={podeSelecionarVendedor}
+            onSubmit={salvarPedidoEdicao}
+            onCancel={fecharEdicaoPedido}
+          />
+        )}
+      </Dialog>
+
       <div className="p-4">
         <div className="flex flex-wrap gap-4 justify-content-between align-items-end mb-3">
           <PedidosFiltro
@@ -308,6 +447,20 @@ export default function PedidosListagem() {
               />
             )}
           />
+
+          {podeEditar && (
+            <Column
+              header=""
+              body={(row) => (
+                <Button
+                  icon="pi pi-pencil"
+                  severity="warning"
+                  onClick={() => abrirEdicaoPedido(row)}
+                  tooltip="Editar pedido"
+                />
+              )}
+            />
+          )}
 
           <Column
             header=""
