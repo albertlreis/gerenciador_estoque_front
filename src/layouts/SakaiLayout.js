@@ -32,7 +32,7 @@ const SakaiLayout = ({ children, defaultSidebarCollapsed = false }) => {
     }
   }, [defaultSidebarCollapsed, hasStoredState, setIsSidebarCollapsed]);
 
-  const menuModel = useMemo(() => menuItems(has), [has]);
+  const menuModel = useMemo(() => menuItems(has, user), [has, user]);
 
   useEffect(() => {
     const menuPath = findMenuPathByRoute(menuModel, location.pathname);

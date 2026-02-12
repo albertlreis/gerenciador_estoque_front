@@ -1,11 +1,14 @@
-import { PERMISSOES } from '../constants/permissoes';
+﻿import { PERMISSOES } from '../constants/permissoes';
+import isDeveloperUser from './isDeveloperUser';
 
 /**
- * Gera os itens de menu com base nas permissões do usuário.
- * @param {Function} has - Função has(permission) para validação.
+ * Gera os itens de menu com base nas permissÃµes do usuÃ¡rio.
+ * @param {Function} has - FunÃ§Ã£o has(permission) para validaÃ§Ã£o.
  * @returns {Array} Itens de menu para o PanelMenu.
  */
-const menuItems = (has) => {
+const menuItems = (has, user = null) => {
+  const canImportarEstoqueDev =
+    has(PERMISSOES.ESTOQUE?.IMPORTAR_PLANILHA_DEV) || isDeveloperUser(user);
   return [
     {
       label: 'Dashboard',
@@ -14,7 +17,7 @@ const menuItems = (has) => {
       to: '/'
     },
 
-    // Agrupa tudo de pedidos (cliente, consignação, importação e fábrica)
+    // Agrupa tudo de pedidos (cliente, consignaÃ§Ã£o, importaÃ§Ã£o e fÃ¡brica)
     (has(PERMISSOES.PEDIDOS?.VISUALIZAR) ||
       has(PERMISSOES.CONSIGNACOES?.VISUALIZAR) ||
       has(PERMISSOES.PEDIDOS?.IMPORTAR) ||
@@ -31,7 +34,7 @@ const menuItems = (has) => {
           to: '/pedidos'
         },
         has(PERMISSOES.CONSIGNACOES?.VISUALIZAR) && {
-          label: 'Consignações',
+          label: 'ConsignaÃ§Ãµes',
           key: 'pedidos-consignacoes',
           icon: 'pi pi-undo',
           to: '/consignacoes'
@@ -41,12 +44,6 @@ const menuItems = (has) => {
           key: 'pedidos-importar',
           icon: 'pi pi-fw pi-upload',
           to: '/pedidos/importar'
-        },
-        has(PERMISSOES.PEDIDOS_FABRICA?.VISUALIZAR) && {
-          label: 'Pedidos Fábrica',
-          key: 'pedidos-fabrica',
-          icon: 'pi pi-fw pi-send',
-          to: '/pedidos-fabrica'
         }
       ].filter(Boolean)
     },
@@ -77,7 +74,7 @@ const menuItems = (has) => {
       icon: 'pi pi-fw pi-tags',
       items: [
         has(PERMISSOES.PRODUTOS?.CATALOGO) && {
-          label: 'Catálogo',
+          label: 'CatÃ¡logo',
           key: 'catalogo',
           icon: 'pi pi-undo',
           to: '/catalogo'
@@ -117,7 +114,7 @@ const menuItems = (has) => {
           to: '/financeiro/dashboard'
         },
         has(PERMISSOES.FINANCEIRO?.LANCAMENTOS?.VISUALIZAR) && {
-          label: 'Lançamentos',
+          label: 'LanÃ§amentos',
           key: 'financeiro-lancamentos',
           icon: 'pi pi-fw pi-list',
           to: '/financeiro/lancamentos'
@@ -141,13 +138,13 @@ const menuItems = (has) => {
           to: '/financeiro/despesas-recorrentes'
         },
         has(PERMISSOES.FINANCEIRO?.LANCAMENTOS?.VISUALIZAR) && {
-          label: 'Transferências entre Contas',
+          label: 'TransferÃªncias entre Contas',
           key: 'financeiro-transferencias',
           icon: 'pi pi-fw pi-arrow-right-arrow-left',
           to: '/financeiro/transferencias'
         },
         {
-          label: 'Dados Básicos',
+          label: 'Dados BÃ¡sicos',
           key: 'financeiro-dados-basicos',
           icon: 'pi pi-fw pi-database',
           items: [
@@ -180,16 +177,22 @@ const menuItems = (has) => {
       icon: 'pi pi-fw pi-box',
       items: [
         {
-          label: 'Depósitos',
+          label: 'DepÃ³sitos',
           key: 'estoque-depositos',
           icon: 'pi pi-fw pi-sitemap',
           to: '/depositos'
         },
         {
-          label: 'Movimentações de Estoque',
+          label: 'MovimentaÃ§Ãµes de Estoque',
           key: 'estoque-movimentacoes',
           icon: 'pi pi-fw pi-sort-alt',
           to: '/movimentacoes-estoque'
+        },
+        canImportarEstoqueDev && {
+          label: 'Importar Estoque (Dev)',
+          key: 'estoque-importar-planilha',
+          icon: 'pi pi-fw pi-file-import',
+          to: '/estoque/importar-planilha'
         },
         // has(PERMISSOES.ESTOQUE?.MOVIMENTAR) && {
         //   label: 'Leitura de Estoque',
@@ -198,7 +201,7 @@ const menuItems = (has) => {
         //   to: '/estoque/leitura'
         // },
         has(PERMISSOES.ESTOQUE?.MOVIMENTAR) && {
-          label: 'Transferir entre Depósitos',
+          label: 'Transferir entre DepÃ³sitos',
           key: 'estoque-transferir',
           icon: 'pi pi-fw pi-external-link',
           to: '/estoque/leitura?mode=transfer'
@@ -226,7 +229,7 @@ const menuItems = (has) => {
       PERMISSOES.FORNECEDORES?.VISUALIZAR,
       PERMISSOES.PARCEIROS?.VISUALIZAR
     ]) && {
-      label: 'Administração',
+      label: 'AdministraÃ§Ã£o',
       key: 'administracao',
       icon: 'pi pi-fw pi-briefcase',
       items: [
@@ -262,14 +265,14 @@ const menuItems = (has) => {
     },
 
     has(PERMISSOES.RELATORIOS?.VISUALIZAR) && {
-      label: 'Relatórios',
+      label: 'RelatÃ³rios',
       key: 'relatorios',
       icon: 'pi pi-fw pi-file',
       to: '/relatorios'
     },
 
     has(PERMISSOES.ASSISTENCIAS?.VISUALIZAR) && {
-      label: 'Assistências',
+      label: 'AssistÃªncias',
       key: 'assistencias',
       icon: 'pi pi-fw pi-wrench',
       items: [
@@ -289,7 +292,7 @@ const menuItems = (has) => {
     },
 
     has(PERMISSOES.COMUNICACAO?.VISUALIZAR) && {
-      label: 'Comunicação',
+      label: 'ComunicaÃ§Ã£o',
       key: 'comunicacao',
       icon: 'pi pi-fw pi-megaphone',
       items: [
@@ -329,7 +332,7 @@ const menuItems = (has) => {
     },
 
     has(PERMISSOES.CONFIGURACOES?.VISUALIZAR) && {
-      label: 'Configurações',
+      label: 'ConfiguraÃ§Ãµes',
       key: 'configuracoes',
       icon: 'pi pi-fw pi-cog',
       to: '/configuracoes'
@@ -339,4 +342,5 @@ const menuItems = (has) => {
 };
 
 export default menuItems;
+
 
