@@ -148,6 +148,8 @@ const SakaiLayout = ({ children, defaultSidebarCollapsed = false }) => {
 
                 if (!isPrimaryClick || hasModifierKey) return;
 
+                // Mantem o ciclo interno do PanelMenu (estado ativo/expandido)
+                options.onClick?.(event);
                 event.preventDefault();
                 navigate(item.to);
               };
