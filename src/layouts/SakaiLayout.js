@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { PanelMenu } from 'primereact/panelmenu';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -65,7 +65,101 @@ const SakaiLayout = ({ children, defaultSidebarCollapsed = false }) => {
     logout();
   };
 
-  const sidebarItems = menuItems(has);
+  const sharedItemTemplate = useCallback((item, options) => {
+    const hasSubmenu = Array.isArray(item.items) && item.items.length > 0;
+    const isExternalUrl = typeof item.url === 'string' && /^https?:\/\//i.test(item.url);
+    const href = item.url || item.to || '#';
+    const target = item.target || (isExternalUrl ? '_blank' : undefined);
+    const opensInNewTab = target === '_blank';
+
+    if (hasSubmenu) {
+      return (
+        <div
+          onClick={options.onClick}
+          onKeyDown={options.onKeyDown}
+          tabIndex={options.tabIndex}
+          className={options.className}
+          title={isSidebarCollapsed ? item.label : undefined}
+          style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8 }}
+        >
+          {item.icon && <i className={`${item.icon} p-menuitem-icon`} />}
+          <span className="p-menuitem-text">{item.label}</span>
+          {options.submenuIcon}
+        </div>
+      );
+    }
+
+    if (!item.to && !item.url) {
+      return (
+        <button
+          type="button"
+          onClick={options.onClick}
+          onKeyDown={options.onKeyDown}
+          tabIndex={options.tabIndex}
+          className={options.className}
+          title={isSidebarCollapsed ? item.label : undefined}
+          style={{
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            width: '100%',
+            border: 'none',
+            background: 'transparent',
+            cursor: 'pointer',
+            textAlign: 'left',
+          }}
+        >
+          {item.icon && <i className={`${item.icon} p-menuitem-icon`} />}
+          <span className="p-menuitem-text">{item.label}</span>
+        </button>
+      );
+    }
+
+    const handleLinkClick = (event) => {
+      if (!item.to || opensInNewTab || isExternalUrl) return;
+
+      const hasModifierKey = event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+      const isPrimaryClick = event.button === 0;
+
+      if (!isPrimaryClick || hasModifierKey) return;
+
+      options.onClick?.(event);
+      event.preventDefault();
+      navigate(item.to);
+    };
+
+    return (
+      <a
+        href={href}
+        target={target}
+        rel={opensInNewTab ? 'noopener noreferrer' : undefined}
+        onClick={handleLinkClick}
+        onKeyDown={options.onKeyDown}
+        tabIndex={options.tabIndex}
+        className={options.className}
+        title={isSidebarCollapsed ? item.label : undefined}
+        style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}
+      >
+        {item.icon && <i className={`${item.icon} p-menuitem-icon`} />}
+        <span className="p-menuitem-text">{item.label}</span>
+      </a>
+    );
+  }, [isSidebarCollapsed, navigate]);
+
+  const applyTemplate = useCallback((items) => {
+    return (items || []).map((it) => {
+      const item = { ...it, template: sharedItemTemplate };
+
+      if (Array.isArray(item.items)) {
+        item.items = applyTemplate(item.items);
+      }
+
+      return item;
+    });
+  }, [sharedItemTemplate]);
+
+  const sidebarItems = useMemo(() => applyTemplate(menuItems(has)), [applyTemplate, has]);
 
   return (
     <div
@@ -89,88 +183,6 @@ const SakaiLayout = ({ children, defaultSidebarCollapsed = false }) => {
               setExpandedKeys(e.value);
             }}
             multiple
-            template={(item, options) => {
-              const hasSubmenu = Array.isArray(item.items) && item.items.length > 0;
-              const isExternalUrl = typeof item.url === 'string' && /^https?:\/\//i.test(item.url);
-              const href = item.url || item.to || '#';
-              const target = item.target || (isExternalUrl ? '_blank' : undefined);
-              const opensInNewTab = target === '_blank';
-
-              if (hasSubmenu) {
-                return (
-                  <div
-                    onClick={options.onClick}
-                    onKeyDown={options.onKeyDown}
-                    tabIndex={options.tabIndex}
-                    className={options.className}
-                    title={isSidebarCollapsed ? item.label : undefined}
-                    style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8 }}
-                  >
-                    {item.icon && <i className={`${item.icon} p-menuitem-icon`} />}
-                    <span className="p-menuitem-text">{item.label}</span>
-                    {options.submenuIcon}
-                  </div>
-                );
-              }
-
-              if (!item.to && !item.url) {
-                return (
-                  <button
-                    type="button"
-                    onClick={options.onClick}
-                    onKeyDown={options.onKeyDown}
-                    tabIndex={options.tabIndex}
-                    className={options.className}
-                    title={isSidebarCollapsed ? item.label : undefined}
-                    style={{
-                      position: 'relative',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      width: '100%',
-                      border: 'none',
-                      background: 'transparent',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                    }}
-                  >
-                    {item.icon && <i className={`${item.icon} p-menuitem-icon`} />}
-                    <span className="p-menuitem-text">{item.label}</span>
-                  </button>
-                );
-              }
-
-              const handleLinkClick = (event) => {
-                if (!item.to || opensInNewTab || isExternalUrl) return;
-
-                const hasModifierKey = event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
-                const isPrimaryClick = event.button === 0;
-
-                if (!isPrimaryClick || hasModifierKey) return;
-
-                // Mantem o ciclo interno do PanelMenu (estado ativo/expandido)
-                options.onClick?.(event);
-                event.preventDefault();
-                navigate(item.to);
-              };
-
-              return (
-                <a
-                  href={href}
-                  target={target}
-                  rel={opensInNewTab ? 'noopener noreferrer' : undefined}
-                  onClick={handleLinkClick}
-                  onKeyDown={options.onKeyDown}
-                  tabIndex={options.tabIndex}
-                  className={options.className}
-                  title={isSidebarCollapsed ? item.label : undefined}
-                  style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}
-                >
-                  {item.icon && <i className={`${item.icon} p-menuitem-icon`} />}
-                  <span className="p-menuitem-text">{item.label}</span>
-                </a>
-              );
-            }}
           />
         </div>
         <div className="layout-content">{children}</div>
