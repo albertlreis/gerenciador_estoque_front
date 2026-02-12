@@ -1,6 +1,8 @@
+import { normalizarBuscaProduto } from './normalizarBuscaProduto';
+
 export const formatarFiltrosParaEnvio = (filtros) => {
   const obj = {
-    nome: filtros.nome?.trim() || null,
+    nome: normalizarBuscaProduto(filtros.nome) ?? null,
     id_categoria: filtros.categoria,
     ativo: filtros.ativo,
     is_outlet: filtros.outlet,

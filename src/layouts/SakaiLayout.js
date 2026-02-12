@@ -1,71 +1,153 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useCallback, useMemo } from 'react';
 import { PanelMenu } from 'primereact/panelmenu';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useMenuState } from '../context/MenuStateContext';
 import usePermissions from '../hooks/usePermissions';
 import Topbar from './Topbar';
 import menuItems from '../utils/menuItems';
+import { findMenuPathByRoute, hasActiveRoute, mergeExpandedKeys } from '../utils/menuState';
 
 /**
- * Layout principal da aplicação com menu lateral e topbar.
+ * Layout principal da aplicacao com menu lateral e topbar.
  */
 const SakaiLayout = ({ children, defaultSidebarCollapsed = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
   const { has } = usePermissions();
-
-  const [expandedKeys, setExpandedKeys] = useState({});
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(defaultSidebarCollapsed);
-
-  const userHasToggled = useRef(false);
+  const {
+    expandedKeys,
+    setExpandedKeys,
+    isSidebarCollapsed,
+    setIsSidebarCollapsed,
+    toggleSidebar,
+    setLastActivePath,
+    hasStoredState,
+  } = useMenuState();
 
   useEffect(() => {
-    if (userHasToggled.current) return;
-
-    const path = location.pathname;
-
-    if (
-      path.startsWith('/acessos') ||
-      path.startsWith('/usuarios') ||
-      path.startsWith('/perfis') ||
-      path.startsWith('/permissoes') ||
-      path.startsWith('/categorias') ||
-      path.startsWith('/fornecedores') ||
-      path.startsWith('/parceiros')
-    ) {
-      setExpandedKeys({ administracao: true });
-    } else if (
-      path.startsWith('/catalogo') ||
-      path.startsWith('/produtos')
-    ) {
-      setExpandedKeys({ produtos: true });
-    } else if (
-      path.startsWith('/depositos') ||
-      path.startsWith('/movimentacoes-estoque') ||
-      path.startsWith('/reservas')
-    ) {
-      setExpandedKeys({ estoque: true });
-    } else if (
-      path.startsWith('/pedidos') ||
-      path.startsWith('/consignacoes') ||
-      path.startsWith('/pedidos-fabrica')
-    ) {
-      setExpandedKeys({ pedidos: true });
-    } else {
-      setExpandedKeys({});
+    if (!hasStoredState && defaultSidebarCollapsed) {
+      setIsSidebarCollapsed(true);
     }
-  }, [location]);
+  }, [defaultSidebarCollapsed, hasStoredState, setIsSidebarCollapsed]);
 
-  const toggleSidebar = () => {
-    setIsSidebarCollapsed((prev) => !prev);
-  };
+  const menuModel = useMemo(() => menuItems(has, user), [has, user]);
+
+  useEffect(() => {
+    const menuPath = findMenuPathByRoute(menuModel, location.pathname);
+    if (menuPath.length > 1) {
+      const parentKeys = menuPath.slice(0, -1);
+      setExpandedKeys((current) => mergeExpandedKeys(current, parentKeys));
+    }
+    setLastActivePath(location.pathname);
+  }, [location.pathname, menuModel, setExpandedKeys, setLastActivePath]);
 
   const handleLogout = () => {
     logout();
   };
 
-  const sidebarItems = menuItems(navigate, has);
+  const getItemClassName = useCallback((item, options) => {
+    const active = hasActiveRoute(item, location.pathname);
+    return `${options.className || ''}${active ? ' menu-item-active' : ''}`;
+  }, [location.pathname]);
+
+  const sharedItemTemplate = useCallback((item, options) => {
+    const hasSubmenu = Array.isArray(item.items) && item.items.length > 0;
+    const isExternalUrl = typeof item.url === 'string' && /^https?:\/\//i.test(item.url);
+    const href = item.url || item.to || '#';
+    const target = item.target || (isExternalUrl ? '_blank' : undefined);
+    const opensInNewTab = target === '_blank';
+    const itemClassName = getItemClassName(item, options);
+
+    if (hasSubmenu) {
+      return (
+        <div
+          onClick={options.onClick}
+          onKeyDown={options.onKeyDown}
+          tabIndex={options.tabIndex}
+          className={itemClassName}
+          title={isSidebarCollapsed ? item.label : undefined}
+          style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8 }}
+        >
+          {item.icon && <i className={`${item.icon} p-menuitem-icon`} />}
+          <span className="p-menuitem-text">{item.label}</span>
+          {options.submenuIcon}
+        </div>
+      );
+    }
+
+    if (!item.to && !item.url) {
+      return (
+        <button
+          type="button"
+          onClick={options.onClick}
+          onKeyDown={options.onKeyDown}
+          tabIndex={options.tabIndex}
+          className={itemClassName}
+          title={isSidebarCollapsed ? item.label : undefined}
+          style={{
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            width: '100%',
+            border: 'none',
+            background: 'transparent',
+            cursor: 'pointer',
+            textAlign: 'left',
+          }}
+        >
+          {item.icon && <i className={`${item.icon} p-menuitem-icon`} />}
+          <span className="p-menuitem-text">{item.label}</span>
+        </button>
+      );
+    }
+
+    const handleLinkClick = (event) => {
+      if (!item.to || opensInNewTab || isExternalUrl) return;
+
+      const hasModifierKey = event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+      const isPrimaryClick = event.button === 0;
+
+      if (!isPrimaryClick || hasModifierKey) return;
+
+      options.onClick?.(event);
+      event.preventDefault();
+      navigate(item.to);
+    };
+
+    return (
+      <a
+        href={href}
+        target={target}
+        rel={opensInNewTab ? 'noopener noreferrer' : undefined}
+        onClick={handleLinkClick}
+        onKeyDown={options.onKeyDown}
+        tabIndex={options.tabIndex}
+        className={itemClassName}
+        title={isSidebarCollapsed ? item.label : undefined}
+        style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}
+      >
+        {item.icon && <i className={`${item.icon} p-menuitem-icon`} />}
+        <span className="p-menuitem-text">{item.label}</span>
+      </a>
+    );
+  }, [getItemClassName, isSidebarCollapsed, navigate]);
+
+  const applyTemplate = useCallback((items) => {
+    return (items || []).map((it) => {
+      const item = { ...it, template: sharedItemTemplate };
+
+      if (Array.isArray(item.items)) {
+        item.items = applyTemplate(item.items);
+      }
+
+      return item;
+    });
+  }, [sharedItemTemplate]);
+
+  const sidebarItems = useMemo(() => applyTemplate(menuModel), [applyTemplate, menuModel]);
 
   return (
     <div
@@ -84,26 +166,8 @@ const SakaiLayout = ({ children, defaultSidebarCollapsed = false }) => {
             model={sidebarItems}
             style={{ width: '100%' }}
             expandedKeys={expandedKeys}
-            onExpandedKeysChange={(e) => {
-              userHasToggled.current = true; // a partir daqui, não auto-reexpande
-              setExpandedKeys(e.value);
-            }}
+            onExpandedKeysChange={(e) => setExpandedKeys(e.value)}
             multiple
-            template={(item, options) => (
-              <div
-                onClick={options.onClick}
-                onKeyDown={options.onKeyDown}
-                tabIndex={options.tabIndex}
-                className={options.className}
-                title={isSidebarCollapsed ? item.label : undefined}
-                style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8 }}
-              >
-                {item.icon && <i className={`${item.icon} p-menuitem-icon`} />}
-                <span className="p-menuitem-text">{item.label}</span>
-                {/* Exibe o caret quando há submenu, melhora a UX de expansão */}
-                {options.submenuIcon}
-              </div>
-            )}
           />
         </div>
         <div className="layout-content">{children}</div>

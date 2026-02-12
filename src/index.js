@@ -11,6 +11,7 @@ import 'primeflex/themes/primeone-light.css';
 
 import { AuthProvider } from './context/AuthContext';
 import { BrowserRouter } from 'react-router-dom';
+import { MenuStateProvider } from './context/MenuStateContext';
 
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
@@ -18,7 +19,9 @@ root.render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <App />
+        <MenuStateProvider>
+          <App />
+        </MenuStateProvider>
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>

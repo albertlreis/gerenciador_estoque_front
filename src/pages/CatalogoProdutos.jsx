@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Divider } from 'primereact/divider';
+import { Dialog } from 'primereact/dialog';
 import { Toast } from 'primereact/toast';
 
 import SakaiLayout from '../layouts/SakaiLayout';
@@ -10,9 +11,14 @@ import CarrinhoSidebar from '../components/CarrinhoSidebar';
 import SelecionarVariacaoDialog from '../components/SelecionarVariacaoDialog';
 import NovoCarrinhoDialog from '../components/NovoCarrinhoDialog';
 import CarrinhoAcoes from '../components/CarrinhoAcoes';
+import ProdutoForm from '../components/produto/ProdutoForm';
 
 import { useCarrinho } from '../context/CarrinhoContext';
 import { useCatalogoProdutos } from '../hooks/useCatalogoProdutos';
+import usePermissions from '../hooks/usePermissions';
+import { PERMISSOES } from '../constants/permissoes';
+import { normalizarProdutoPayload } from '../utils/normalizarProdutoPayload';
+import { getQuantidadeDisponivelVariacao } from '../utils/estoqueVariacao';
 import api from '../services/apiEstoque';
 
 const filtrosIniciais = {
@@ -34,8 +40,15 @@ const CatalogoProdutos = () => {
   const [dialogVariacaoVisible, setDialogVariacaoVisible] = useState(false);
   const [carrinhoVisible, setCarrinhoVisible] = useState(false);
   const [animateCart, setAnimateCart] = useState(false);
+  const [dialogEditarVisible, setDialogEditarVisible] = useState(false);
+  const [produtoEditando, setProdutoEditando] = useState(null);
+  const [loadingProduto, setLoadingProduto] = useState(false);
 
   const toast = useRef(null);
+
+  const { has } = usePermissions();
+  const podeEditarCompleto = has([PERMISSOES.PRODUTOS.EDITAR, PERMISSOES.PRODUTOS.GERENCIAR]);
+  const somenteImagens = !podeEditarCompleto;
 
   const {
     carrinhos,
@@ -90,6 +103,17 @@ const CatalogoProdutos = () => {
   };
 
   const confirmarVariacao = () => {
+    const quantidadeDisponivel = getQuantidadeDisponivelVariacao(variacaoSelecionada);
+    if (quantidadeDisponivel <= 0) {
+      toast.current?.show({
+        severity: 'warn',
+        summary: 'Sem estoque',
+        detail: 'Esta variação está esgotada no momento.',
+        life: 3000,
+      });
+      return;
+    }
+
     const precoBase = Number(variacaoSelecionada.preco);
     const outlet = variacaoSelecionada.outletSelecionado;
     const desconto = outlet ? outlet.percentual_desconto : 0;
@@ -106,6 +130,110 @@ const CatalogoProdutos = () => {
     setDialogVariacaoVisible(false);
     setAnimateCart(true);
     setCarrinhoVisible(true);
+  };
+
+  const carregarProdutoParaEdicao = async (produtoId, silent = false) => {
+    if (!produtoId) return;
+    try {
+      const response = await api.get(`/produtos/${produtoId}`);
+      const produtoAtualizado = response.data?.data || response.data;
+      setProdutoEditando(produtoAtualizado);
+      atualizarProdutoNaLista(produtoAtualizado);
+      if (!silent) {
+        toast.current?.show({
+          severity: 'success',
+          summary: 'Produto atualizado',
+          detail: 'Dados recarregados com sucesso.',
+          life: 3000,
+        });
+      }
+    } catch (error) {
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Erro',
+        detail: error?.response?.data?.message || 'N?o foi poss?vel recarregar o produto.',
+        life: 3000,
+      });
+    }
+  };
+
+  const abrirEdicaoProduto = async (grupo) => {
+    const produtoId = grupo?.produto?.id;
+    if (!produtoId) return;
+
+    setLoadingProduto(true);
+    try {
+      const response = await api.get(`/produtos/${produtoId}`);
+      const produto = response.data?.data || response.data;
+      setProdutoEditando(produto);
+      setDialogEditarVisible(true);
+    } catch (error) {
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Erro',
+        detail: error?.response?.data?.message || 'Erro ao carregar produto para edi??o.',
+        life: 3000,
+      });
+    } finally {
+      setLoadingProduto(false);
+    }
+  };
+
+  const fecharDialogEditar = () => {
+    setDialogEditarVisible(false);
+    setProdutoEditando(null);
+  };
+
+  const handleSubmitProduto = async (produtoData) => {
+    if (!produtoEditando?.id) return;
+
+    const payload = normalizarProdutoPayload(produtoData);
+
+    if (!payload.nome || !payload.id_categoria) {
+      toast.current?.show({
+        severity: 'warn',
+        summary: 'Campos obrigat?rios',
+        detail: 'Preencha o nome e a categoria do produto.',
+        life: 4000,
+      });
+      throw new Error('Campos obrigat?rios ausentes');
+    }
+
+    const formData = new FormData();
+    formData.append('nome', payload.nome);
+    formData.append('descricao', payload.descricao || '');
+    formData.append('id_categoria', payload.id_categoria ?? '');
+    formData.append('id_fornecedor', payload.id_fornecedor ?? '');
+    formData.append('altura', payload.altura ?? '');
+    formData.append('largura', payload.largura ?? '');
+    formData.append('profundidade', payload.profundidade ?? '');
+    formData.append('peso', payload.peso ?? '');
+    formData.append('ativo', payload.ativo ?? 1);
+    formData.append('motivo_desativacao', payload.motivo_desativacao || '');
+    formData.append('estoque_minimo', payload.estoque_minimo ?? '');
+
+    if (payload.manualArquivo instanceof File) {
+      const allowedTypes = ['application/pdf'];
+      if (!allowedTypes.includes(payload.manualArquivo.type)) {
+        toast.current?.show({
+          severity: 'warn',
+          summary: 'Arquivo inv?lido',
+          detail: 'O manual deve ser um arquivo PDF.',
+          life: 4000,
+        });
+        throw new Error('Arquivo de manual inv?lido');
+      }
+      formData.append('manual_conservacao', payload.manualArquivo);
+    }
+
+    formData.append('_method', 'PUT');
+
+    const response = await api.post(`/produtos/${produtoEditando.id}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+
+    await carregarProdutoParaEdicao(produtoEditando.id, true);
+    return response;
   };
 
   return (
@@ -148,8 +276,9 @@ const CatalogoProdutos = () => {
           <OverlayLoading visible={loading && produtos.length === 0} message="Carregando produtos do catálogo...">
             <CatalogoGrid
               produtos={produtos}
+              estoqueStatus={filtros.estoque_status}
               onAdicionarAoCarrinho={handleAdicionarAoCarrinho}
-              onProdutoAtualizado={atualizarProdutoNaLista}
+              onEditarProduto={abrirEdicaoProduto}
             />
             <div ref={sentinelaRef} style={{ height: '1px', marginTop: '80px' }} />
             {loading && produtos.length > 0 && (
@@ -174,12 +303,35 @@ const CatalogoProdutos = () => {
 
       <SelecionarVariacaoDialog
         produto={produtoSelecionado}
+        estoqueStatus={filtros.estoque_status}
         visible={dialogVariacaoVisible}
         onHide={() => setDialogVariacaoVisible(false)}
         variacaoSelecionada={variacaoSelecionada}
         setVariacaoSelecionada={setVariacaoSelecionada}
         onAdicionar={confirmarVariacao}
       />
+
+      <Dialog
+        header={`Editar Produto${produtoEditando?.nome ? ` - ${produtoEditando.nome}` : ''}`}
+        visible={dialogEditarVisible}
+        style={{ width: '900px', maxWidth: '95vw' }}
+        modal
+        onHide={fecharDialogEditar}
+      >
+        <OverlayLoading visible={loadingProduto} message="Carregando produto...">
+          {produtoEditando ? (
+            <ProdutoForm
+              initialData={produtoEditando}
+              onSubmit={handleSubmitProduto}
+              onCancel={fecharDialogEditar}
+              somenteImagens={somenteImagens}
+              onAlterado={() => carregarProdutoParaEdicao(produtoEditando?.id, true)}
+            />
+          ) : (
+            <div className="p-4 text-center text-color-secondary">Produto nÃ£o encontrado.</div>
+          )}
+        </OverlayLoading>
+      </Dialog>
     </SakaiLayout>
   );
 };

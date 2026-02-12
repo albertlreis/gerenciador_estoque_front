@@ -10,7 +10,11 @@ import LocalizacaoEstoqueDialog from '../components/LocalizacaoEstoqueDialog';
 import EstoqueFiltro from '../components/EstoqueFiltro';
 import EstoqueAtual from '../components/EstoqueAtual';
 import EstoqueMovimentacoes from '../components/EstoqueMovimentacoes';
+import DialogOutlet from '../components/produto/DialogOutlet';
 import { ESTOQUE_ENDPOINTS } from '../constants/endpointsEstoque';
+import usePermissions from '../hooks/usePermissions';
+import { PERMISSOES } from '../constants/permissoes';
+import { normalizarBuscaProduto } from '../utils/normalizarBuscaProduto';
 
 /**
  * Página de Estoque + Movimentações com editor de localização.
@@ -32,9 +36,21 @@ const MovimentacoesEstoque = () => {
 
     return parsed[0] && parsed[1] ? parsed : null;
   };
+  const normalizeEstoqueStatus = (rawStatus, legacyZerados) => {
+    const status = typeof rawStatus === 'string' ? rawStatus.trim() : null;
+    if (status === 'com_estoque' || status === 'sem_estoque' || status === 'all') {
+      return status;
+    }
+
+    const legacyValue = typeof legacyZerados === 'string' ? legacyZerados.trim().toLowerCase() : legacyZerados;
+    const legacyParsed = [true, 1, '1', 'true', 'yes', 'on'].includes(legacyValue);
+    return legacyParsed ? 'sem_estoque' : 'all';
+  };
 
   const toast = useRef(null);
   const [searchParams] = useSearchParams();
+  const { has } = usePermissions();
+  const podeCadastrarOutlet = has(PERMISSOES.PRODUTOS.OUTLET_CADASTRAR);
   const estoqueRequestSeq = useRef(0);
   const movsRequestSeq = useRef(0);
   const resumoRequestSeq = useRef(0);
@@ -47,6 +63,12 @@ const MovimentacoesEstoque = () => {
 
   const [firstEstoque, setFirstEstoque] = useState(0);
   const [totalEstoque, setTotalEstoque] = useState(0);
+  const [estoqueQuery, setEstoqueQuery] = useState({
+    first: 0,
+    rows: 10,
+    sortField: null,
+    sortOrder: null,
+  });
 
   const [firstMovs, setFirstMovs] = useState(0);
   const [totalMovs, setTotalMovs] = useState(0);
@@ -70,6 +92,9 @@ const MovimentacoesEstoque = () => {
   const [movsProdutoTotal, setMovsProdutoTotal] = useState(0);
   const [loadingDialog, setLoadingDialog] = useState(false);
   const [loadingExportPdf, setLoadingExportPdf] = useState(false);
+  const [showOutletDialog, setShowOutletDialog] = useState(false);
+  const [variacaoOutlet, setVariacaoOutlet] = useState(null);
+  const [loadingOutlet, setLoadingOutlet] = useState(false);
 
   const [resumo, setResumo] = useState({
     totalProdutos: 0,
@@ -84,7 +109,7 @@ const MovimentacoesEstoque = () => {
     fornecedor: null,
     produto: '',
     periodo: null,
-    zerados: false,
+    estoque_status: 'all',
   });
   const filtrosRef = useRef(filtros);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -96,6 +121,10 @@ const MovimentacoesEstoque = () => {
   const sortFieldEstoqueMap = {
     produto_referencia: 'referencia',
     quantidade: 'quantidade_estoque',
+    custo_unitario: 'custo_unitario',
+    data_entrada_estoque_atual: 'data_entrada_estoque_atual',
+    ultima_venda_em: 'ultima_venda_em',
+    dias_sem_venda: 'dias_sem_venda',
   };
   const sortFieldMovsMap = {
     produto_referencia: 'id',
@@ -142,10 +171,17 @@ const MovimentacoesEstoque = () => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
+        const estoqueStatus = normalizeEstoqueStatus(parsed?.estoque_status, parsed?.zerados);
+        const nextFiltros = {
+          ...parsed,
+          estoque_status: estoqueStatus,
+          periodo: toPeriodoDateRange(parsed?.periodo),
+        };
+        delete nextFiltros.zerados;
+
         setFiltros((prev) => ({
           ...prev,
-          ...parsed,
-          periodo: toPeriodoDateRange(parsed?.periodo),
+          ...nextFiltros,
         }));
       } catch {
         localStorage.removeItem(LOCAL_STORAGE_KEY);
@@ -189,9 +225,15 @@ const MovimentacoesEstoque = () => {
     const requestId = ++resumoRequestSeq.current;
     try {
       const formatDate = (d) => d instanceof Date ? d.toISOString().split('T')[0] : null;
+      const estoqueStatus = normalizeEstoqueStatus(
+        filtrosAtuais?.estoque_status,
+        filtrosAtuais?.zerados
+      );
       const filtroParams = {
         ...filtrosAtuais,
-        zerados: filtrosAtuais.zerados ? 1 : 0,
+        produto: normalizarBuscaProduto(filtrosAtuais?.produto),
+        estoque_status: estoqueStatus !== 'all' ? estoqueStatus : null,
+        zerados: estoqueStatus === 'sem_estoque' ? 1 : 0,
         periodo:
           filtrosAtuais.periodo?.length === 2 && filtrosAtuais.periodo[1]
             ? [formatDate(filtrosAtuais.periodo[0]), formatDate(filtrosAtuais.periodo[1])]
@@ -222,6 +264,7 @@ const MovimentacoesEstoque = () => {
                                      sortOrder = null,
                                      filtrosOverride = null,
                                    } = {}) => {
+    setEstoqueQuery({ first, rows, sortField, sortOrder });
     abortInFlightRequest(estoqueAbortRef);
     const controller = new AbortController();
     estoqueAbortRef.current = controller;
@@ -231,9 +274,16 @@ const MovimentacoesEstoque = () => {
     try {
       const formatDate = (d) => d instanceof Date ? d.toISOString().split('T')[0] : null;
 
+      const estoqueStatus = normalizeEstoqueStatus(
+        filtrosAtuais?.estoque_status,
+        filtrosAtuais?.zerados
+      );
+
       const filtroParams = {
         ...filtrosAtuais,
-        zerados: filtrosAtuais.zerados ? 1 : 0,
+        produto: normalizarBuscaProduto(filtrosAtuais?.produto),
+        estoque_status: estoqueStatus !== 'all' ? estoqueStatus : null,
+        zerados: estoqueStatus === 'sem_estoque' ? 1 : 0,
         periodo: filtrosAtuais.periodo?.length === 2 && filtrosAtuais.periodo[1]
           ? [formatDate(filtrosAtuais.periodo[0]), formatDate(filtrosAtuais.periodo[1])]
           : null,
@@ -284,6 +334,7 @@ const MovimentacoesEstoque = () => {
 
       const filtroParams = {
         ...filtrosAtuais,
+        produto: normalizarBuscaProduto(filtrosAtuais?.produto),
         periodo:
           filtrosAtuais.periodo?.length === 2 && filtrosAtuais.periodo[1]
             ? [formatDate(filtrosAtuais.periodo[0]), formatDate(filtrosAtuais.periodo[1])]
@@ -325,9 +376,15 @@ const MovimentacoesEstoque = () => {
         d instanceof Date ? d.toISOString().split('T')[0] : null;
       const filtrosAtuais = filtrosRef.current;
 
+      const estoqueStatus = normalizeEstoqueStatus(
+        filtrosAtuais?.estoque_status,
+        filtrosAtuais?.zerados
+      );
+
       const params = {
         ...filtrosAtuais,
-        zerados: filtrosAtuais.zerados ? 1 : 0,
+        estoque_status: estoqueStatus !== 'all' ? estoqueStatus : null,
+        zerados: estoqueStatus === 'sem_estoque' ? 1 : 0,
         periodo:
           filtrosAtuais.periodo?.length === 2 && filtrosAtuais.periodo[1]
             ? [formatDate(filtrosAtuais.periodo[0]), formatDate(filtrosAtuais.periodo[1])]
@@ -392,6 +449,63 @@ const MovimentacoesEstoque = () => {
     } catch (err) {
       showToast('error', 'Erro ao baixar PDF da transferência.');
     }
+  };
+
+  const abrirDialogOutlet = async (rowData) => {
+    if (!rowData?.produto_id || !rowData?.variacao_id) {
+      showToast('warn', 'Produto ou variacao nao encontrados.', 'Atencao');
+      return;
+    }
+
+    if (Number(rowData?.quantidade ?? 0) <= 0) {
+      showToast('warn', 'Nao ha estoque disponivel para outlet.', 'Atencao');
+      return;
+    }
+
+    setLoadingOutlet(true);
+    try {
+      const response = await apiEstoque.get(`/produtos/${rowData.produto_id}`);
+      const produto = response.data?.data || response.data;
+      const variacao = (produto?.variacoes || []).find(
+        (v) => Number(v.id) === Number(rowData.variacao_id)
+      );
+
+      if (!variacao) {
+        showToast('warn', 'Variacao nao encontrada para este produto.', 'Atencao');
+        return;
+      }
+
+      setVariacaoOutlet({
+        ...variacao,
+        estoque_total: variacao.estoque_total ?? rowData.quantidade,
+        outlets: variacao.outlets || [],
+      });
+      setShowOutletDialog(true);
+    } catch (err) {
+      showToast('error', 'Erro ao carregar dados do produto para outlet');
+    } finally {
+      setLoadingOutlet(false);
+    }
+  };
+
+  const fecharDialogOutlet = () => {
+    setShowOutletDialog(false);
+    setVariacaoOutlet(null);
+  };
+
+  const salvarOutletEstoque = async (payload) => {
+    if (!variacaoOutlet?.id) return false;
+
+    await apiEstoque.post(`/variacoes/${variacaoOutlet.id}/outlets`, payload);
+    showToast('success', 'Outlet cadastrado com sucesso', 'Sucesso');
+    await fetchEstoqueAtual({
+      first: estoqueQuery.first,
+      rows: estoqueQuery.rows,
+      sortField: estoqueQuery.sortField,
+      sortOrder: estoqueQuery.sortOrder,
+      filtrosOverride: filtrosRef.current,
+    });
+    return true;
   };
 
   const fetchDepositos = async () => {
@@ -486,7 +600,7 @@ const MovimentacoesEstoque = () => {
       fornecedor: null,
       produto: '',
       periodo: null,
-      zerados: false,
+      estoque_status: 'all',
     };
 
     setFiltros(reset);
@@ -634,6 +748,8 @@ const MovimentacoesEstoque = () => {
               verMovimentacoes={verMovimentacoes}
               onExportPdf={exportarEstoquePdf}
               loadingExportPdf={loadingExportPdf}
+              onCadastrarOutlet={abrirDialogOutlet}
+              podeCadastrarOutlet={podeCadastrarOutlet && !loadingOutlet}
             />
           </AccordionTab>
           <AccordionTab header="Movimentações Recentes">
@@ -687,6 +803,14 @@ const MovimentacoesEstoque = () => {
             }}
           />
         </Dialog>
+
+        <DialogOutlet
+          visible={showOutletDialog}
+          onHide={fecharDialogOutlet}
+          onSalvar={salvarOutletEstoque}
+          variacao={variacaoOutlet}
+          outletEdicao={null}
+        />
       </div>
     </SakaiLayout>
   );

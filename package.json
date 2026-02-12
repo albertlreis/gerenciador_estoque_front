@@ -30,6 +30,7 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
+    "check:menu-encoding": "node scripts/check-menu-encoding.js",
     "eject": "react-scripts eject",
     "postbuild": "node scripts/write-version.js"
   },

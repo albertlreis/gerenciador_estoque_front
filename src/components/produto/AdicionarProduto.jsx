@@ -9,6 +9,8 @@ import { InputNumber } from 'primereact/inputnumber';
 import { AutoComplete } from 'primereact/autocomplete';
 
 import apiEstoque from '../../services/apiEstoque';
+import { listarProdutos } from '../../services/produtoService';
+import { normalizarBuscaProduto } from '../../utils/normalizarBuscaProduto';
 
 /**
  * Componente para adicionar produtos ao pedido.
@@ -91,7 +93,8 @@ const AdicionarProduto = ({ visible, onHide, onAdicionarItem, categorias = [] })
   // BUSCAR PRODUTOS
   // ======================================================
   const buscarProdutos = async () => {
-    if (!busca.trim()) {
+    const termoBusca = normalizarBuscaProduto(busca);
+    if (!termoBusca) {
       toastRef.current.show({
         severity: 'info',
         summary: 'Informe algo para buscar',
@@ -102,9 +105,7 @@ const AdicionarProduto = ({ visible, onHide, onAdicionarItem, categorias = [] })
 
     setLoadingBusca(true);
     try {
-      const { data } = await apiEstoque.get('/produtos', {
-        params: { q: busca.trim(), view: 'minima', per_page: 20 }
-      });
+      const { data } = await listarProdutos({ q: termoBusca, view: 'minima', per_page: 20 });
 
       const lista = Array.isArray(data?.data) ? data.data :
         Array.isArray(data) ? data : [];

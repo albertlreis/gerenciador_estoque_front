@@ -2,7 +2,6 @@ import React from 'react';
 import { Dropdown } from 'primereact/dropdown';
 import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
-import { InputSwitch } from 'primereact/inputswitch';
 import { Tooltip } from 'primereact/tooltip';
 import { motion } from 'framer-motion';
 import CalendarBR from "./CalendarBR";
@@ -116,17 +115,22 @@ const EstoqueFiltro = ({
             placeholder="Selecionar intervalo"
           />
         </div>
-
-        {/* Zerados */}
-        <div className="field col-12 sm:col-6 md:col-2 flex align-items-end justify-content-between md:justify-content-start mt-3 md:mt-0">
-          <label htmlFor="zerados" className="text-sm text-600">
-            Exibir apenas produtos sem estoque
-            <i className="pi pi-info-circle text-500 ml-1" data-pr-tooltip="Mostra apenas produtos que estão com estoque zerado" />
+        {/* Status de estoque */}
+        <div className="field col-12 sm:col-6 md:col-2">
+          <label htmlFor="estoque_status" className="font-medium mb-2 block">
+            Estoque
+            <i className="pi pi-info-circle text-500 ml-1" data-pr-tooltip="Filtra por produtos com ou sem estoque" />
           </label>
-          <InputSwitch
-            id="zerados"
-            checked={filtros.zerados}
-            onChange={(e) => setFiltros({ ...filtros, zerados: e.value })}
+          <Dropdown
+            id="estoque_status"
+            value={filtros.estoque_status}
+            options={[
+              { label: 'Todos', value: 'all' },
+              { label: 'Somente em estoque', value: 'com_estoque' },
+              { label: 'Somente sem estoque', value: 'sem_estoque' },
+            ]}
+            onChange={(e) => setFiltros({ ...filtros, estoque_status: e.value })}
+            className="w-full"
           />
         </div>
 

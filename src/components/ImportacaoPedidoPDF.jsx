@@ -9,6 +9,7 @@ import { confirmDialog, ConfirmDialog } from 'primereact/confirmdialog';
 import { Dialog } from 'primereact/dialog';
 import { Dropdown } from 'primereact/dropdown';
 import { Checkbox } from 'primereact/checkbox';
+import { InputNumber } from 'primereact/inputnumber';
 
 import apiEstoque from '../services/apiEstoque';
 import apiAuth from '../services/apiAuth';
@@ -21,6 +22,7 @@ import TabelaParcelas from './importacaoPedido/TabelaParcelas';
 import PedidoFabricaForm from './PedidoFabricaForm';
 import ClienteForm from '../components/cliente/ClienteForm';
 import AdicionarProduto from './produto/AdicionarProduto';
+import { normalizeDateToYmd } from '../utils/date';
 
 /**
  * Mescla produtos com mesma referência, somando quantidades e valores.
@@ -37,16 +39,87 @@ function mesclarProdutosRepetidos(itens) {
     } else {
       const qtdAtual = Number(mapa[ref].quantidade || 0);
       const qtdNova = Number(item.quantidade || 0);
-      const valAtual = Number(mapa[ref].valor || 0);
-      const valNovo = Number(item.valor || 0);
+      const novaQuantidade = qtdAtual + qtdNova;
+      const custoAtual = Number(mapa[ref].custo_unitario ?? 0);
+      const custoNovo = Number(item.custo_unitario ?? 0);
+      const vendaAtual = Number(mapa[ref].valor ?? mapa[ref].preco_unitario ?? 0);
+      const vendaNova = Number(item.valor ?? item.preco_unitario ?? 0);
 
-      mapa[ref].quantidade = qtdAtual + qtdNova;
-      mapa[ref].valor = valAtual + valNovo;
+      mapa[ref].quantidade = novaQuantidade;
+      mapa[ref].custo_unitario =
+        novaQuantidade > 0
+          ? Number(((custoAtual * qtdAtual + custoNovo * qtdNova) / novaQuantidade).toFixed(2))
+          : 0;
+      mapa[ref].valor =
+        novaQuantidade > 0
+          ? Number(((vendaAtual * qtdAtual + vendaNova * qtdNova) / novaQuantidade).toFixed(2))
+          : 0;
+      mapa[ref].preco_unitario = mapa[ref].valor;
     }
   });
 
   return Object.values(mapa);
 }
+
+const toNumber = (value) => {
+  if (value === null || value === undefined || value === '') return 0;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const roundCurrency = (value) => Number(toNumber(value).toFixed(2));
+
+const calcularVendaPorMargem = (custoUnitario, percentual) => {
+  const custo = toNumber(custoUnitario);
+  const margem = toNumber(percentual);
+  return roundCurrency(custo * (1 + margem / 100));
+};
+
+const parseDateInput = (value) => {
+  if (!value) return null;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+
+  const raw = String(value).trim();
+  if (!raw) return null;
+
+  let match = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (match) {
+    const [, y, m, d] = match;
+    return new Date(Number(y), Number(m) - 1, Number(d));
+  }
+
+  match = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (match) {
+    const [, d, m, y] = match;
+    return new Date(Number(y), Number(m) - 1, Number(d));
+  }
+
+  const parsed = new Date(raw);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const addBusinessDays = (date, days) => {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return null;
+  const amount = Math.max(0, Number(days) || 0);
+  const result = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  let added = 0;
+
+  while (added < amount) {
+    result.setDate(result.getDate() + 1);
+    const weekDay = result.getDay();
+    if (weekDay !== 0 && weekDay !== 6) {
+      added += 1;
+    }
+  }
+
+  return result;
+};
+
+const formatDateBr = (value) => {
+  const date = parseDateInput(value);
+  if (!date) return null;
+  return date.toLocaleDateString('pt-BR');
+};
 
 /**
  * Componente responsável pela importação de pedidos via PDF.
@@ -74,6 +147,7 @@ export default function ImportacaoPedidoPDF() {
   const [abrirPedidoFabrica, setAbrirPedidoFabrica] = useState(false);
   const [itensParaFabrica, setItensParaFabrica] = useState([]);
   const [pedidoSalvoId, setPedidoSalvoId] = useState(null);
+  const [percentualVenda, setPercentualVenda] = useState(0);
 
   // seleção em lote de produtos
   const [itensSelecionados, setItensSelecionados] = useState([]);
@@ -141,7 +215,12 @@ export default function ImportacaoPedidoPDF() {
         numero_externo: p.numero_externo || '',
         data_pedido: p.data_pedido || null,
         data_inclusao: p.data_inclusao || null,
-        data_entrega: p.data_entrega || null,
+        data_entrega: null,
+        entregue: false,
+        previsao_tipo: p.data_entrega ? 'DATA' : null,
+        data_prevista: p.data_entrega || null,
+        dias_uteis_previstos: null,
+        dias_corridos_previstos: null,
         total: Number(p.total) || 0,
         observacoes: p.observacoes || '',
         parcelas: p.parcelas || [],
@@ -151,12 +230,31 @@ export default function ImportacaoPedidoPDF() {
       // ITENS (normaliza + mescla refs iguais)
       // ================================
       const itensNormalizadosBase = (payload.itens || []).map((item) => ({
+        quantidade: toNumber(item.quantidade ?? 0),
+        custo_unitario: roundCurrency(
+          item.custo_unitario ??
+            item.preco_unitario ??
+            item.preco ??
+            0,
+        ),
         ref: item.ref || item.codigo || '',
         nome: item.nome || item.descricao || '',
         nome_completo: item.nome_completo || '',
-        quantidade: Number(item.quantidade ?? 0),
-        valor: Number(item.valor_total ?? item.valor ?? 0),
-        preco_unitario: Number(item.preco_unitario ?? 0),
+        valor: roundCurrency(
+          item.valor ??
+            item.preco_venda ??
+            item.preco_unitario ??
+            item.preco ??
+            0,
+        ),
+        preco_unitario: roundCurrency(
+          item.valor ??
+            item.preco_venda ??
+            item.preco_unitario ??
+            item.preco ??
+            0,
+        ),
+        preco: roundCurrency(item.preco ?? item.preco_unitario ?? 0),
         unidade: item.unidade || 'PC',
 
         id_categoria: item.id_categoria ?? null,
@@ -185,6 +283,7 @@ export default function ImportacaoPedidoPDF() {
       setClienteSelecionadoId(null);
       setPedido(pedidoNormalizado);
       setItens(itensNormalizados);
+      setPercentualVenda(0);
       setItensSelecionados([]);
       setUploadStatus('done');
       setImportacaoId(response.data?.importacao_id ?? null);
@@ -225,15 +324,58 @@ export default function ImportacaoPedidoPDF() {
 
   /** Atualizações de pedido */
   const onChangePedido = (field, value) =>
-    setPedido((prev) => ({ ...prev, [field]: value }));
+    setPedido((prev) => {
+      const next = { ...prev, [field]: value };
+
+      if (field === 'entregue' && !value) {
+        next.data_entrega = null;
+      }
+
+      if (field === 'previsao_tipo') {
+        if (value !== 'DATA') next.data_prevista = null;
+        if (value !== 'DIAS_UTEIS') next.dias_uteis_previstos = null;
+        if (value !== 'DIAS_CORRIDOS') next.dias_corridos_previstos = null;
+      }
+
+      return next;
+    });
 
   /** Atualizações de item */
   const onChangeItem = (index, field, value) => {
     setItens((prev) => {
       const novos = [...prev];
-      novos[index] = { ...novos[index], [field]: value };
+      const itemAtual = { ...novos[index], [field]: value };
+
+      if (field === 'valor' || field === 'preco_unitario') {
+        const precoVenda = roundCurrency(value);
+        itemAtual.valor = precoVenda;
+        itemAtual.preco_unitario = precoVenda;
+      }
+
+      if (field === 'custo_unitario') {
+        itemAtual.custo_unitario = roundCurrency(value);
+      }
+
+      novos[index] = itemAtual;
       return novos;
     });
+  };
+
+  const aplicarPercentualVendaTodosItens = () => {
+    const percentual = toNumber(percentualVenda);
+    setItens((prev) =>
+      prev.map((item) => {
+        const custoUnit = roundCurrency(item.custo_unitario ?? item.preco_unitario ?? item.preco ?? 0);
+        const precoVenda = calcularVendaPorMargem(custoUnit, percentual);
+
+        return {
+          ...item,
+          custo_unitario: custoUnit,
+          valor: precoVenda,
+          preco_unitario: precoVenda,
+        };
+      }),
+    );
   };
 
   /**
@@ -284,6 +426,7 @@ export default function ImportacaoPedidoPDF() {
           quantidade: 1,
           valor: 0,
           preco_unitario: 0,
+          custo_unitario: 0,
           unidade: 'PC',
           id_categoria: null,
           produto_id: null,
@@ -305,7 +448,6 @@ export default function ImportacaoPedidoPDF() {
 
   /** Remover item (qualquer item) */
   const removerItem = (index) => {
-    console.log(index)
     setItens((prev) => prev.filter((_, idx) => idx !== index));
 
     setItensSelecionados((prev) =>
@@ -373,6 +515,7 @@ export default function ImportacaoPedidoPDF() {
     setItensParaFabrica([]);
     setAbrirPedidoFabrica(false);
     setImportacaoId(null);
+    setPercentualVenda(0);
   };
 
   const confirmarRemocaoArquivo = () => {
@@ -390,6 +533,12 @@ export default function ImportacaoPedidoPDF() {
   /** 💾 Confirma importação e salva no banco */
   const confirmarImportacao = async () => {
     const tipo = pedido?.tipo ?? 'venda';
+    const entregue = Boolean(pedido?.entregue);
+    const dataEntregaYmd = normalizeDateToYmd(pedido?.data_entrega);
+    const previsaoTipo = pedido?.previsao_tipo ?? null;
+    const dataPrevistaYmd = normalizeDateToYmd(pedido?.data_prevista);
+    const diasUteisPrevistos = pedido?.dias_uteis_previstos ?? null;
+    const diasCorridosPrevistos = pedido?.dias_corridos_previstos ?? null;
 
     if (tipo === 'venda' && (!clienteSelecionadoId || !cliente?.nome)) {
       toast.current?.show({
@@ -410,13 +559,71 @@ export default function ImportacaoPedidoPDF() {
       return;
     }
 
+    if (entregue && !dataEntregaYmd) {
+      toast.current?.show({
+        severity: 'warn',
+        summary: 'Data de entrega obrigatória',
+        detail: 'Informe a data de entrega quando o pedido já foi entregue.',
+      });
+      return;
+    }
+
+    if (previsaoTipo === 'DATA' && !dataPrevistaYmd) {
+      toast.current?.show({
+        severity: 'warn',
+        summary: 'Previsão incompleta',
+        detail: 'Informe a data prevista para o tipo DATA.',
+      });
+      return;
+    }
+
+    if (previsaoTipo === 'DIAS_UTEIS' && (diasUteisPrevistos === null || diasUteisPrevistos === '')) {
+      toast.current?.show({
+        severity: 'warn',
+        summary: 'Previsão incompleta',
+        detail: 'Informe os dias úteis previstos.',
+      });
+      return;
+    }
+
+    if (previsaoTipo === 'DIAS_CORRIDOS' && (diasCorridosPrevistos === null || diasCorridosPrevistos === '')) {
+      toast.current?.show({
+        severity: 'warn',
+        summary: 'Previsão incompleta',
+        detail: 'Informe os dias corridos previstos.',
+      });
+      return;
+    }
+
     try {
+      const pedidoPayload = {
+        ...pedido,
+        tipo,
+        data_pedido: normalizeDateToYmd(pedido?.data_pedido),
+        data_inclusao: normalizeDateToYmd(pedido?.data_inclusao),
+        data_entrega: dataEntregaYmd,
+        entregue,
+        previsao_tipo: previsaoTipo,
+        data_prevista: dataPrevistaYmd,
+        dias_uteis_previstos: diasUteisPrevistos,
+        dias_corridos_previstos: diasCorridosPrevistos,
+      };
+
       const response = await PedidosApi.confirmarImportacaoPdf({
         importacao_id: importacaoId,
         cliente: tipo === 'venda' ? cliente : {},
-        pedido: { ...pedido, tipo },
+        pedido: pedidoPayload,
+        entregue,
+        data_entrega: dataEntregaYmd,
+        previsao_tipo: previsaoTipo,
+        data_prevista: dataPrevistaYmd,
+        dias_uteis_previstos: diasUteisPrevistos,
+        dias_corridos_previstos: diasCorridosPrevistos,
         itens: itens.map((item) => ({
           ...item,
+          valor: roundCurrency(item.valor ?? item.preco_unitario ?? 0),
+          preco_unitario: roundCurrency(item.preco_unitario ?? item.valor ?? 0),
+          custo_unitario: roundCurrency(item.custo_unitario ?? item.preco_unitario ?? item.preco ?? 0),
           descricao: item.descricao,
           id_variacao: item.id_variacao ?? null,
           produto_id: item.produto_id ?? null,
@@ -490,6 +697,29 @@ export default function ImportacaoPedidoPDF() {
   };
 
   /** 🖼️ Template de arquivo no upload */
+  const entregaPrevistaPreview = (() => {
+    const tipoPrevisao = pedido?.previsao_tipo;
+    const baseDate = parseDateInput(pedido?.data_pedido) || new Date();
+
+    if (tipoPrevisao === 'DATA') {
+      return formatDateBr(pedido?.data_prevista);
+    }
+
+    if (tipoPrevisao === 'DIAS_UTEIS') {
+      const prevista = addBusinessDays(baseDate, pedido?.dias_uteis_previstos);
+      return formatDateBr(prevista);
+    }
+
+    if (tipoPrevisao === 'DIAS_CORRIDOS') {
+      const dias = Math.max(0, Number(pedido?.dias_corridos_previstos) || 0);
+      const prevista = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate());
+      prevista.setDate(prevista.getDate() + dias);
+      return formatDateBr(prevista);
+    }
+
+    return null;
+  })();
+
   const fileTemplate = (file) => (
     <div className="flex align-items-center justify-content-between w-full px-3 py-2 border-bottom-1 surface-border">
       <div className="flex align-items-center gap-3">
@@ -573,6 +803,7 @@ export default function ImportacaoPedidoPDF() {
               vendedores={vendedores}
               parceiros={parceiros}
               onChange={onChangePedido}
+              entregaPrevistaPreview={entregaPrevistaPreview}
             />
           </Card>
 
@@ -660,6 +891,26 @@ export default function ImportacaoPedidoPDF() {
                   icon="pi pi-share-alt"
                   className="p-button-sm"
                   onClick={aplicarDepositoLote}
+                />
+              </div>
+
+              <div className="flex align-items-center gap-2">
+                <span className="text-sm">% venda sobre custo:</span>
+                <InputNumber
+                  value={percentualVenda}
+                  onValueChange={(e) => setPercentualVenda(e.value ?? 0)}
+                  min={0}
+                  max={1000}
+                  suffix="%"
+                  className="w-10rem p-inputtext-sm"
+                />
+                <Button
+                  type="button"
+                  label="Aplicar %"
+                  icon="pi pi-percentage"
+                  className="p-button-sm p-button-help"
+                  onClick={aplicarPercentualVendaTodosItens}
+                  disabled={itens.length === 0}
                 />
               </div>
 

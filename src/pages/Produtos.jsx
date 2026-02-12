@@ -11,8 +11,11 @@ import { Divider } from 'primereact/divider';
 
 import SakaiLayout from '../layouts/SakaiLayout';
 import apiEstoque from '../services/apiEstoque';
+import { listarProdutos } from '../services/produtoService';
 import ProdutoForm from '../components/produto/ProdutoForm';
 import TableActions from '../components/TableActions';
+import { normalizarProdutoPayload } from '../utils/normalizarProdutoPayload';
+import { normalizarBuscaProduto } from '../utils/normalizarBuscaProduto';
 
 const Produtos = () => {
   const toast = useRef(null);
@@ -51,8 +54,9 @@ const Produtos = () => {
         per_page: lazyParams.rows,
       };
 
-      if (filtros.nome?.trim()) {
-        params.nome = filtros.nome.trim();
+      const nomeBusca = normalizarBuscaProduto(filtros.nome);
+      if (nomeBusca) {
+        params.nome = nomeBusca;
       }
 
       if (filtros.id_categoria?.length > 0) {
@@ -63,7 +67,7 @@ const Produtos = () => {
         params.fornecedor_id = filtros.fornecedor_id;
       }
 
-      const response = await apiEstoque.get('/produtos', { params });
+      const response = await listarProdutos(params);
       const { data, meta } = response.data;
 
       setProdutos(data);
@@ -154,43 +158,44 @@ const Produtos = () => {
   const handleFormSubmit = async (produtoData) => {
     try {
       const formData = new FormData();
+      const payload = normalizarProdutoPayload(produtoData);
 
-      // Validação básica no front-end
-      if (!produtoData.nome || !produtoData.id_categoria) {
+      // Valida????o b??sica no front-end
+      if (!payload.nome || !payload.id_categoria) {
         toast.current?.show({
           severity: 'error',
           summary: 'Erro',
           detail: 'Preencha o nome e a categoria do produto.',
           life: 4000
         });
-        throw new Error('Campos obrigatórios ausentes');
+        throw new Error('Campos obrigat??rios ausentes');
       }
 
-      formData.append('nome', produtoData.nome);
-      formData.append('descricao', produtoData.descricao || '');
-      formData.append('id_categoria', produtoData.id_categoria);
-      formData.append('id_fornecedor', produtoData.id_fornecedor || '');
-      formData.append('altura', produtoData.altura || '');
-      formData.append('largura', produtoData.largura || '');
-      formData.append('profundidade', produtoData.profundidade || '');
-      formData.append('peso', produtoData.peso || '');
-      formData.append('ativo', produtoData.ativo ?? 1);
-      formData.append('motivo_desativacao', produtoData.motivo_desativacao || '');
-      formData.append('estoque_minimo', produtoData.estoque_minimo || '');
+      formData.append('nome', payload.nome);
+      formData.append('descricao', payload.descricao || '');
+      formData.append('id_categoria', payload.id_categoria ?? '');
+      formData.append('id_fornecedor', payload.id_fornecedor ?? '');
+      formData.append('altura', payload.altura ?? '');
+      formData.append('largura', payload.largura ?? '');
+      formData.append('profundidade', payload.profundidade ?? '');
+      formData.append('peso', payload.peso ?? '');
+      formData.append('ativo', payload.ativo ?? 1);
+      formData.append('motivo_desativacao', payload.motivo_desativacao || '');
+      formData.append('estoque_minimo', payload.estoque_minimo ?? '');
 
-      if (produtoData.manualArquivo instanceof File) {
+      if (payload.manualArquivo instanceof File) {
         const allowedTypes = ['application/pdf'];
-        if (!allowedTypes.includes(produtoData.manualArquivo.type)) {
+        if (!allowedTypes.includes(payload.manualArquivo.type)) {
           toast.current?.show({
             severity: 'warn',
-            summary: 'Arquivo inválido',
+            summary: 'Arquivo inv??lido',
             detail: 'O manual deve ser um arquivo PDF.',
             life: 4000,
           });
-          return;
+          throw new Error('Arquivo de manual inv??lido');
         }
 
-        formData.append('manual_conservacao', produtoData.manualArquivo);
+        formData.append('manual_conservacao', payload.manualArquivo);
       }
 
       let response;
@@ -200,48 +205,20 @@ const Produtos = () => {
         response = await apiEstoque.post(`/produtos/${editingProduto.id}`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
-        toast.current?.show({
-          severity: 'success',
-          summary: 'Sucesso',
-          detail: 'Produto atualizado com sucesso',
-          life: 3000
-        });
       } else {
         response = await apiEstoque.post('/produtos', formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
-        });
-        toast.current?.show({
-          severity: 'success',
-          summary: 'Sucesso',
-          detail: 'Produto cadastrado com sucesso',
-          life: 3000
         });
       }
 
       await fetchProdutos();
       return response;
     } catch (error) {
-      if (error.response?.data?.errors) {
-        const mensagens = Object.values(error.response.data.errors).flat().join('\n');
-        toast.current?.show({
-          severity: 'error',
-          summary: 'Erro de Validação',
-          detail: mensagens,
-          life: 5000
-        });
-      } else {
-        toast.current?.show({
-          severity: 'error',
-          summary: 'Erro',
-          detail: 'Erro ao salvar produto',
-          life: 3000
-        });
-      }
       throw error;
     }
   };
 
-  const categoriaBodyTemplate = (rowData) =>
+const categoriaBodyTemplate = (rowData) =>
     categorias.find(c => c.id === rowData.id_categoria)?.nome || '—';
 
   const fornecedorBodyTemplate = (rowData) =>

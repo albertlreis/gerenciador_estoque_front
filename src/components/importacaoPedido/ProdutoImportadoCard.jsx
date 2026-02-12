@@ -25,10 +25,10 @@ export default function ProdutoImportadoCard({
                                                onChangeItem,
                                                onRemove,
                                              }) {
-  console.log(item)
   const quantidade = Number(item.quantidade) || 0;
-  const totalItem = Number(item.preco_unitario) || 0;
-  const valorUnitario = quantidade > 0 ? totalItem / quantidade : 0;
+  const custoUnitario = Number(item.custo_unitario ?? item.preco_unitario ?? 0) || 0;
+  const valorUnitario = Number(item.valor ?? item.preco_unitario ?? 0) || 0;
+  const totalItem = valorUnitario * quantidade;
 
   const totalFormatado = totalItem.toLocaleString('pt-BR', {
     style: 'currency',
@@ -147,17 +147,28 @@ export default function ProdutoImportadoCard({
 
               {/* Valor Unitário */}
               <div className="field col-6 md:col-3">
-                <label className="block text-xs font-medium mb-1">Valor Unitário</label>
+                <label className="block text-xs font-medium mb-1">Custo Unitário</label>
+                <InputNumber
+                  value={custoUnitario}
+                  mode="currency"
+                  currency="BRL"
+                  locale="pt-BR"
+                  onValueChange={(e) => {
+                    onChangeItem(index, 'custo_unitario', e.value ?? 0);
+                  }}
+                  className="w-full p-inputtext-sm"
+                />
+              </div>
+
+              <div className="field col-6 md:col-3">
+                <label className="block text-xs font-medium mb-1">Preço de Venda</label>
                 <InputNumber
                   value={valorUnitario}
                   mode="currency"
                   currency="BRL"
                   locale="pt-BR"
                   onValueChange={(e) => {
-                    const novoUnitario = e.value || 0;
-                    const novaQuantidade = Number(item.quantidade || 0) || 1;
-                    const novoTotal = novoUnitario * novaQuantidade;
-                    onChangeItem(index, 'valor', Number(novoTotal.toFixed(2)));
+                    onChangeItem(index, 'valor', e.value ?? 0);
                   }}
                   className="w-full p-inputtext-sm"
                 />

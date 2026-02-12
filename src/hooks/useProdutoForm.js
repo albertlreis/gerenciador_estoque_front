@@ -27,6 +27,16 @@ export const useProdutoForm = (produto = {}) => {
   const [loading, setLoading] = useState(false);
   const [totalSize, setTotalSize] = useState(0);
 
+  const toArray = (res) => {
+    if (!res) return [];
+    if (Array.isArray(res)) return res;
+    if (Array.isArray(res?.data)) return res.data;
+    if (Array.isArray(res?.dados?.results)) return res.dados.results;
+    if (Array.isArray(res?.dados)) return res.dados;
+    if (Array.isArray(res?.results)) return res.results;
+    return [];
+  };
+
   useEffect(() => {
     if (!produto || !produto.id) return;
 
@@ -74,7 +84,7 @@ export const useProdutoForm = (produto = {}) => {
     const fetchCategorias = async () => {
       try {
         const response = await apiEstoque.get('/categorias');
-        setCategorias(response.data);
+        setCategorias(toArray(response.data));
       } catch {
         toastRef.current?.show({
           severity: 'error',
@@ -91,7 +101,7 @@ export const useProdutoForm = (produto = {}) => {
     const fetchFornecedores = async () => {
       try {
         const { data } = await apiEstoque.get('/fornecedores');
-        setFornecedores(data);
+        setFornecedores(toArray(data));
       } catch {
         toastRef.current?.show({
           severity: 'error',

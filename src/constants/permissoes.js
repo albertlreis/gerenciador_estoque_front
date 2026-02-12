@@ -61,6 +61,7 @@ export const PERMISSOES = {
     CRIAR: 'pedidos.criar',
     EDITAR: 'pedidos.editar',
     EXCLUIR: 'pedidos.excluir',
+    VER_CUSTO: 'pedidos.ver_custo',
     EXPORTAR_PDF: 'pedidos.exportar_pdf',
     IMPORTAR: 'pedidos.importar_pdf',
     ENVIAR_WHATSAPP: 'pedidos.enviar_whatsapp',
@@ -86,6 +87,7 @@ export const PERMISSOES = {
     HISTORICO: 'estoque.historico',
     TRANSFERIR: 'estoque.transferir',
     LOGS: 'estoque.logs',
+    IMPORTAR_PLANILHA_DEV: 'estoque.importar_planilha_dev',
   },
 
   RELATORIOS: {
