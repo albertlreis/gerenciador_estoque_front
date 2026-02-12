@@ -131,15 +131,19 @@ const ProdutosOutlet = () => {
 
     setLoadingExport(true);
     try {
-      const response = await apiEstoque.post('/produtos/outlet/export', { ids }, { responseType: 'blob' });
+      const response = await apiEstoque.post(
+        '/produtos/outlet/export',
+        { ids, format: 'pdf' },
+        { responseType: 'blob' }
+      );
       const blob = new Blob([response.data], {
-        type: response.headers['content-type'] || 'text/csv'
+        type: response.headers['content-type'] || 'application/pdf'
       });
 
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `catalogo_outlet_${new Date().toISOString().slice(0, 10)}.csv`;
+      link.download = `catalogo_outlet_${new Date().toISOString().slice(0, 10)}.pdf`;
       link.click();
       window.URL.revokeObjectURL(url);
     } catch (err) {
@@ -159,17 +163,17 @@ const ProdutosOutlet = () => {
       .filter(Boolean);
 
     const uniq = Array.from(new Set(refs));
-    return uniq.length ? uniq.join(', ') : '—';
+    return uniq.length ? uniq.join(', ') : 'ï¿½';
   };
 
-  const categoriaBody = (row) => row?.categoria?.nome || row?.categoria || '—';
+  const categoriaBody = (row) => row?.categoria?.nome || row?.categoria || 'ï¿½';
 
   const precoBody = (row) => {
     const precos = (row.variacoes || [])
       .map((v) => v?.preco)
       .filter((v) => v !== null && v !== undefined);
 
-    if (!precos.length) return '—';
+    if (!precos.length) return 'ï¿½';
     const min = Math.min(...precos.map(Number));
     return formatarPreco(min);
   };
@@ -259,8 +263,8 @@ const ProdutosOutlet = () => {
             />
             <Button
               label="Exportar selecionados"
-              icon={loadingExport ? 'pi pi-spin pi-spinner' : 'pi pi-file-excel'}
-              className="p-button-success"
+              icon={loadingExport ? 'pi pi-spin pi-spinner' : 'pi pi-file-pdf'}
+              className="p-button-danger"
               onClick={exportarSelecionados}
               disabled={!selecionados.length || loadingExport}
             />
