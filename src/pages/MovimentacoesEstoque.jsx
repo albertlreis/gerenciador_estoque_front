@@ -35,6 +35,16 @@ const MovimentacoesEstoque = () => {
 
     return parsed[0] && parsed[1] ? parsed : null;
   };
+  const normalizeEstoqueStatus = (rawStatus, legacyZerados) => {
+    const status = typeof rawStatus === 'string' ? rawStatus.trim() : null;
+    if (status === 'com_estoque' || status === 'sem_estoque' || status === 'all') {
+      return status;
+    }
+
+    const legacyValue = typeof legacyZerados === 'string' ? legacyZerados.trim().toLowerCase() : legacyZerados;
+    const legacyParsed = [true, 1, '1', 'true', 'yes', 'on'].includes(legacyValue);
+    return legacyParsed ? 'sem_estoque' : 'all';
+  };
 
   const toast = useRef(null);
   const [searchParams] = useSearchParams();
@@ -98,7 +108,7 @@ const MovimentacoesEstoque = () => {
     fornecedor: null,
     produto: '',
     periodo: null,
-    zerados: false,
+    estoque_status: 'all',
   });
   const filtrosRef = useRef(filtros);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -156,10 +166,17 @@ const MovimentacoesEstoque = () => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
+        const estoqueStatus = normalizeEstoqueStatus(parsed?.estoque_status, parsed?.zerados);
+        const nextFiltros = {
+          ...parsed,
+          estoque_status: estoqueStatus,
+          periodo: toPeriodoDateRange(parsed?.periodo),
+        };
+        delete nextFiltros.zerados;
+
         setFiltros((prev) => ({
           ...prev,
-          ...parsed,
-          periodo: toPeriodoDateRange(parsed?.periodo),
+          ...nextFiltros,
         }));
       } catch {
         localStorage.removeItem(LOCAL_STORAGE_KEY);
@@ -203,9 +220,14 @@ const MovimentacoesEstoque = () => {
     const requestId = ++resumoRequestSeq.current;
     try {
       const formatDate = (d) => d instanceof Date ? d.toISOString().split('T')[0] : null;
+      const estoqueStatus = normalizeEstoqueStatus(
+        filtrosAtuais?.estoque_status,
+        filtrosAtuais?.zerados
+      );
       const filtroParams = {
         ...filtrosAtuais,
-        zerados: filtrosAtuais.zerados ? 1 : 0,
+        estoque_status: estoqueStatus !== 'all' ? estoqueStatus : null,
+        zerados: estoqueStatus === 'sem_estoque' ? 1 : 0,
         periodo:
           filtrosAtuais.periodo?.length === 2 && filtrosAtuais.periodo[1]
             ? [formatDate(filtrosAtuais.periodo[0]), formatDate(filtrosAtuais.periodo[1])]
@@ -246,9 +268,15 @@ const MovimentacoesEstoque = () => {
     try {
       const formatDate = (d) => d instanceof Date ? d.toISOString().split('T')[0] : null;
 
+      const estoqueStatus = normalizeEstoqueStatus(
+        filtrosAtuais?.estoque_status,
+        filtrosAtuais?.zerados
+      );
+
       const filtroParams = {
         ...filtrosAtuais,
-        zerados: filtrosAtuais.zerados ? 1 : 0,
+        estoque_status: estoqueStatus !== 'all' ? estoqueStatus : null,
+        zerados: estoqueStatus === 'sem_estoque' ? 1 : 0,
         periodo: filtrosAtuais.periodo?.length === 2 && filtrosAtuais.periodo[1]
           ? [formatDate(filtrosAtuais.periodo[0]), formatDate(filtrosAtuais.periodo[1])]
           : null,
@@ -340,9 +368,15 @@ const MovimentacoesEstoque = () => {
         d instanceof Date ? d.toISOString().split('T')[0] : null;
       const filtrosAtuais = filtrosRef.current;
 
+      const estoqueStatus = normalizeEstoqueStatus(
+        filtrosAtuais?.estoque_status,
+        filtrosAtuais?.zerados
+      );
+
       const params = {
         ...filtrosAtuais,
-        zerados: filtrosAtuais.zerados ? 1 : 0,
+        estoque_status: estoqueStatus !== 'all' ? estoqueStatus : null,
+        zerados: estoqueStatus === 'sem_estoque' ? 1 : 0,
         periodo:
           filtrosAtuais.periodo?.length === 2 && filtrosAtuais.periodo[1]
             ? [formatDate(filtrosAtuais.periodo[0]), formatDate(filtrosAtuais.periodo[1])]
@@ -558,7 +592,7 @@ const MovimentacoesEstoque = () => {
       fornecedor: null,
       produto: '',
       periodo: null,
-      zerados: false,
+      estoque_status: 'all',
     };
 
     setFiltros(reset);

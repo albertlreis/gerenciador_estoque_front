@@ -239,6 +239,29 @@ describe('MovimentacoesEstoque', () => {
     expect(secondSignal.aborted).toBe(false);
   });
 
+  it('envia estoque_status e zerados conforme selecao', async () => {
+    render(<MovimentacoesEstoque />);
+    await waitFor(() => expect(getCalls('/estoque/atual').length).toBeGreaterThan(0));
+
+    apiEstoque.get.mockClear();
+
+    act(() => {
+      lastFiltroProps.setFiltros({
+        ...lastFiltroProps.filtros,
+        estoque_status: 'com_estoque',
+      });
+    });
+
+    await waitFor(() => expect(lastFiltroProps.filtros.estoque_status).toBe('com_estoque'));
+    fireEvent.click(screen.getByRole('button', { name: 'filtrar' }));
+
+    await waitFor(() => expect(getCalls('/estoque/atual')).toHaveLength(1));
+    const [, config] = getCalls('/estoque/atual')[0];
+
+    expect(config.params.estoque_status).toBe('com_estoque');
+    expect(config.params.zerados).toBe(0);
+  });
+
   it('faz paginação real no modal de movimentações por produto', async () => {
     render(<MovimentacoesEstoque />);
     await waitFor(() => expect(getCalls('/estoque/movimentacoes').length).toBeGreaterThan(0));
