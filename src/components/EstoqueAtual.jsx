@@ -14,6 +14,8 @@ const EstoqueAtual = ({
                         verMovimentacoes,
                         onExportPdf,
                         loadingExportPdf,
+                        onCadastrarOutlet,
+                        podeCadastrarOutlet,
                       }) => {
   const [sortField, setSortField] = useState('produto_nome');
   const [sortOrder, setSortOrder] = useState(1);
@@ -133,12 +135,21 @@ const EstoqueAtual = ({
         <Column
           header="Ações"
           body={(rowData) => (
-            <Button
-              icon="pi pi-eye"
-              tooltip="Ver movimentações"
-              className="p-button-sm"
-              onClick={() => verMovimentacoes(rowData)}
-            />
+            <div className="flex gap-2">
+              <Button
+                icon="pi pi-eye"
+                tooltip="Ver movimentações"
+                className="p-button-sm"
+                onClick={() => verMovimentacoes(rowData)}
+              />
+              <Button
+                icon="pi pi-tag"
+                tooltip="Cadastrar em Outlet"
+                className="p-button-sm p-button-warning"
+                onClick={() => onCadastrarOutlet && onCadastrarOutlet(rowData)}
+                disabled={!podeCadastrarOutlet || !rowData?.variacao_id}
+              />
+            </div>
           )}
         />
       </DataTable>
