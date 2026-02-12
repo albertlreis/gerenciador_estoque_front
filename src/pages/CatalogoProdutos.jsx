@@ -276,6 +276,7 @@ const CatalogoProdutos = () => {
           <OverlayLoading visible={loading && produtos.length === 0} message="Carregando produtos do catálogo...">
             <CatalogoGrid
               produtos={produtos}
+              estoqueStatus={filtros.estoque_status}
               onAdicionarAoCarrinho={handleAdicionarAoCarrinho}
               onEditarProduto={abrirEdicaoProduto}
             />
@@ -302,6 +303,7 @@ const CatalogoProdutos = () => {
 
       <SelecionarVariacaoDialog
         produto={produtoSelecionado}
+        estoqueStatus={filtros.estoque_status}
         visible={dialogVariacaoVisible}
         onHide={() => setDialogVariacaoVisible(false)}
         variacaoSelecionada={variacaoSelecionada}
