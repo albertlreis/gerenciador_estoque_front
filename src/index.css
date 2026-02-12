@@ -97,6 +97,15 @@ textarea.p-inputtextarea {
   cursor: pointer;
 }
 
+.layout-sidebar .p-menuitem-link.menu-item-active {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+}
+
+.layout-sidebar .p-menuitem-link.menu-item-active .p-menuitem-icon {
+  color: #1d4ed8;
+}
+
 /* Ícones do menu */
 .layout-sidebar .p-menuitem-icon {
   font-size: 1.2rem;

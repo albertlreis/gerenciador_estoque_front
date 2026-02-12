@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useEffect, useCallback, useMemo } from 'react';
 import { PanelMenu } from 'primereact/panelmenu';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useMenuState } from '../context/MenuStateContext';
 import usePermissions from '../hooks/usePermissions';
 import Topbar from './Topbar';
 import menuItems from '../utils/menuItems';
+import { findMenuPathByRoute, hasActiveRoute, mergeExpandedKeys } from '../utils/menuState';
 
 /**
  * Layout principal da aplicacao com menu lateral e topbar.
@@ -14,56 +16,41 @@ const SakaiLayout = ({ children, defaultSidebarCollapsed = false }) => {
   const location = useLocation();
   const { user, logout } = useAuth();
   const { has } = usePermissions();
-
-  const [expandedKeys, setExpandedKeys] = useState({});
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(defaultSidebarCollapsed);
-
-  const userHasToggled = useRef(false);
+  const {
+    expandedKeys,
+    setExpandedKeys,
+    isSidebarCollapsed,
+    setIsSidebarCollapsed,
+    toggleSidebar,
+    setLastActivePath,
+    hasStoredState,
+  } = useMenuState();
 
   useEffect(() => {
-    if (userHasToggled.current) return;
-
-    const path = location.pathname;
-
-    if (
-      path.startsWith('/acessos') ||
-      path.startsWith('/usuarios') ||
-      path.startsWith('/perfis') ||
-      path.startsWith('/permissoes') ||
-      path.startsWith('/categorias') ||
-      path.startsWith('/fornecedores') ||
-      path.startsWith('/parceiros')
-    ) {
-      setExpandedKeys({ administracao: true });
-    } else if (
-      path.startsWith('/catalogo') ||
-      path.startsWith('/produtos')
-    ) {
-      setExpandedKeys({ produtos: true });
-    } else if (
-      path.startsWith('/depositos') ||
-      path.startsWith('/movimentacoes-estoque') ||
-      path.startsWith('/reservas')
-    ) {
-      setExpandedKeys({ estoque: true });
-    } else if (
-      path.startsWith('/pedidos') ||
-      path.startsWith('/consignacoes') ||
-      path.startsWith('/pedidos-fabrica')
-    ) {
-      setExpandedKeys({ pedidos: true });
-    } else {
-      setExpandedKeys({});
+    if (!hasStoredState && defaultSidebarCollapsed) {
+      setIsSidebarCollapsed(true);
     }
-  }, [location]);
+  }, [defaultSidebarCollapsed, hasStoredState, setIsSidebarCollapsed]);
 
-  const toggleSidebar = () => {
-    setIsSidebarCollapsed((prev) => !prev);
-  };
+  const menuModel = useMemo(() => menuItems(has), [has]);
+
+  useEffect(() => {
+    const menuPath = findMenuPathByRoute(menuModel, location.pathname);
+    if (menuPath.length > 1) {
+      const parentKeys = menuPath.slice(0, -1);
+      setExpandedKeys((current) => mergeExpandedKeys(current, parentKeys));
+    }
+    setLastActivePath(location.pathname);
+  }, [location.pathname, menuModel, setExpandedKeys, setLastActivePath]);
 
   const handleLogout = () => {
     logout();
   };
+
+  const getItemClassName = useCallback((item, options) => {
+    const active = hasActiveRoute(item, location.pathname);
+    return `${options.className || ''}${active ? ' menu-item-active' : ''}`;
+  }, [location.pathname]);
 
   const sharedItemTemplate = useCallback((item, options) => {
     const hasSubmenu = Array.isArray(item.items) && item.items.length > 0;
@@ -71,6 +58,7 @@ const SakaiLayout = ({ children, defaultSidebarCollapsed = false }) => {
     const href = item.url || item.to || '#';
     const target = item.target || (isExternalUrl ? '_blank' : undefined);
     const opensInNewTab = target === '_blank';
+    const itemClassName = getItemClassName(item, options);
 
     if (hasSubmenu) {
       return (
@@ -78,7 +66,7 @@ const SakaiLayout = ({ children, defaultSidebarCollapsed = false }) => {
           onClick={options.onClick}
           onKeyDown={options.onKeyDown}
           tabIndex={options.tabIndex}
-          className={options.className}
+          className={itemClassName}
           title={isSidebarCollapsed ? item.label : undefined}
           style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8 }}
         >
@@ -96,7 +84,7 @@ const SakaiLayout = ({ children, defaultSidebarCollapsed = false }) => {
           onClick={options.onClick}
           onKeyDown={options.onKeyDown}
           tabIndex={options.tabIndex}
-          className={options.className}
+          className={itemClassName}
           title={isSidebarCollapsed ? item.label : undefined}
           style={{
             position: 'relative',
@@ -137,7 +125,7 @@ const SakaiLayout = ({ children, defaultSidebarCollapsed = false }) => {
         onClick={handleLinkClick}
         onKeyDown={options.onKeyDown}
         tabIndex={options.tabIndex}
-        className={options.className}
+        className={itemClassName}
         title={isSidebarCollapsed ? item.label : undefined}
         style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}
       >
@@ -145,7 +133,7 @@ const SakaiLayout = ({ children, defaultSidebarCollapsed = false }) => {
         <span className="p-menuitem-text">{item.label}</span>
       </a>
     );
-  }, [isSidebarCollapsed, navigate]);
+  }, [getItemClassName, isSidebarCollapsed, navigate]);
 
   const applyTemplate = useCallback((items) => {
     return (items || []).map((it) => {
@@ -159,7 +147,7 @@ const SakaiLayout = ({ children, defaultSidebarCollapsed = false }) => {
     });
   }, [sharedItemTemplate]);
 
-  const sidebarItems = useMemo(() => applyTemplate(menuItems(has)), [applyTemplate, has]);
+  const sidebarItems = useMemo(() => applyTemplate(menuModel), [applyTemplate, menuModel]);
 
   return (
     <div
@@ -178,10 +166,7 @@ const SakaiLayout = ({ children, defaultSidebarCollapsed = false }) => {
             model={sidebarItems}
             style={{ width: '100%' }}
             expandedKeys={expandedKeys}
-            onExpandedKeysChange={(e) => {
-              userHasToggled.current = true;
-              setExpandedKeys(e.value);
-            }}
+            onExpandedKeysChange={(e) => setExpandedKeys(e.value)}
             multiple
           />
         </div>
