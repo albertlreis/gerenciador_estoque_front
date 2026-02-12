@@ -61,6 +61,7 @@ export const PERMISSOES = {
     CRIAR: 'pedidos.criar',
     EDITAR: 'pedidos.editar',
     EXCLUIR: 'pedidos.excluir',
+    VER_CUSTO: 'pedidos.ver_custo',
     EXPORTAR_PDF: 'pedidos.exportar_pdf',
     IMPORTAR: 'pedidos.importar_pdf',
     ENVIAR_WHATSAPP: 'pedidos.enviar_whatsapp',

@@ -5,6 +5,8 @@ import { Timeline } from 'primereact/timeline';
 import { Button } from 'primereact/button';
 import { formatarReal } from '../utils/formatters';
 import { STATUS_MAP } from '../constants/statusPedido';
+import usePermissions from '../hooks/usePermissions';
+import { PERMISSOES } from '../constants/permissoes';
 
 const severityEntrega = (diasUteisRestantes, atrasado) => {
   if (atrasado) return 'danger';
@@ -17,7 +19,14 @@ const isEstadoFinal = (status) =>
   ['entrega_cliente', 'finalizado', 'consignado', 'devolucao_consignacao'].includes(status ?? '');
 
 const PedidoDetalhado = ({ visible, onHide, pedido }) => {
+  const { has } = usePermissions();
   if (!pedido) return null;
+  const podeVerCusto = has([
+    PERMISSOES.PEDIDOS.VER_CUSTO,
+    PERMISSOES.PRODUTOS.GERENCIAR,
+    PERMISSOES.ESTOQUE.MOVIMENTACAO,
+    PERMISSOES.ESTOQUE.MOVIMENTAR,
+  ]);
 
   const status = STATUS_MAP[pedido.status] ?? { label: pedido.status };
   const dataPedido = pedido.data_pedido ? new Date(pedido.data_pedido).toLocaleDateString('pt-BR') : '—';
@@ -40,6 +49,9 @@ const PedidoDetalhado = ({ visible, onHide, pedido }) => {
     ? pedido.itens.reduce((s, i) => s + (Number(i.quantidade) || 0), 0)
     : 0;
   const totalPedido = pedido.valor_total;
+  const totalCustoPedido = Array.isArray(pedido.itens)
+    ? pedido.itens.reduce((s, i) => s + Number(i.total_custo ?? 0), 0)
+    : 0;
 
   const badgeEstadoFinal = () => {
     const map = {
@@ -204,7 +216,12 @@ const PedidoDetalhado = ({ visible, onHide, pedido }) => {
 
                   <div className="text-sm">
                     Qtde: <strong>{item.quantidade}</strong> <br />
-                    Unitário: <strong>{formatarReal(item.preco_unitario)}</strong> <br />
+                    {podeVerCusto && item.preco_custo !== undefined && (
+                      <>
+                        Preço de custo: <strong>{formatarReal(item.preco_custo)}</strong> <br />
+                      </>
+                    )}
+                    Preço de venda: <strong>{formatarReal(item.preco_venda ?? item.preco_unitario)}</strong> <br />
                     Subtotal: <strong>{formatarReal(item.subtotal)}</strong>
                   </div>
                 </div>
@@ -218,6 +235,11 @@ const PedidoDetalhado = ({ visible, onHide, pedido }) => {
                   <div className="text-sm text-gray-600">
                     Produtos: {produtosCount} • Itens: {itensCount}
                   </div>
+                  {podeVerCusto && totalCustoPedido > 0 && (
+                    <div className="text-sm text-gray-600">
+                      Total de custo: {formatarReal(totalCustoPedido)}
+                    </div>
+                  )}
                   <div className="text-xl font-bold text-gray-800">
                     Total do Pedido: {formatarReal(totalPedido)}
                   </div>
