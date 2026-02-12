@@ -14,8 +14,9 @@ export default function ProdutoImportadoListItem({
                                                    onRemove,
                                                  }) {
   const quantidade = Number(item.quantidade) || 0;
-  const totalItem = Number(item.preco_unitario) || 0;
-  const valorUnitario = quantidade > 0 ? totalItem / quantidade : 0;
+  const custoUnitario = Number(item.custo_unitario ?? item.preco_unitario ?? 0) || 0;
+  const valorUnitario = Number(item.valor ?? item.preco_unitario ?? 0) || 0;
+  const totalItem = valorUnitario * quantidade;
 
   const totalFormatado = totalItem.toLocaleString('pt-BR', {
     style: 'currency',
@@ -89,16 +90,26 @@ export default function ProdutoImportadoListItem({
         </div>
 
         <div className="col-12 md:col-3">
-          <label className="block text-xs mb-1">Valor unitário</label>
+          <label className="block text-xs mb-1">Custo unitário</label>
+          <InputNumber
+            value={custoUnitario}
+            mode="currency"
+            currency="BRL"
+            locale="pt-BR"
+            onValueChange={(e) => onChangeItem(index, 'custo_unitario', e.value ?? 0)}
+            className="w-full p-inputtext-sm"
+          />
+        </div>
+
+        <div className="col-12 md:col-3">
+          <label className="block text-xs mb-1">Preço de venda</label>
           <InputNumber
             value={valorUnitario}
             mode="currency"
             currency="BRL"
             locale="pt-BR"
             onValueChange={(e) => {
-              const novoUnitario = e.value || 0;
-              const novoTotal = novoUnitario * quantidade;
-              onChangeItem(index, 'valor', Number(novoTotal.toFixed(2)));
+              onChangeItem(index, 'valor', e.value ?? 0);
             }}
             className="w-full p-inputtext-sm"
           />
