@@ -18,6 +18,7 @@ import { usePedidosFiltros } from '../hooks/relatorios/usePedidosFiltros';
 import { formatarReal, formatarDataParaISO } from '../utils/formatters';
 import { STATUS_MAP } from '../constants/statusPedido';
 import api from '../services/apiEstoque';
+import AuthApi from '../api/authApi';
 import { formatarDataIsoParaBR } from "../utils/formatarData";
 import ColumnSelector from "../components/ColumnSelector";
 import DialogDevolucao from "../components/DialogDevolucao";
@@ -51,6 +52,7 @@ export default function PedidosListagem() {
   const [exibirDialogEdicao, setExibirDialogEdicao] = useState(false);
   const [loadingEdicao, setLoadingEdicao] = useState(false);
   const [depositos, setDepositos] = useState([]);
+  const [vendedoresExtras, setVendedoresExtras] = useState([]);
   const [pedidoParaDevolucao, setPedidoParaDevolucao] = useState(null);
   const [detalhesVisivel, setDetalhesVisivel] = useState(false);
   const [loadingDetalhes, setLoadingDetalhes] = useState(false);
@@ -65,6 +67,16 @@ export default function PedidosListagem() {
     enabled: exibirDialogEdicao,
     toastRef: toast,
   });
+
+  const vendedoresDisponiveis = useMemo(() => {
+    const map = new Map();
+    [...(vendedoresOpts || []), ...(vendedoresExtras || [])].forEach((v) => {
+      if (!v || v.value === undefined || v.value === null) return;
+      const key = Number(v.value);
+      if (!map.has(key)) map.set(key, v);
+    });
+    return Array.from(map.values());
+  }, [vendedoresOpts, vendedoresExtras]);
 
   const isEstadoFinal = (status) => (
     ['entrega_cliente','finalizado','consignado','devolucao_consignacao'].includes(status ?? '')
@@ -169,6 +181,45 @@ export default function PedidosListagem() {
       alive = false;
     };
   }, [exibirDialogEdicao]);
+
+  useEffect(() => {
+    if (!exibirDialogEdicao || !podeSelecionarVendedor) return;
+
+    const vendedorId = pedidoEmEdicao?.id_usuario;
+    if (!vendedorId) return;
+
+    const existe = vendedoresDisponiveis.some((v) => Number(v.value) === Number(vendedorId));
+    if (existe) return;
+
+    let alive = true;
+    (async () => {
+      try {
+        const { data } = await AuthApi.usuarios.buscar(vendedorId);
+        const usuario = data?.data ?? data;
+        if (!alive || !usuario?.id) return;
+
+        setVendedoresExtras((prev) => {
+          const jaExiste = prev.some((v) => Number(v.value) === Number(usuario.id));
+          if (jaExiste) return prev;
+          return [
+            ...prev,
+            { label: usuario.nome ?? usuario.email ?? `Vendedor #${usuario.id}`, value: usuario.id },
+          ];
+        });
+      } catch (err) {
+        if (!alive) return;
+        toast.current?.show({
+          severity: 'warn',
+          summary: 'Vendedor',
+          detail: 'Nao foi possivel carregar o vendedor atual.',
+        });
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, [exibirDialogEdicao, podeSelecionarVendedor, pedidoEmEdicao?.id_usuario, vendedoresDisponiveis]);
 
   useEffect(() => {
     const listener = (e) => setPedidoParaDevolucao(e.detail);
@@ -377,7 +428,7 @@ export default function PedidosListagem() {
             initialData={pedidoEmEdicao || {}}
             clientes={clientesOpts}
             parceiros={parceirosOpts}
-            vendedores={vendedoresOpts}
+            vendedores={vendedoresDisponiveis}
             depositos={depositosOpts}
             permitirSelecionarVendedor={podeSelecionarVendedor}
             onSubmit={salvarPedidoEdicao}
