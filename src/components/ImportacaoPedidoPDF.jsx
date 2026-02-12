@@ -426,6 +426,9 @@ export default function ImportacaoPedidoPDF() {
         pedido: pedidoPayload,
         itens: itens.map((item) => ({
           ...item,
+          custo_unitario:
+            Number(item.custo_unitario ?? item.preco_unitario ?? 0) ||
+            Number(item.valor ?? 0),
           descricao: item.descricao,
           id_variacao: item.id_variacao ?? null,
           produto_id: item.produto_id ?? null,
