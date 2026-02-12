@@ -9,6 +9,7 @@ import { confirmDialog, ConfirmDialog } from 'primereact/confirmdialog';
 import { Dialog } from 'primereact/dialog';
 import { Dropdown } from 'primereact/dropdown';
 import { Checkbox } from 'primereact/checkbox';
+import { InputNumber } from 'primereact/inputnumber';
 
 import apiEstoque from '../services/apiEstoque';
 import apiAuth from '../services/apiAuth';
@@ -38,16 +39,41 @@ function mesclarProdutosRepetidos(itens) {
     } else {
       const qtdAtual = Number(mapa[ref].quantidade || 0);
       const qtdNova = Number(item.quantidade || 0);
-      const valAtual = Number(mapa[ref].valor || 0);
-      const valNovo = Number(item.valor || 0);
+      const novaQuantidade = qtdAtual + qtdNova;
+      const custoAtual = Number(mapa[ref].custo_unitario ?? 0);
+      const custoNovo = Number(item.custo_unitario ?? 0);
+      const vendaAtual = Number(mapa[ref].valor ?? mapa[ref].preco_unitario ?? 0);
+      const vendaNova = Number(item.valor ?? item.preco_unitario ?? 0);
 
-      mapa[ref].quantidade = qtdAtual + qtdNova;
-      mapa[ref].valor = valAtual + valNovo;
+      mapa[ref].quantidade = novaQuantidade;
+      mapa[ref].custo_unitario =
+        novaQuantidade > 0
+          ? Number(((custoAtual * qtdAtual + custoNovo * qtdNova) / novaQuantidade).toFixed(2))
+          : 0;
+      mapa[ref].valor =
+        novaQuantidade > 0
+          ? Number(((vendaAtual * qtdAtual + vendaNova * qtdNova) / novaQuantidade).toFixed(2))
+          : 0;
+      mapa[ref].preco_unitario = mapa[ref].valor;
     }
   });
 
   return Object.values(mapa);
 }
+
+const toNumber = (value) => {
+  if (value === null || value === undefined || value === '') return 0;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const roundCurrency = (value) => Number(toNumber(value).toFixed(2));
+
+const calcularVendaPorMargem = (custoUnitario, percentual) => {
+  const custo = toNumber(custoUnitario);
+  const margem = toNumber(percentual);
+  return roundCurrency(custo * (1 + margem / 100));
+};
 
 /**
  * Componente responsável pela importação de pedidos via PDF.
@@ -75,6 +101,7 @@ export default function ImportacaoPedidoPDF() {
   const [abrirPedidoFabrica, setAbrirPedidoFabrica] = useState(false);
   const [itensParaFabrica, setItensParaFabrica] = useState([]);
   const [pedidoSalvoId, setPedidoSalvoId] = useState(null);
+  const [percentualVenda, setPercentualVenda] = useState(0);
 
   // seleção em lote de produtos
   const [itensSelecionados, setItensSelecionados] = useState([]);
@@ -152,12 +179,33 @@ export default function ImportacaoPedidoPDF() {
       // ITENS (normaliza + mescla refs iguais)
       // ================================
       const itensNormalizadosBase = (payload.itens || []).map((item) => ({
+        quantidade: toNumber(item.quantidade ?? 0),
+        custo_unitario: roundCurrency(
+          item.custo_unitario ??
+            item.preco_unitario ??
+            (toNumber(item.valor_total ?? 0) > 0 && toNumber(item.quantidade ?? 0) > 0
+              ? toNumber(item.valor_total) / toNumber(item.quantidade)
+              : item.valor ?? 0),
+        ),
         ref: item.ref || item.codigo || '',
         nome: item.nome || item.descricao || '',
         nome_completo: item.nome_completo || '',
-        quantidade: Number(item.quantidade ?? 0),
-        valor: Number(item.valor_total ?? item.valor ?? 0),
-        preco_unitario: Number(item.preco_unitario ?? 0),
+        valor: roundCurrency(
+          item.valor ??
+            item.preco_venda ??
+            item.preco_unitario ??
+            (toNumber(item.valor_total ?? 0) > 0 && toNumber(item.quantidade ?? 0) > 0
+              ? toNumber(item.valor_total) / toNumber(item.quantidade)
+              : 0),
+        ),
+        preco_unitario: roundCurrency(
+          item.valor ??
+            item.preco_venda ??
+            item.preco_unitario ??
+            (toNumber(item.valor_total ?? 0) > 0 && toNumber(item.quantidade ?? 0) > 0
+              ? toNumber(item.valor_total) / toNumber(item.quantidade)
+              : 0),
+        ),
         unidade: item.unidade || 'PC',
 
         id_categoria: item.id_categoria ?? null,
@@ -186,6 +234,7 @@ export default function ImportacaoPedidoPDF() {
       setClienteSelecionadoId(null);
       setPedido(pedidoNormalizado);
       setItens(itensNormalizados);
+      setPercentualVenda(0);
       setItensSelecionados([]);
       setUploadStatus('done');
       setImportacaoId(response.data?.importacao_id ?? null);
@@ -232,9 +281,38 @@ export default function ImportacaoPedidoPDF() {
   const onChangeItem = (index, field, value) => {
     setItens((prev) => {
       const novos = [...prev];
-      novos[index] = { ...novos[index], [field]: value };
+      const itemAtual = { ...novos[index], [field]: value };
+
+      if (field === 'valor' || field === 'preco_unitario') {
+        const precoVenda = roundCurrency(value);
+        itemAtual.valor = precoVenda;
+        itemAtual.preco_unitario = precoVenda;
+      }
+
+      if (field === 'custo_unitario') {
+        itemAtual.custo_unitario = roundCurrency(value);
+      }
+
+      novos[index] = itemAtual;
       return novos;
     });
+  };
+
+  const aplicarPercentualVendaTodosItens = () => {
+    const percentual = toNumber(percentualVenda);
+    setItens((prev) =>
+      prev.map((item) => {
+        const custoUnit = roundCurrency(item.custo_unitario ?? item.preco_unitario ?? item.valor ?? 0);
+        const precoVenda = calcularVendaPorMargem(custoUnit, percentual);
+
+        return {
+          ...item,
+          custo_unitario: custoUnit,
+          valor: precoVenda,
+          preco_unitario: precoVenda,
+        };
+      }),
+    );
   };
 
   /**
@@ -285,6 +363,7 @@ export default function ImportacaoPedidoPDF() {
           quantidade: 1,
           valor: 0,
           preco_unitario: 0,
+          custo_unitario: 0,
           unidade: 'PC',
           id_categoria: null,
           produto_id: null,
@@ -306,7 +385,6 @@ export default function ImportacaoPedidoPDF() {
 
   /** Remover item (qualquer item) */
   const removerItem = (index) => {
-    console.log(index)
     setItens((prev) => prev.filter((_, idx) => idx !== index));
 
     setItensSelecionados((prev) =>
@@ -374,6 +452,7 @@ export default function ImportacaoPedidoPDF() {
     setItensParaFabrica([]);
     setAbrirPedidoFabrica(false);
     setImportacaoId(null);
+    setPercentualVenda(0);
   };
 
   const confirmarRemocaoArquivo = () => {
@@ -426,9 +505,9 @@ export default function ImportacaoPedidoPDF() {
         pedido: pedidoPayload,
         itens: itens.map((item) => ({
           ...item,
-          custo_unitario:
-            Number(item.custo_unitario ?? item.preco_unitario ?? 0) ||
-            Number(item.valor ?? 0),
+          valor: roundCurrency(item.valor ?? item.preco_unitario ?? 0),
+          preco_unitario: roundCurrency(item.preco_unitario ?? item.valor ?? 0),
+          custo_unitario: roundCurrency(item.custo_unitario ?? item.preco_unitario ?? item.valor ?? 0),
           descricao: item.descricao,
           id_variacao: item.id_variacao ?? null,
           produto_id: item.produto_id ?? null,
@@ -672,6 +751,26 @@ export default function ImportacaoPedidoPDF() {
                   icon="pi pi-share-alt"
                   className="p-button-sm"
                   onClick={aplicarDepositoLote}
+                />
+              </div>
+
+              <div className="flex align-items-center gap-2">
+                <span className="text-sm">% venda sobre custo:</span>
+                <InputNumber
+                  value={percentualVenda}
+                  onValueChange={(e) => setPercentualVenda(e.value ?? 0)}
+                  min={0}
+                  max={1000}
+                  suffix="%"
+                  className="w-10rem p-inputtext-sm"
+                />
+                <Button
+                  type="button"
+                  label="Aplicar %"
+                  icon="pi pi-percentage"
+                  className="p-button-sm p-button-help"
+                  onClick={aplicarPercentualVendaTodosItens}
+                  disabled={itens.length === 0}
                 />
               </div>
 
