@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '../services/apiEstoque';
 import { formatarFiltrosParaEnvio } from '../utils/formatarFiltrosParaEnvio';
+import { getQuantidadeDisponivelVariacao } from '../utils/estoqueVariacao';
 
 export const useCatalogoProdutos = (filtros) => {
   const [produtos, setProdutos] = useState([]);
@@ -8,6 +9,19 @@ export const useCatalogoProdutos = (filtros) => {
   const [temMais, setTemMais] = useState(true);
   const [loading, setLoading] = useState(false);
   const sentinelaRef = useRef(null);
+
+  const aplicarFiltroDeVariacoesComEstoque = (lista = []) => {
+    if (filtros?.estoque_status !== 'com_estoque') return lista;
+
+    return (lista || [])
+      .map((produto) => ({
+        ...produto,
+        variacoes: (produto?.variacoes || []).filter(
+          (variacao) => getQuantidadeDisponivelVariacao(variacao) > 0
+        ),
+      }))
+      .filter((produto) => (produto?.variacoes || []).length > 0);
+  };
 
   const fetchProdutos = async (append = false, pageOverride = null) => {
     setLoading(true);
@@ -17,7 +31,7 @@ export const useCatalogoProdutos = (filtros) => {
         params: { ...formatarFiltrosParaEnvio(filtros), page, per_page: 20 }
       });
 
-      const novos = response.data.data || [];
+      const novos = aplicarFiltroDeVariacoesComEstoque(response.data.data || []);
       setProdutos((prev) => (append && page > 1 ? [...prev, ...novos] : novos));
       const meta = response.data.meta || {};
       setTemMais((meta.current_page || 1) < (meta.last_page || 1));

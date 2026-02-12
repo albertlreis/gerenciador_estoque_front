@@ -18,6 +18,7 @@ import { useCatalogoProdutos } from '../hooks/useCatalogoProdutos';
 import usePermissions from '../hooks/usePermissions';
 import { PERMISSOES } from '../constants/permissoes';
 import { normalizarProdutoPayload } from '../utils/normalizarProdutoPayload';
+import { getQuantidadeDisponivelVariacao } from '../utils/estoqueVariacao';
 import api from '../services/apiEstoque';
 
 const filtrosIniciais = {
@@ -102,6 +103,17 @@ const CatalogoProdutos = () => {
   };
 
   const confirmarVariacao = () => {
+    const quantidadeDisponivel = getQuantidadeDisponivelVariacao(variacaoSelecionada);
+    if (quantidadeDisponivel <= 0) {
+      toast.current?.show({
+        severity: 'warn',
+        summary: 'Sem estoque',
+        detail: 'Esta variação está esgotada no momento.',
+        life: 3000,
+      });
+      return;
+    }
+
     const precoBase = Number(variacaoSelecionada.preco);
     const outlet = variacaoSelecionada.outletSelecionado;
     const desconto = outlet ? outlet.percentual_desconto : 0;

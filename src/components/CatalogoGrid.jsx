@@ -5,14 +5,11 @@ import { Divider } from 'primereact/divider';
 import { Tag } from 'primereact/tag';
 import formatarPreco from '../utils/formatarPreco';
 import getImageSrc from '../utils/getImageSrc';
+import { getQuantidadeDisponivelVariacao } from '../utils/estoqueVariacao';
 
 // ✅ precisa estar no escopo do módulo (usado em mais de um lugar)
 const estoqueDaVariacao = (v) => {
-  if (!v) return 0;
-  if (typeof v.estoque_total === 'number') return v.estoque_total;
-  if (v.estoque && typeof v.estoque.quantidade === 'number') return v.estoque.quantidade;
-  if (Array.isArray(v.estoques)) return v.estoques.reduce((s, e) => s + Number(e.quantidade || 0), 0);
-  return 0;
+  return getQuantidadeDisponivelVariacao(v);
 };
 
 const resumirDepositos = (variacoes) => {

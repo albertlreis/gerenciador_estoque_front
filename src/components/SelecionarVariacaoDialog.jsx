@@ -4,6 +4,7 @@ import { Button } from 'primereact/button';
 import { Tag } from 'primereact/tag';
 import formatarPreco from '../utils/formatarPreco';
 import getImageSrc from "../utils/getImageSrc";
+import { getQuantidadeDisponivelVariacao, isVariacaoDisponivel } from '../utils/estoqueVariacao';
 
 const SelecionarVariacaoDialog = ({
                                     produto,
@@ -20,6 +21,7 @@ const SelecionarVariacaoDialog = ({
 
   const motivoLegivel = (motivo) =>
     motivo.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  const variacaoSelecionadaDisponivel = isVariacaoDisponivel(variacaoSelecionada);
 
   return (
     <Dialog
@@ -36,7 +38,7 @@ const SelecionarVariacaoDialog = ({
           <Button
             label="Adicionar ao Carrinho"
             icon="pi pi-check"
-            disabled={!variacaoSelecionada}
+            disabled={!variacaoSelecionada || !variacaoSelecionadaDisponivel}
             className="p-button-primary"
             onClick={onAdicionar}
           />
@@ -47,7 +49,7 @@ const SelecionarVariacaoDialog = ({
         {/* Imagem do Produto */}
         <div className="col-12 md:col-3 flex justify-content-center align-items-start mb-4 p-0">
           <img
-            src={produto.imagem_principal ?? 'https://placehold.co/500x300?text=Sem+Imagem'}
+            src={produto.imagem_principal ? getImageSrc(produto.imagem_principal) : 'https://placehold.co/500x300?text=Sem+Imagem'}
             alt={produto.nome}
             style={{ maxWidth: '100%', borderRadius: '4px' }}
           />
@@ -65,7 +67,8 @@ const SelecionarVariacaoDialog = ({
                 const nome = attr.atributo?.toUpperCase();
                 if (nome) atributos.set(nome, attr.valor?.toUpperCase());
               });
-              const estoqueQtd = variacao?.estoque?.quantidade ?? 0;
+              const estoqueQtd = getQuantidadeDisponivelVariacao(variacao);
+              const semEstoque = estoqueQtd <= 0;
 
               return (
                 <div key={variacao.id} className="w-full md:w-6 lg:w-6 xl:w-6 p-2">
@@ -90,7 +93,7 @@ const SelecionarVariacaoDialog = ({
                         <span className="text-green-700 font-bold text-sm">
                           Preço: {formatarPreco(preco)}
                         </span>
-                        <span className="text-xs">{estoqueQtd > 0 ? `Estoque: ${estoqueQtd}` : 'Esgotado'}</span>
+                        <span className="text-xs">{semEstoque ? 'Esgotado' : `Disponível: ${estoqueQtd}`}</span>
                       </div>
 
                       {/* OUTLETS */}
@@ -125,6 +128,7 @@ const SelecionarVariacaoDialog = ({
                                       label="Selecionar"
                                       icon="pi pi-cart-plus"
                                       className={`p-button-sm ${selecionado ? 'p-button-warning' : 'p-button-success'}`}
+                                      disabled={semEstoque}
                                       onClick={() =>
                                         setVariacaoSelecionada({...variacao, outletSelecionado: outlet})
                                       }
@@ -148,6 +152,7 @@ const SelecionarVariacaoDialog = ({
                           label="Selecionar Preço Normal"
                           icon="pi pi-money-bill"
                           className={`p-button-sm ${isSelecionada && !outletSelecionado ? 'p-button-info' : 'p-button-secondary'}`}
+                          disabled={semEstoque}
                           onClick={() => setVariacaoSelecionada({...variacao, outletSelecionado: null})}
                         />
                       ) : (
@@ -155,6 +160,7 @@ const SelecionarVariacaoDialog = ({
                           label="Selecionar"
                           icon="pi pi-cart-plus"
                           className={`p-button-sm ${isSelecionada ? 'p-button-info' : 'p-button-secondary'}`}
+                          disabled={semEstoque}
                           onClick={() => setVariacaoSelecionada({...variacao, outletSelecionado: null})}
                         />
                       )}
