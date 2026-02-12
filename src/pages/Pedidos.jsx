@@ -90,6 +90,33 @@ export default function PedidosListagem() {
   };
 
   const situacaoEntregaBody = (row) => {
+    const situacaoEntrega = row.situacao_entrega;
+
+    if (situacaoEntrega) {
+      const diasAtraso = Number(row.dias_atraso ?? 0);
+
+      if (situacaoEntrega === 'Entregue') {
+        return <Tag value="Entregue" icon="pi pi-check-circle" severity="success" className="text-xs" rounded />;
+      }
+
+      if (situacaoEntrega === 'Cancelado') {
+        return <Tag value="Cancelado" icon="pi pi-times-circle" severity="danger" className="text-xs" rounded />;
+      }
+
+      if (situacaoEntrega === 'Atrasado') {
+        const label = diasAtraso > 0 ? `Atrasado (${diasAtraso} dia(s))` : 'Atrasado';
+        return <Tag value={label} icon="pi pi-exclamation-triangle" severity="danger" className="text-xs" rounded />;
+      }
+
+      if (situacaoEntrega === 'Entrega hoje') {
+        return <Tag value="Entrega hoje" icon="pi pi-clock" severity="warning" className="text-xs" rounded />;
+      }
+
+      if (situacaoEntrega === 'No prazo') {
+        return <Tag value="No prazo" icon="pi pi-check" severity="info" className="text-xs" rounded />;
+      }
+    }
+
     // Se o backend considerar que não conta prazo, virá null/false; render tratada aqui
     const d = row.dias_uteis_restantes;
     const atrasado = row.atrasado_entrega;
@@ -125,8 +152,10 @@ export default function PedidosListagem() {
     );
   };
 
-  const entregaPrevistaBody = (row) =>
-    row.data_limite_entrega ? formatarDataIsoParaBR(row.data_limite_entrega) : (isEstadoFinal(row.status) ? '—' : '—');
+  const entregaPrevistaBody = (row) => {
+    const dataEntregaPrevista = row.entrega_prevista || row.data_limite_entrega;
+    return dataEntregaPrevista ? formatarDataIsoParaBR(dataEntregaPrevista) : '—';
+  };
 
   const prazoBody = (row) => row.prazo_dias_uteis ?? 60;
 
@@ -145,8 +174,8 @@ export default function PedidosListagem() {
     { field: 'status', header: 'Status', body: (row) => statusTemplate(row) },
     { field: 'data_ultimo_status', header: 'Última Atualização', body: (row) => dataStatusBody(row) },
     { field: 'prazo_dias_uteis', header: 'Prazo (úteis)', body: prazoBody },
-    { field: 'data_limite_entrega', header: 'Entrega prevista', body: entregaPrevistaBody },
-    { field: 'dias_uteis_restantes', header: 'Situação da entrega', body: situacaoEntregaBody },
+    { field: 'entrega_prevista', header: 'Entrega prevista', body: entregaPrevistaBody },
+    { field: 'situacao_entrega', header: 'Situação da entrega', body: situacaoEntregaBody },
   ], []);
 
   const [colunasVisiveis, setColunasVisiveis] = useState(colunasDisponiveis);
@@ -469,7 +498,7 @@ export default function PedidosListagem() {
           emptyMessage="Nenhum pedido encontrado."
           scrollable
           responsiveLayout="scroll"
-          rowClassName={(row) => (row.dias_uteis_restantes !== null && row.atrasado_entrega) ? 'linha-atrasada' : ''}
+          rowClassName={(row) => (row.situacao_entrega === 'Atrasado' || (row.dias_uteis_restantes !== null && row.atrasado_entrega)) ? 'linha-atrasada' : ''}
           className="text-sm"
           size="small"
         >
