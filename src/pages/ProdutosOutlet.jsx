@@ -163,19 +163,145 @@ const ProdutosOutlet = () => {
       .filter(Boolean);
 
     const uniq = Array.from(new Set(refs));
-    return uniq.length ? uniq.join(', ') : '�';
+    return uniq.length ? uniq.join(', ') : '-';
   };
 
-  const categoriaBody = (row) => row?.categoria?.nome || row?.categoria || '�';
+  const categoriaBody = (row) => row?.categoria?.nome || row?.categoria || '-';
 
-  const precoBody = (row) => {
-    const precos = (row.variacoes || [])
-      .map((v) => v?.preco)
-      .filter((v) => v !== null && v !== undefined);
+  const calcularOfertaFallback = (row) => {
+    const variacoes = Array.isArray(row?.variacoes) ? row.variacoes : [];
 
-    if (!precos.length) return '�';
-    const min = Math.min(...precos.map(Number));
-    return formatarPreco(min);
+    const ofertas = variacoes
+      .map((variacao) => {
+        const precoVenda = Number(variacao?.preco ?? 0);
+        if (precoVenda <= 0) return null;
+
+        const outletsAtivos = Array.isArray(variacao?.outlets)
+          ? variacao.outlets.filter((outlet) => Number(outlet?.quantidade_restante ?? 0) > 0)
+          : [];
+
+        const condicoes = outletsAtivos
+          .flatMap((outlet) => (Array.isArray(outlet?.formas_pagamento) ? outlet.formas_pagamento : []))
+          .map((forma) => {
+            const nome = forma?.forma_pagamento?.nome || null;
+            const maxParcelas = forma?.max_parcelas ?? forma?.forma_pagamento?.max_parcelas_default ?? null;
+            return {
+              forma_pagamento: nome,
+              percentual_desconto: Number(forma?.percentual_desconto ?? 0),
+              max_parcelas: maxParcelas ? Number(maxParcelas) : null,
+            };
+          })
+          .filter((condicao) => !!condicao.forma_pagamento);
+
+        const percentualDesconto = condicoes.reduce(
+          (maximo, condicao) => Math.max(maximo, Number(condicao.percentual_desconto || 0)),
+          0
+        );
+
+        const precoFinalVenda = Number((precoVenda * (1 - percentualDesconto / 100)).toFixed(2));
+
+        return {
+          preco_venda: precoVenda,
+          preco_final_venda: precoFinalVenda,
+          percentual_desconto: percentualDesconto,
+          pagamento_condicoes: condicoes,
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.preco_final_venda - b.preco_final_venda);
+
+    return ofertas[0] || null;
+  };
+
+  const obterOfertaOutlet = (row) => {
+    const catalogo = row?.outlet_catalogo || {};
+    const precoVenda = Number(catalogo?.preco_venda ?? row?.preco_venda ?? 0);
+    const precoFinalVenda = Number(catalogo?.preco_final_venda ?? row?.preco_final_venda ?? 0);
+    const percentualDesconto = Number(catalogo?.percentual_desconto ?? row?.percentual_desconto ?? 0);
+    const pagamentoLabel = catalogo?.pagamento_label ?? row?.pagamento_label ?? null;
+    const pagamentoDetalhes = catalogo?.pagamento_detalhes ?? row?.pagamento_detalhes ?? null;
+    const pagamentoCondicoes = Array.isArray(catalogo?.pagamento_condicoes)
+      ? catalogo.pagamento_condicoes
+      : Array.isArray(row?.pagamento_condicoes)
+        ? row.pagamento_condicoes
+        : [];
+
+    if (precoVenda > 0 && precoFinalVenda > 0) {
+      return {
+        preco_venda: precoVenda,
+        preco_final_venda: precoFinalVenda,
+        percentual_desconto: percentualDesconto,
+        pagamento_label: pagamentoLabel,
+        pagamento_detalhes: pagamentoDetalhes,
+        pagamento_condicoes: pagamentoCondicoes,
+      };
+    }
+
+    const fallback = calcularOfertaFallback(row);
+    if (!fallback) {
+      return null;
+    }
+
+    const formas = [...new Set((fallback.pagamento_condicoes || []).map((item) => item.forma_pagamento).filter(Boolean))];
+    const parcelasMax = (fallback.pagamento_condicoes || []).reduce((maximo, item) => {
+      const parcelas = Number(item?.max_parcelas || 0);
+      return parcelas > maximo ? parcelas : maximo;
+    }, 0);
+
+    const pagamentoLabelFallback = formas.length
+      ? `${formas.join(', ')}${parcelasMax > 1 ? ` (ate ${parcelasMax}x)` : ''}`
+      : null;
+
+    return {
+      ...fallback,
+      pagamento_label: pagamentoLabelFallback,
+      pagamento_detalhes: fallback.percentual_desconto > 0
+        ? `Desconto de ate ${fallback.percentual_desconto}% conforme forma de pagamento.`
+        : null,
+    };
+  };
+
+  const precoVendaBody = (row) => {
+    const oferta = obterOfertaOutlet(row);
+    if (!oferta) return '-';
+
+    if (Number(oferta.percentual_desconto || 0) > 0) {
+      return (
+        <span style={{ textDecoration: 'line-through', color: '#6b7280' }}>
+          {formatarPreco(oferta.preco_venda)}
+        </span>
+      );
+    }
+
+    return formatarPreco(oferta.preco_venda);
+  };
+
+  const precoFinalBody = (row) => {
+    const oferta = obterOfertaOutlet(row);
+    if (!oferta) return '-';
+
+    return (
+      <div className="flex align-items-center gap-2">
+        <strong>{formatarPreco(oferta.preco_final_venda)}</strong>
+        {Number(oferta.percentual_desconto || 0) > 0 && (
+          <Tag value={`-${oferta.percentual_desconto}%`} severity="warning" />
+        )}
+      </div>
+    );
+  };
+
+  const pagamentoBody = (row) => {
+    const oferta = obterOfertaOutlet(row);
+    if (!oferta?.pagamento_label) return '-';
+
+    return (
+      <div title={oferta.pagamento_detalhes || ''}>
+        <div>{oferta.pagamento_label}</div>
+        {oferta.pagamento_detalhes && (
+          <small className="text-600">{oferta.pagamento_detalhes}</small>
+        )}
+      </div>
+    );
   };
 
   const outletRestanteBody = (row) => {
@@ -290,7 +416,9 @@ const ProdutosOutlet = () => {
           <Column header="Referencia" body={referenciasBody} />
           <Column field="nome" header="Nome" />
           <Column header="Categoria" body={categoriaBody} />
-          <Column header="Preco" body={precoBody} style={{ width: '140px' }} />
+          <Column header="Preco de venda" body={precoVendaBody} style={{ width: '150px' }} />
+          <Column header="Preco final" body={precoFinalBody} style={{ width: '180px' }} />
+          <Column header="Pagamento" body={pagamentoBody} style={{ minWidth: '220px' }} />
           <Column header="Outlet" body={outletRestanteBody} style={{ width: '120px' }} />
         </DataTable>
       </div>
