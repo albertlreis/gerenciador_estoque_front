@@ -3,6 +3,7 @@ import { Toast } from 'primereact/toast';
 import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 import SakaiLayout from '../layouts/SakaiLayout';
 import apiEstoque from '../services/apiEstoque';
+import { listarProdutos } from '../services/produtoService';
 import BarcodeScanner from '../components/BarcodeScanner';
 import ToolbarLeitura from '../components/estoque/ToolbarLeitura';
 import TabelaItensLeitura from '../components/estoque/TabelaItensLeitura';
@@ -244,14 +245,11 @@ export default function LeituraEstoque() {
       const depositoBusca = mode === 'transfer' ? origemId : depositoId;
       console.log('🌐 Buscar por código de barras. depositoBusca=', depositoBusca, ' codigo=', item.codigo_barras);
 
-      apiEstoque
-        .get('/produtos', {
-          params: {
-            q: item.codigo_barras,
-            view: 'minima',
-            deposito_id: depositoBusca,
-          },
-        })
+      listarProdutos({
+        q: item.codigo_barras,
+        view: 'minima',
+        deposito_id: depositoBusca,
+      })
         .then((res) => {
           const prod = res.data?.data?.[0];
           console.log('✅ Resposta de busca por código:', prod);

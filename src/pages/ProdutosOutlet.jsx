@@ -10,8 +10,10 @@ import { Tag } from 'primereact/tag';
 import SakaiLayout from '../layouts/SakaiLayout';
 
 import apiEstoque from '../services/apiEstoque';
+import { listarProdutos } from '../services/produtoService';
 import formatarPreco from '../utils/formatarPreco';
 import { buildOutletExportIds } from '../utils/outletExport';
+import { normalizarBuscaProduto } from '../utils/normalizarBuscaProduto';
 
 const filtrosIniciais = {
   categoria_id: null,
@@ -68,11 +70,12 @@ const ProdutosOutlet = () => {
           params.id_categoria = filtrosAtuais.categoria_id;
         }
 
-        if (filtrosAtuais.referencia?.trim()) {
-          params.referencia = filtrosAtuais.referencia.trim();
+        const referenciaBusca = normalizarBuscaProduto(filtrosAtuais.referencia);
+        if (referenciaBusca) {
+          params.referencia = referenciaBusca;
         }
 
-        const { data } = await apiEstoque.get('/produtos', { params });
+        const { data } = await listarProdutos(params);
 
         setProdutos(data?.data ?? []);
         setPaginacao((prev) => ({

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import api from '../services/apiEstoque';
+import { listarProdutos } from '../services/produtoService';
 import { formatarFiltrosParaEnvio } from '../utils/formatarFiltrosParaEnvio';
 
 export const useCatalogoProdutos = (filtros) => {
@@ -13,8 +13,10 @@ export const useCatalogoProdutos = (filtros) => {
     setLoading(true);
     try {
       const page = pageOverride ?? (append ? pagina : 1);
-      const response = await api.get('/produtos', {
-        params: { ...formatarFiltrosParaEnvio(filtros), page, per_page: 20 }
+      const response = await listarProdutos({
+        ...formatarFiltrosParaEnvio(filtros),
+        page,
+        per_page: 20,
       });
 
       const novos = response.data.data || [];

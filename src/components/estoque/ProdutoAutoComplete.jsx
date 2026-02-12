@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { AutoComplete } from 'primereact/autocomplete';
 import apiEstoque from '../../services/apiEstoque';
+import { listarProdutos } from '../../services/produtoService';
+import { normalizarBuscaProduto } from '../../utils/normalizarBuscaProduto';
 
 /**
  * AutoComplete de produtos e variações.
@@ -23,7 +25,7 @@ export default function ProdutoAutoComplete({ depositoId, onSelectVariacao }) {
 
   /** 🔎 Busca produtos (view=minima) */
   const buscarProdutos = async (term) => {
-    const search = term.trim();
+    const search = normalizarBuscaProduto(term) || '';
     console.log('🔎 buscarProdutos term=', search);
 
     if (search.length < 2) {
@@ -41,13 +43,11 @@ export default function ProdutoAutoComplete({ depositoId, onSelectVariacao }) {
     setLoading(true);
     try {
       console.log('🌐 GET /produtos?view=minima&q=', search, ' depositoId=', depositoId);
-      const res = await apiEstoque.get('/produtos', {
-        params: {
-          q: search,
-          view: 'minima',
-          deposito_id: depositoId,
-          per_page: 10,
-        },
+      const res = await listarProdutos({
+        q: search,
+        view: 'minima',
+        deposito_id: depositoId,
+        per_page: 10,
       });
 
       const produtos = res.data?.data || [];

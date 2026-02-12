@@ -11,9 +11,11 @@ import { Divider } from 'primereact/divider';
 
 import SakaiLayout from '../layouts/SakaiLayout';
 import apiEstoque from '../services/apiEstoque';
+import { listarProdutos } from '../services/produtoService';
 import ProdutoForm from '../components/produto/ProdutoForm';
 import TableActions from '../components/TableActions';
 import { normalizarProdutoPayload } from '../utils/normalizarProdutoPayload';
+import { normalizarBuscaProduto } from '../utils/normalizarBuscaProduto';
 
 const Produtos = () => {
   const toast = useRef(null);
@@ -52,8 +54,9 @@ const Produtos = () => {
         per_page: lazyParams.rows,
       };
 
-      if (filtros.nome?.trim()) {
-        params.nome = filtros.nome.trim();
+      const nomeBusca = normalizarBuscaProduto(filtros.nome);
+      if (nomeBusca) {
+        params.nome = nomeBusca;
       }
 
       if (filtros.id_categoria?.length > 0) {
@@ -64,7 +67,7 @@ const Produtos = () => {
         params.fornecedor_id = filtros.fornecedor_id;
       }
 
-      const response = await apiEstoque.get('/produtos', { params });
+      const response = await listarProdutos(params);
       const { data, meta } = response.data;
 
       setProdutos(data);

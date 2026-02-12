@@ -14,6 +14,7 @@ import DialogOutlet from '../components/produto/DialogOutlet';
 import { ESTOQUE_ENDPOINTS } from '../constants/endpointsEstoque';
 import usePermissions from '../hooks/usePermissions';
 import { PERMISSOES } from '../constants/permissoes';
+import { normalizarBuscaProduto } from '../utils/normalizarBuscaProduto';
 
 /**
  * Página de Estoque + Movimentações com editor de localização.
@@ -230,6 +231,7 @@ const MovimentacoesEstoque = () => {
       );
       const filtroParams = {
         ...filtrosAtuais,
+        produto: normalizarBuscaProduto(filtrosAtuais?.produto),
         estoque_status: estoqueStatus !== 'all' ? estoqueStatus : null,
         zerados: estoqueStatus === 'sem_estoque' ? 1 : 0,
         periodo:
@@ -279,6 +281,7 @@ const MovimentacoesEstoque = () => {
 
       const filtroParams = {
         ...filtrosAtuais,
+        produto: normalizarBuscaProduto(filtrosAtuais?.produto),
         estoque_status: estoqueStatus !== 'all' ? estoqueStatus : null,
         zerados: estoqueStatus === 'sem_estoque' ? 1 : 0,
         periodo: filtrosAtuais.periodo?.length === 2 && filtrosAtuais.periodo[1]
@@ -331,6 +334,7 @@ const MovimentacoesEstoque = () => {
 
       const filtroParams = {
         ...filtrosAtuais,
+        produto: normalizarBuscaProduto(filtrosAtuais?.produto),
         periodo:
           filtrosAtuais.periodo?.length === 2 && filtrosAtuais.periodo[1]
             ? [formatDate(filtrosAtuais.periodo[0]), formatDate(filtrosAtuais.periodo[1])]
