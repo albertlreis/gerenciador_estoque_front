@@ -87,6 +87,7 @@ export const PERMISSOES = {
     HISTORICO: 'estoque.historico',
     TRANSFERIR: 'estoque.transferir',
     LOGS: 'estoque.logs',
+    IMPORTAR_PLANILHA_DEV: 'estoque.importar_planilha_dev',
   },
 
   RELATORIOS: {

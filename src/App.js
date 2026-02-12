@@ -15,6 +15,7 @@ import Depositos from './pages/Depositos';
 import MovimentacoesEstoque from './pages/MovimentacoesEstoque';
 import FinalizarPedido from './pages/FinalizarPedido';
 import ImportacaoPage from './pages/ImportacaoProdutos';
+import ImportacaoEstoquePlanilha from './pages/ImportacaoEstoquePlanilha';
 import Pedidos from './pages/Pedidos';
 import Produtos from './pages/Produtos';
 import ProdutosOutlet from './pages/ProdutosOutlet';
@@ -23,6 +24,7 @@ import MonitoramentoCache from './pages/MonitoramentoCache';
 
 import PrivateRoute from './routes/PrivateRoute';
 import PermissaoRoute from './routes/PermissaoRoute';
+import DevOnlyRoute from './routes/DevOnlyRoute';
 import {PERMISSOES} from './constants/permissoes';
 import ComCarrinho from "./routes/ComCarrinho";
 import useCheckVersion from "./hooks/useCheckVersion";
@@ -115,6 +117,10 @@ const App = () => {
       <Route path="/depositos" element={renderProtectedRoute(<Depositos/>, PERMISSOES.DEPOSITOS.VISUALIZAR)}/>
       <Route path="/movimentacoes-estoque"
              element={renderProtectedRoute(<MovimentacoesEstoque/>, PERMISSOES.ESTOQUE.MOVIMENTACAO)}/>
+      <Route
+        path="/estoque/importar-planilha"
+        element={<PrivateRoute element={<DevOnlyRoute element={<ImportacaoEstoquePlanilha />} />} />}
+      />
       <Route
         path="/finalizar-pedido/:id"
         element={renderProtectedRoute(
