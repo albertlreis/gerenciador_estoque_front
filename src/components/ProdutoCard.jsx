@@ -3,21 +3,29 @@ import { Tag } from 'primereact/tag';
 import formatarPreco from '../utils/formatarPreco';
 import getImageSrc from '../utils/getImageSrc';
 
-const ProdutoCard = ({ grupo, onDetalhes, onAdicionar, onEditar }) => {
+const ProdutoCard = ({ grupo, estoqueStatus, onDetalhes, onAdicionar, onEditar }) => {
   const primeira = grupo?.variacoes?.[0];
   const preco = Number(primeira?.preco || 0);
+
+  const resumo = grupo?.estoque_resumo || {};
+  const variacoesComEstoque = Number(resumo?.variacoes_com_estoque || 0);
+  const variacoesSemEstoque = Number(resumo?.variacoes_sem_estoque || 0);
+  const totalDisponivel = Number(resumo?.total_disponivel || 0);
 
   const precoRender = useMemo(() => {
     const outletsValidos = Array.isArray(primeira?.outlets)
       ? primeira.outlets.filter((o) => (o.quantidade_restante || 0) > 0)
       : [];
+
     if (!grupo?.is_outlet || outletsValidos.length === 0) {
       return <span>{formatarPreco(preco)}</span>;
     }
+
     const melhorOutlet = outletsValidos.reduce((menor, atual) =>
       (atual.percentual_desconto || 0) > (menor.percentual_desconto || 0) ? atual : menor
     );
     const precoOutlet = preco * (1 - (melhorOutlet.percentual_desconto || 0) / 100);
+
     return (
       <>
         <span style={{ textDecoration: 'line-through', color: '#999', marginRight: '0.5rem' }}>
@@ -36,7 +44,6 @@ const ProdutoCard = ({ grupo, onDetalhes, onAdicionar, onEditar }) => {
       className="p-3 border-1 surface-border border-round surface-card shadow-1 relative h-full flex flex-column justify-between"
       style={{ minHeight: '390px' }}
     >
-      {/* ✅ Editar (visível para todos) */}
       <button
         type="button"
         className="p-button p-button-rounded p-button-text p-button-secondary p-button-sm absolute top-0 left-0 m-1 z-2"
@@ -94,19 +101,50 @@ const ProdutoCard = ({ grupo, onDetalhes, onAdicionar, onEditar }) => {
         {primeira && (
           <>
             <div className="mb-2 text-sm">
-              <strong>Preço:</strong> {precoRender}
+              <strong>Preco:</strong> {precoRender}
             </div>
 
-            <div className="mb-3 text-sm">
-              <p className="m-0">
-                <strong>Estoque:</strong>{' '}
-                <Tag value={`${grupo?.estoque_total} un.`} severity={grupo?.estoque_total > 0 ? 'success' : 'danger'} />
-              </p>
-            </div>
+            {estoqueStatus === 'sem_estoque' && (
+              <div className="mb-3 text-sm">
+                <p className="m-0">
+                  <strong>Sem estoque:</strong>{' '}
+                  <Tag value="0 un." severity="danger" />
+                </p>
+                <small className="text-600">
+                  Variacoes sem estoque: {variacoesSemEstoque}
+                </small>
+              </div>
+            )}
 
-            <div className="mb-3 text-xs text-600" title={grupo?.depositos_tooltip || ''}>
-              {grupo?.estoque_total > 0 ? (grupo?.depositos_resumo || 'Disponivel em: —') : 'Sem estoque'}
-            </div>
+            {estoqueStatus === 'com_estoque' && (
+              <div className="mb-3 text-sm">
+                <p className="m-0">
+                  <strong>Disponivel:</strong>{' '}
+                  <Tag value={`${totalDisponivel} un.`} severity="success" />
+                </p>
+                <small className="text-600">
+                  Variacoes em estoque: {variacoesComEstoque}
+                </small>
+              </div>
+            )}
+
+            {!estoqueStatus && (
+              <div className="mb-3 text-sm">
+                <p className="m-0">
+                  <strong>Em estoque:</strong>{' '}
+                  <Tag value={String(variacoesComEstoque)} severity={variacoesComEstoque > 0 ? 'success' : 'danger'} />
+                  <span className="mx-2">|</span>
+                  <strong>Sem estoque:</strong>{' '}
+                  <Tag value={String(variacoesSemEstoque)} severity={variacoesSemEstoque > 0 ? 'danger' : 'success'} />
+                </p>
+              </div>
+            )}
+
+            {estoqueStatus !== 'sem_estoque' && (
+              <div className="mb-3 text-xs text-600" title={grupo?.depositos_tooltip || ''}>
+                {totalDisponivel > 0 ? (grupo?.depositos_resumo || 'Disponivel em: -') : 'Sem estoque'}
+              </div>
+            )}
           </>
         )}
       </div>

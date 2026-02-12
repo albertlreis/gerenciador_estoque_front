@@ -8,6 +8,7 @@ import { getQuantidadeDisponivelVariacao, isVariacaoDisponivel } from '../utils/
 
 const SelecionarVariacaoDialog = ({
                                     produto,
+                                    estoqueStatus,
                                     variacaoSelecionada,
                                     setVariacaoSelecionada,
                                     visible,
@@ -22,6 +23,10 @@ const SelecionarVariacaoDialog = ({
   const motivoLegivel = (motivo) =>
     motivo.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   const variacaoSelecionadaDisponivel = isVariacaoDisponivel(variacaoSelecionada);
+  const variacoesBase = Array.isArray(produto.variacoes) ? produto.variacoes : [];
+  const variacoesExibidas = estoqueStatus === 'com_estoque'
+    ? variacoesBase.filter((variacao) => getQuantidadeDisponivelVariacao(variacao) > 0)
+    : variacoesBase;
 
   return (
     <Dialog
@@ -58,7 +63,7 @@ const SelecionarVariacaoDialog = ({
         {/* Conteúdo de variações */}
         <div className="col-12 md:col-9 p-0">
           <div className="flex flex-wrap -mt-3">
-            {(produto.variacoes || []).map((variacao, idx) => {
+            {variacoesExibidas.map((variacao, idx) => {
               const preco = Number(variacao.preco || 0);
               const isSelecionada = variacaoSelecionada?.id === variacao.id;
               const outletSelecionado = variacaoSelecionada?.outletSelecionado;
@@ -169,6 +174,12 @@ const SelecionarVariacaoDialog = ({
                 </div>
               );
             })}
+
+            {variacoesExibidas.length === 0 && (
+              <div className="w-full p-3">
+                <Tag severity="warning" value="Nenhuma variacao disponivel para este filtro de estoque." />
+              </div>
+            )}
           </div>
         </div>
       </div>
