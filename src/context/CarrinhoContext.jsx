@@ -35,13 +35,21 @@ export const CarrinhoProvider = ({ children }) => {
 
   const criarCarrinho = async (id_cliente) => {
     try {
-      const response = await api.post('/carrinhos', { id_cliente });
+      const payload = typeof id_cliente === 'object'
+        ? id_cliente
+        : { id_cliente };
+
+      const response = await api.post('/carrinhos', payload);
       const novoCarrinho = response.data?.data || response.data;
       await carregarCarrinho(novoCarrinho.id);
       await listarCarrinhos();
+      return { success: true, data: novoCarrinho };
     } catch (e) {
       console.error('Erro ao criar carrinho', e);
-      return null;
+      return {
+        success: false,
+        message: e?.response?.data?.message || 'Erro ao criar carrinho.',
+      };
     }
   };
 
@@ -75,21 +83,35 @@ export const CarrinhoProvider = ({ children }) => {
   };
 
   const removerItem = async (id) => {
+    if (!carrinhoAtual?.id) {
+      return { success: false, message: 'Carrinho nao selecionado.' };
+    }
+
     try {
-      await api.delete(`/carrinho-itens/${id}`);
+      await api.delete(`/carrinhos/${carrinhoAtual.id}/itens/${id}`);
       await carregarCarrinho(carrinhoAtual.id);
+      return { success: true };
     } catch (e) {
       console.error('Erro ao remover item', e);
+      return {
+        success: false,
+        message: e?.response?.data?.message || 'Erro ao remover item.',
+      };
     }
   };
 
   const limparCarrinho = async () => {
-    if (!carrinhoAtual?.id) return;
+    if (!carrinhoAtual?.id) return { success: false, message: 'Carrinho nao selecionado.' };
     try {
-      await api.delete(`/carrinho-itens/limpar/${carrinhoAtual.id}`);
+      await api.delete(`/carrinhos/${carrinhoAtual.id}/itens`);
       await carregarCarrinho(carrinhoAtual.id);
+      return { success: true };
     } catch (e) {
       console.error('Erro ao limpar carrinho', e);
+      return {
+        success: false,
+        message: e?.response?.data?.message || 'Erro ao limpar carrinho.',
+      };
     }
   };
 

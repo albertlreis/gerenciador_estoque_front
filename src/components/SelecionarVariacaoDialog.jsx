@@ -5,6 +5,7 @@ import { Tag } from 'primereact/tag';
 import formatarPreco from '../utils/formatarPreco';
 import getImageSrc from "../utils/getImageSrc";
 import { getQuantidadeDisponivelVariacao, isVariacaoDisponivel } from '../utils/estoqueVariacao';
+import { filtrarVariacoesPorEstoqueStatus } from '../utils/catalogoEstoque';
 
 const SelecionarVariacaoDialog = ({
                                     produto,
@@ -24,9 +25,7 @@ const SelecionarVariacaoDialog = ({
     motivo.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   const variacaoSelecionadaDisponivel = isVariacaoDisponivel(variacaoSelecionada);
   const variacoesBase = Array.isArray(produto.variacoes) ? produto.variacoes : [];
-  const variacoesExibidas = estoqueStatus === 'com_estoque'
-    ? variacoesBase.filter((variacao) => getQuantidadeDisponivelVariacao(variacao) > 0)
-    : variacoesBase;
+  const variacoesExibidas = filtrarVariacoesPorEstoqueStatus(variacoesBase, estoqueStatus);
 
   return (
     <Dialog

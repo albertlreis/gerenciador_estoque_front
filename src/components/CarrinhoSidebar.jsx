@@ -4,12 +4,15 @@ import { Button } from 'primereact/button';
 import { ConfirmDialog } from 'primereact/confirmdialog';
 import { confirmDialog } from 'primereact/confirmdialog';
 import { Tag } from 'primereact/tag';
+import { Toast } from 'primereact/toast';
 import { useCarrinho } from '../context/CarrinhoContext';
 import formatarPreco from '../utils/formatarPreco';
 import {useNavigate} from "react-router-dom";
+import { useRef } from 'react';
 
 const CarrinhoSidebar = ({ visible, onHide }) => {
   const navigate = useNavigate();
+  const toast = useRef(null);
 
   const { itens, removerItem, limparCarrinho, adicionarItem, carrinhoAtual } = useCarrinho();
   const [limpando, setLimpando] = useState(false);
@@ -21,9 +24,18 @@ const CarrinhoSidebar = ({ visible, onHide }) => {
       message: 'Deseja remover este item do carrinho?',
       header: 'Remover Item',
       icon: 'pi pi-trash',
-      acceptLabel: 'Sim',
-      rejectLabel: 'Cancelar',
-      accept: () => removerItem(itemId),
+          acceptLabel: 'Sim',
+          rejectLabel: 'Cancelar',
+          accept: async () => {
+            const result = await removerItem(itemId);
+            if (!result?.success) {
+              toast.current?.show({
+                severity: 'error',
+                summary: 'Erro',
+                detail: result?.message || 'Nao foi possivel remover o item.',
+              });
+            }
+          },
     });
   };
 
@@ -43,6 +55,11 @@ const CarrinhoSidebar = ({ visible, onHide }) => {
       });
     } catch (err) {
       console.error('Erro ao atualizar quantidade', err);
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Erro',
+        detail: 'Nao foi possivel atualizar a quantidade do item.',
+      });
     }
   };
 
@@ -55,8 +72,15 @@ const CarrinhoSidebar = ({ visible, onHide }) => {
       rejectLabel: 'Cancelar',
       accept: async () => {
         setLimpando(true);
-        await limparCarrinho();
+        const result = await limparCarrinho();
         setLimpando(false);
+        if (!result?.success) {
+          toast.current?.show({
+            severity: 'error',
+            summary: 'Erro',
+            detail: result?.message || 'Nao foi possivel limpar o carrinho.',
+          });
+        }
       },
     });
   };
@@ -65,6 +89,8 @@ const CarrinhoSidebar = ({ visible, onHide }) => {
     motivo?.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
 
   return (
+    <>
+      <Toast ref={toast} />
     <Sidebar visible={visible} onHide={onHide} position="right" showCloseIcon style={{ width: '400px' }}>
       <h3 className="mb-3 border-bottom pb-2">Carrinho</h3>
 
@@ -147,6 +173,7 @@ const CarrinhoSidebar = ({ visible, onHide }) => {
 
       <ConfirmDialog />
     </Sidebar>
+    </>
   );
 };
 
