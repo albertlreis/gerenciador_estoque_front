@@ -44,6 +44,17 @@ const ProdutoCard = ({ grupo, estoqueStatus, onDetalhes, onAdicionar, onEditar }
       className="p-3 border-1 surface-border border-round surface-card shadow-1 relative h-full flex flex-column justify-between"
       style={{ minHeight: '390px' }}
     >
+      <button
+        type="button"
+        className="p-button p-button-rounded p-button-sm p-button-help p-button-raised absolute top-0 left-0 m-2 z-3"
+        onClick={onEditar}
+        title="Editar produto"
+        disabled={!onEditar}
+        aria-label="Editar produto"
+      >
+        <i className="pi pi-pencil" />
+      </button>
+
       {grupo?.is_outlet && (
         <div className="absolute top-0 right-0 p-1 bg-orange-500 text-white text-xs font-bold z-2 border-round-right">
           OUTLET
@@ -136,11 +147,7 @@ const ProdutoCard = ({ grupo, estoqueStatus, onDetalhes, onAdicionar, onEditar }
         )}
       </div>
 
-      <div className="flex justify-content-between gap-2 mt-auto flex-wrap">
-        <button className="p-button p-button-sm p-button-warning p-button-outlined" onClick={onEditar} title="Editar produto" disabled={!onEditar}>
-          <i className="pi pi-pencil mr-1" />
-          Editar
-        </button>
+      <div className="flex justify-content-end gap-2 mt-auto flex-wrap">
         <button className="p-button p-button-sm p-button-outlined" onClick={onDetalhes}>
           Detalhes
         </button>
