@@ -10,9 +10,12 @@ const NovoCarrinhoDialog = ({
                               visible,
                               onHide,
                               clientes,
+                              vendedores,
                               setClientes,
                               clienteSelecionado,
                               setClienteSelecionado,
+                              vendedorSelecionado,
+                              setVendedorSelecionado,
                               onConfirmar
                             }) => {
   const [showClienteDialog, setShowClienteDialog] = useState(false);
@@ -35,6 +38,24 @@ const NovoCarrinhoDialog = ({
             optionValue="id"
             onChange={(e) => setClienteSelecionado(e.value)}
             placeholder="Selecione o cliente"
+            className="w-full"
+            filter
+            showClear
+          />
+        </div>
+
+        <div className="mb-3">
+          <div className="flex align-items-center justify-content-between mb-1">
+            <label className="font-semibold">Vendedor responsável</label>
+          </div>
+
+          <Dropdown
+            value={vendedorSelecionado}
+            options={vendedores}
+            optionLabel="nome"
+            optionValue="id"
+            onChange={(e) => setVendedorSelecionado?.(e.value)}
+            placeholder="Selecione o vendedor"
             className="w-full"
             filter
             showClear

@@ -14,12 +14,14 @@ import CarrinhoAcoes from '../components/CarrinhoAcoes';
 import ProdutoForm from '../components/produto/ProdutoForm';
 
 import { useCarrinho } from '../context/CarrinhoContext';
+import { useAuth } from '../context/AuthContext';
 import { useCatalogoProdutos } from '../hooks/useCatalogoProdutos';
 import usePermissions from '../hooks/usePermissions';
 import { PERMISSOES } from '../constants/permissoes';
 import { normalizarProdutoPayload } from '../utils/normalizarProdutoPayload';
 import { getQuantidadeDisponivelVariacao } from '../utils/estoqueVariacao';
 import api from '../services/apiEstoque';
+import AuthApi from '../api/authApi';
 
 const filtrosIniciais = {
   nome: '',
@@ -27,12 +29,14 @@ const filtrosIniciais = {
   ativo: null,
   outlet: null,
   atributos: {},
-  estoque_status: null,
+  estoque_status: 'com_estoque',
 };
 
 const CatalogoProdutos = () => {
   const [filtros, setFiltros] = useState(filtrosIniciais);
   const [clientes, setClientes] = useState([]);
+  const [vendedores, setVendedores] = useState([]);
+  const [vendedorSelecionado, setVendedorSelecionado] = useState(null);
   const [clienteSelecionado, setClienteSelecionado] = useState(null);
   const [produtoSelecionado, setProdutoSelecionado] = useState(null);
   const [variacaoSelecionada, setVariacaoSelecionada] = useState(null);
@@ -45,6 +49,7 @@ const CatalogoProdutos = () => {
   const [loadingProduto, setLoadingProduto] = useState(false);
 
   const toast = useRef(null);
+  const { user } = useAuth();
 
   const { has } = usePermissions();
   const podeEditarCompleto = has([PERMISSOES.PRODUTOS.EDITAR, PERMISSOES.PRODUTOS.GERENCIAR]);
@@ -90,16 +95,39 @@ const CatalogoProdutos = () => {
   };
 
   const abrirDialogCarrinho = async () => {
-    const { data } = await api.get('/clientes');
-    setClientes(data);
+    const [{ data: clientesData }, vendedoresResponse] = await Promise.all([
+      api.get('/clientes'),
+      AuthApi.usuarios.opcoes.vendedores({ fields: 'id,nome' }).catch(() => ({ data: [] })),
+    ]);
+
+    setClientes(clientesData);
+    const vendedoresList = Array.isArray(vendedoresResponse?.data)
+      ? vendedoresResponse.data
+      : [];
+    setVendedores(vendedoresList);
+    setVendedorSelecionado(user?.id ?? null);
     setDialogNovoCarrinho(true);
   };
 
   const confirmarNovoCarrinho = async () => {
     if (!clienteSelecionado) return;
-    await criarCarrinho(clienteSelecionado);
+    const result = await criarCarrinho({
+      id_cliente: clienteSelecionado,
+      id_usuario: vendedorSelecionado || undefined,
+    });
+
+    if (!result?.success) {
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Erro',
+        detail: result?.message || 'Nao foi possivel criar o carrinho.',
+      });
+      return;
+    }
+
     setDialogNovoCarrinho(false);
     setClienteSelecionado(null);
+    setVendedorSelecionado(null);
   };
 
   const confirmarVariacao = () => {
@@ -295,9 +323,12 @@ const CatalogoProdutos = () => {
         visible={dialogNovoCarrinho}
         onHide={() => setDialogNovoCarrinho(false)}
         clientes={clientes}
+        vendedores={vendedores}
         setClientes={setClientes}                   // << novo
         clienteSelecionado={clienteSelecionado}
         setClienteSelecionado={setClienteSelecionado}
+        vendedorSelecionado={vendedorSelecionado}
+        setVendedorSelecionado={setVendedorSelecionado}
         onConfirmar={confirmarNovoCarrinho}
       />
 

@@ -21,7 +21,7 @@ const CarrinhoAcoes = ({
       <Dropdown
         value={carrinhoAtual?.id || null}
         options={(carrinhos || []).map((c) => ({
-          label: `Cliente: ${c.cliente?.nome || '---'}`,
+          label: `Carrinho — ${c.vendedor_nome || c.usuario?.nome || 'Sem vendedor'} — Cliente: ${c.cliente?.nome || '---'}`,
           value: c.id
         }))}
         placeholder="Selecionar carrinho"
