@@ -316,6 +316,18 @@ const ProdutosOutlet = () => {
     return <Tag value={`${total} un.`} severity={total > 0 ? 'success' : 'danger'} />;
   };
 
+  const medidasBody = (row) => {
+    const altura = row?.altura;
+    const largura = row?.largura;
+    const profundidade = row?.profundidade;
+
+    const algumPreenchido = [altura, largura, profundidade].some((v) => v !== null && v !== undefined && v !== '');
+    if (!algumPreenchido) return 'Nao informado';
+
+    const format = (valor) => (valor === null || valor === undefined || valor === '' ? '—' : valor);
+    return `A ${format(altura)} x L ${format(largura)} x P ${format(profundidade)} cm`;
+  };
+
   return (
     <SakaiLayout>
       <Toast ref={toast} />
@@ -419,6 +431,7 @@ const ProdutosOutlet = () => {
           <Column header="Referencia" body={referenciasBody} />
           <Column field="nome" header="Nome" />
           <Column header="Categoria" body={categoriaBody} />
+          <Column header="Medidas" body={medidasBody} style={{ minWidth: '220px' }} />
           <Column header="Preco de venda" body={precoVendaBody} style={{ width: '150px' }} />
           <Column header="Preco final" body={precoFinalBody} style={{ width: '180px' }} />
           <Column header="Pagamento" body={pagamentoBody} style={{ minWidth: '220px' }} />
