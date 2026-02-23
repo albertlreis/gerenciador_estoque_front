@@ -68,7 +68,8 @@ const CatalogoProdutos = () => {
     produtos,
     loading,
     sentinelaRef,
-    atualizarProdutoNaLista
+    atualizarProdutoNaLista,
+    refresh
   } = useCatalogoProdutos(filtros);
 
   const handleAdicionarAoCarrinho = (produtoComVariacoesDoGrupo) => {
@@ -84,6 +85,88 @@ const CatalogoProdutos = () => {
     setProdutoSelecionado(produtoComVariacoesDoGrupo);
     setVariacaoSelecionada(null);
     setDialogVariacaoVisible(true);
+  };
+
+  const abrirEdicaoProduto = async (grupo) => {
+    const produtoId = grupo?.produto?.id ?? grupo?.id;
+    if (!produtoId) return;
+
+    if (!podeEditarCompleto && !isVendedor) {
+      toast.current?.show({
+        severity: 'warn',
+        summary: 'Sem permissão',
+        detail: 'Você não tem permissão para editar este produto.',
+        life: 3000,
+      });
+      return;
+    }
+
+    setCarregandoEdicao(true);
+    try {
+      const response = await api.get(`/produtos/${produtoId}`);
+      const produto = response.data?.data || response.data;
+      setProdutoEdicao(produto);
+      setDialogEditarVisible(true);
+    } catch (error) {
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Erro',
+        detail: 'Erro ao carregar produto para edição.',
+        life: 3000,
+      });
+    } finally {
+      setCarregandoEdicao(false);
+    }
+  };
+
+  const salvarEdicaoProduto = async (produtoData) => {
+    if (!produtoEdicao?.id) return;
+
+    const formData = new FormData();
+
+    if (!produtoData.nome || !produtoData.id_categoria) {
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Erro',
+        detail: 'Preencha o nome e a categoria do produto.',
+        life: 4000,
+      });
+      throw new Error('Campos obrigatórios ausentes');
+    }
+
+    formData.append('nome', produtoData.nome);
+    formData.append('descricao', produtoData.descricao || '');
+    formData.append('id_categoria', produtoData.id_categoria);
+    formData.append('id_fornecedor', produtoData.id_fornecedor || '');
+    formData.append('altura', produtoData.altura || '');
+    formData.append('largura', produtoData.largura || '');
+    formData.append('profundidade', produtoData.profundidade || '');
+    formData.append('peso', produtoData.peso || '');
+    formData.append('ativo', produtoData.ativo ?? 1);
+    formData.append('motivo_desativacao', produtoData.motivo_desativacao || '');
+    formData.append('estoque_minimo', produtoData.estoque_minimo || '');
+
+    if (produtoData.manualArquivo instanceof File) {
+      formData.append('manual_conservacao', produtoData.manualArquivo);
+    }
+
+    formData.append('_method', 'PUT');
+
+    const response = await api.post(`/produtos/${produtoEdicao.id}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+
+    toast.current?.show({
+      severity: 'success',
+      summary: 'Sucesso',
+      detail: 'Produto atualizado com sucesso',
+      life: 3000,
+    });
+
+    refresh();
+    atualizarProdutoNaLista(response.data?.data || response.data || {});
+
+    return response;
   };
 
   const handleFiltrosChange = (patch) => {

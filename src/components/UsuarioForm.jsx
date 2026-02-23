@@ -75,7 +75,7 @@ const UsuarioForm = ({ initialData = {}, perfisOptions = [], onSubmit, onCancel,
     if (shouldAskSenha) {
       const s = String(usuario.senha || '');
       if (!s) e.senha = 'Senha é obrigatória.';
-      else if (s.length < 6) e.senha = 'Senha deve ter no mínimo 6 caracteres.';
+      else if (s.length < 8) e.senha = 'Senha deve ter no mínimo 8 caracteres.';
     }
 
     return e;
@@ -187,7 +187,7 @@ const UsuarioForm = ({ initialData = {}, perfisOptions = [], onSubmit, onCancel,
               inputClassName="w-full"
             />
             {touched.senha && errors.senha && <small className="p-error">{errors.senha}</small>}
-            <small className="p-text-secondary">Mínimo 6 caracteres.</small>
+            <small className="p-text-secondary">Mínimo 8 caracteres.</small>
           </div>
         )}
 

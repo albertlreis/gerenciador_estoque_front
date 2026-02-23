@@ -60,7 +60,7 @@ const montarResumoEstoque = (variacoes) => {
   };
 };
 
-const agruparPorReferencia = (produtos) => {
+const agruparPorReferencia = (produtos, apenasComEstoque = false) => {
   const grupos = [];
 
   for (const produto of produtos || []) {

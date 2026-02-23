@@ -65,6 +65,8 @@ const ProdutoVariacoes = ({
     ]);
   };
 
+  const isVazio = (valor) => valor === null || valor === undefined || valor === '';
+
   const isEmptyValue = (v) => v === null || v === undefined || v === '';
   const isEmptyText = (v) => !v || String(v).trim() === '';
 

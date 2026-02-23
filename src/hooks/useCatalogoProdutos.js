@@ -70,5 +70,10 @@ export const useCatalogoProdutos = (filtros) => {
     temMais,
     sentinelaRef,
     atualizarProdutoNaLista,
+    refresh: () => {
+      setPagina(1);
+      setTemMais(true);
+      fetchProdutos(false, 1);
+    },
   };
 };

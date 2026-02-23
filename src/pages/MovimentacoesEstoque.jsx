@@ -100,6 +100,7 @@ const MovimentacoesEstoque = () => {
     totalProdutos: 0,
     totalPecas: 0,
     totalDepositos: 0,
+    totalValorEstoque: null,
   });
 
   const [filtros, setFiltros] = useState({
@@ -591,7 +592,7 @@ const MovimentacoesEstoque = () => {
     abortInFlightRequest(resumoAbortRef);
     setMovimentacoes([]);
     setEstoqueAtual([]);
-    setResumo({ totalProdutos: 0, totalPecas: 0, totalDepositos: 0 });
+    setResumo({ totalProdutos: 0, totalPecas: 0, totalDepositos: 0, totalValorEstoque: null });
 
     const reset = {
       tipo: null,
@@ -675,6 +676,9 @@ const MovimentacoesEstoque = () => {
     setShowLocalizacaoDialog(true);
   };
 
+  const mostraValorEstoque = resumo?.totalValorEstoque !== undefined && resumo?.totalValorEstoque !== null;
+  const kpiColClass = mostraValorEstoque ? 'col-12 md:col-3' : 'col-12 md:col-4';
+
   return (
     <SakaiLayout>
       <Toast ref={toast} />
@@ -706,24 +710,32 @@ const MovimentacoesEstoque = () => {
         />
 
         <div className="grid mb-4">
-          <div className="col-12 md:col-4">
+          <div className={kpiColClass}>
             <Card title="Produtos" className="text-center">
               <i className="pi pi-box text-4xl text-primary mb-2 block" />
               <h3>{resumo.totalProdutos}</h3>
             </Card>
           </div>
-          <div className="col-12 md:col-4">
+          <div className={kpiColClass}>
             <Card title="Peças em Estoque" className="text-center">
               <i className="pi pi-inbox text-4xl text-success mb-2 block" />
               <h3>{resumo.totalPecas}</h3>
             </Card>
           </div>
-          <div className="col-12 md:col-4">
+          <div className={kpiColClass}>
             <Card title="Depósitos Ativos" className="text-center">
               <i className="pi pi-building text-4xl text-warning mb-2 block" />
               <h3>{resumo.totalDepositos}</h3>
             </Card>
           </div>
+          {mostraValorEstoque && (
+            <div className={kpiColClass}>
+              <Card title="Valor em Estoque" className="text-center">
+                <i className="pi pi-dollar text-4xl text-indigo-500 mb-2 block" />
+                <h3>{formatarPreco(resumo.totalValorEstoque)}</h3>
+              </Card>
+            </div>
+          )}
         </div>
 
         <Accordion multiple>
@@ -733,6 +745,7 @@ const MovimentacoesEstoque = () => {
               loading={loadingEstoque}
               total={totalEstoque}
               first={firstEstoque}
+              mostrarCusto={mostraValorEstoque}
               onPage={(e) => {
                 setFirstEstoque(e.first);
                 fetchEstoqueAtual({

@@ -12,9 +12,23 @@ const ProdutoManualConservacao = ({
   const fileUploadRef = useRef(null);
   const backendUrl = process.env.REACT_APP_BASE_URL_ESTOQUE;
 
-  const manualUrl = produto?.manual_conservacao
-    ? `${backendUrl}/uploads/manuais/${produto.manual_conservacao}`
-    : null;
+  const manualUrl = (() => {
+    const raw = produto?.manual_conservacao;
+    if (!raw) return null;
+    const cleaned = String(raw).trim();
+    if (cleaned.startsWith('http://') || cleaned.startsWith('https://')) return cleaned;
+    if (
+      cleaned.startsWith('/storage') ||
+      cleaned.startsWith('storage/') ||
+      cleaned.startsWith('/uploads') ||
+      cleaned.startsWith('uploads/')
+    ) {
+      const path = cleaned.startsWith('/') ? cleaned : `/${cleaned}`;
+      return backendUrl ? `${backendUrl}${path}` : path;
+    }
+    const legacy = `/uploads/manuais/${cleaned.replace(/^\/+/, '')}`;
+    return backendUrl ? `${backendUrl}${legacy}` : legacy;
+  })();
 
   const confirmDelete = () => {
     confirmDialog({

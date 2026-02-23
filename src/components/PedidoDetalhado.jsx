@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { Dialog } from 'primereact/dialog';
 import { Tag } from 'primereact/tag';
 import { Timeline } from 'primereact/timeline';
@@ -42,6 +42,7 @@ const PedidoDetalhado = ({ visible, onHide, pedido }) => {
 
   const atrasadoEntrega = !!pedido.atrasado_entrega;
   const estadoFinal = isEstadoFinal(pedido.status);
+  const xmlVinculado = Boolean(pedido.nfe_xml_vinculado || pedido.nfe_xml_nome);
 
   // ✅ Totais reutilizáveis
   const produtosCount = Array.isArray(pedido.itens) ? pedido.itens.length : 0;
@@ -65,6 +66,68 @@ const PedidoDetalhado = ({ visible, onHide, pedido }) => {
     return <Tag value={cfg.label} icon={cfg.icon} severity={cfg.severity} rounded />;
   };
 
+  const handleSelecionarXml = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    const nome = (file.name || '').toLowerCase();
+    if (!nome.endsWith('.xml')) {
+      toast?.current?.show({
+        severity: 'warn',
+        summary: 'Arquivo invalido',
+        detail: 'Selecione um arquivo .xml',
+      });
+      return;
+    }
+
+    try {
+      setUploadingXml(true);
+      const formData = new FormData();
+      formData.append('arquivo', file);
+      await api.post(`/pedidos/${pedido.id}/xml`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      toast?.current?.show({
+        severity: 'success',
+        summary: 'XML vinculado',
+        detail: 'Arquivo anexado com sucesso.',
+      });
+      onAtualizar?.();
+    } catch (err) {
+      toast?.current?.show({
+        severity: 'error',
+        summary: 'Falha ao anexar XML',
+        detail: err.response?.data?.message || err.message,
+      });
+    } finally {
+      setUploadingXml(false);
+    }
+  };
+
+  const handleDownloadXml = async () => {
+    if (!xmlVinculado) return;
+    try {
+      setDownloadingXml(true);
+      const response = await api.get(`/pedidos/${pedido.id}/xml`, { responseType: 'blob' });
+      const blob = new Blob([response.data], { type: 'application/xml' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = pedido.nfe_xml_nome || `pedido_${pedido.id}_nfe.xml`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      toast?.current?.show({
+        severity: 'error',
+        summary: 'Falha ao baixar XML',
+        detail: err.response?.data?.message || err.message,
+      });
+    } finally {
+      setDownloadingXml(false);
+    }
+  };
+
   return (
     <Dialog
       header={
@@ -85,6 +148,14 @@ const PedidoDetalhado = ({ visible, onHide, pedido }) => {
             onClick={onHide}
             severity="secondary"
           />
+          {podeEditar && (
+            <Button
+              label="Editar Pedido"
+              icon="pi pi-pencil"
+              severity="info"
+              onClick={() => onEditar?.(pedido)}
+            />
+          )}
           <Button
             label="Solicitar Devolução ou Troca"
             icon="pi pi-sync"
@@ -176,6 +247,38 @@ const PedidoDetalhado = ({ visible, onHide, pedido }) => {
               📝 <strong>Observações:</strong> {pedido.observacoes}
             </div>
           )}
+
+          <div className="mt-2 flex flex-wrap align-items-center gap-2 text-sm">
+            <strong>XML NF-e:</strong>
+            <span>{xmlVinculado ? (pedido.nfe_xml_nome || 'XML vinculado') : 'Nenhum XML vinculado'}</span>
+            {xmlVinculado && (
+              <Button
+                label="Baixar XML"
+                icon={downloadingXml ? 'pi pi-spin pi-spinner' : 'pi pi-download'}
+                severity="secondary"
+                size="small"
+                onClick={handleDownloadXml}
+                disabled={downloadingXml}
+              />
+            )}
+            {podeEditar && (
+              <Button
+                label={xmlVinculado ? 'Substituir XML' : 'Anexar XML'}
+                icon="pi pi-upload"
+                severity="info"
+                size="small"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingXml}
+              />
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xml"
+              onChange={handleSelecionarXml}
+              style={{ display: 'none' }}
+            />
+          </div>
         </div>
       </div>
 

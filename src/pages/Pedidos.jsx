@@ -368,6 +368,12 @@ export default function PedidosListagem() {
     }
   };
 
+  const abrirEdicaoPedido = (pedido) => {
+    if (!podeEditarPedido(pedido)) return;
+    setPedidoParaEditar(pedido);
+    setEditarVisivel(true);
+  };
+
   const gerarPdfPedido = async (pedidoId) => {
     try {
       setLoadingPdfId(pedidoId);
@@ -441,6 +447,29 @@ export default function PedidosListagem() {
         }}
         pedido={pedidoDetalhado}
         loading={loadingDetalhes}
+        podeEditar={podeEditarPedido(pedidoDetalhado)}
+        onEditar={abrirEdicaoPedido}
+        onAtualizar={() => {
+          if (pedidoDetalhado?.id) {
+            carregarDetalhesPedido({ id: pedidoDetalhado.id });
+          }
+        }}
+        toast={toast}
+      />
+
+      <PedidoEditarDialog
+        visible={editarVisivel}
+        pedidoId={pedidoParaEditar?.id}
+        onHide={() => {
+          setEditarVisivel(false);
+          setPedidoParaEditar(null);
+        }}
+        onSalvo={async () => {
+          await fetchPedidos(paginaAtual);
+          if (detalhesVisivel && pedidoParaEditar?.id) {
+            await carregarDetalhesPedido({ id: pedidoParaEditar.id });
+          }
+        }}
       />
 
       <Dialog
