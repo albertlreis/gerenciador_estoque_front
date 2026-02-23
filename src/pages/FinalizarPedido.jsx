@@ -7,7 +7,7 @@ import { confirmDialog, ConfirmDialog } from 'primereact/confirmdialog';
 import SakaiLayout from '../layouts/SakaiLayout';
 import api from '../services/apiEstoque';
 import { useAuth } from '../context/AuthContext';
-import apiAuth from '../services/apiAuth';
+import AuthApi from '../api/authApi';
 
 import ResumoPedidoCard from '../components/ResumoPedidoCard';
 import ItemPedidoCard from '../components/ItemPedidoCard';
@@ -23,7 +23,8 @@ import { ParceiroForm } from '../components/ParceiroForm';
 
 const FinalizarPedido = () => {
   const { user } = useAuth();
-  const isAdmin = user?.permissoes?.includes(PERMISSOES.PEDIDOS.SELECIONAR_VENDEDOR);
+  const podeSelecionarVendedor = user?.permissoes?.includes(PERMISSOES.PEDIDOS.SELECIONAR_VENDEDOR)
+    || user?.permissoes?.includes(PERMISSOES.CARRINHOS.FINALIZAR);
 
   const { id } = useParams();
   const navigate = useNavigate();
@@ -64,7 +65,7 @@ const FinalizarPedido = () => {
         await carregarCarrinho(id);
         await fetchClientes();
         await fetchParceiros();
-        if (isAdmin) await fetchVendedores();
+        if (podeSelecionarVendedor) await fetchVendedores();
       } finally {
         setLoading(false);
       }
@@ -73,10 +74,10 @@ const FinalizarPedido = () => {
   }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (isAdmin && carrinhoAtual?.id_usuario) {
-      setIdVendedorSelecionado(carrinhoAtual.id_usuario);
+    if (podeSelecionarVendedor) {
+      setIdVendedorSelecionado(user?.id ?? carrinhoAtual?.id_usuario ?? null);
     }
-  }, [isAdmin, carrinhoAtual]);
+  }, [podeSelecionarVendedor, user?.id, carrinhoAtual?.id_usuario]);
 
   useEffect(() => {
     if (itens.length > 0) carregarDepositosParaItens();
@@ -122,7 +123,7 @@ const FinalizarPedido = () => {
 
   const fetchVendedores = async () => {
     try {
-      const { data } = await apiAuth.get('/usuarios/vendedores');
+      const { data } = await AuthApi.usuarios.opcoes.vendedores({ fields: 'id,nome' });
       setVendedores(toArray(data));
     } catch (error) {
       console.error('Erro ao buscar vendedores:', error);
@@ -189,7 +190,16 @@ const FinalizarPedido = () => {
         icon: 'pi pi-exclamation-triangle',
         acceptLabel: 'Sim',
         rejectLabel: 'Cancelar',
-        accept: () => removerItem(item.id),
+        accept: async () => {
+          const result = await removerItem(item.id);
+          if (!result?.success) {
+            toast.current?.show({
+              severity: 'error',
+              summary: 'Erro',
+              detail: result?.message || 'Erro ao remover item do carrinho.',
+            });
+          }
+        },
       });
       return;
     }
@@ -232,7 +242,7 @@ const FinalizarPedido = () => {
         observacoes,
         modo_consignacao: modoConsignacao,
         prazo_consignacao: prazoConsignacao,
-        id_usuario: isAdmin ? idVendedorSelecionado : carrinhoAtual?.id_usuario,
+        id_usuario: podeSelecionarVendedor ? idVendedorSelecionado : undefined,
         depositos_por_item: depositosPayload,
         registrar_movimentacao,
       });
@@ -289,7 +299,7 @@ const FinalizarPedido = () => {
     }));
 
     // Se NÃO for admin, vai direto para RESERVA (sem dialog)
-    if (!isAdmin) {
+    if (!podeSelecionarVendedor) {
       await finalizarComOpcao(false, depositosPayload);
       return;
     }
@@ -321,6 +331,17 @@ const FinalizarPedido = () => {
   const handleCancelar = async () => {
     await cancelarCarrinho();
     navigate('/catalogo');
+  };
+
+  const handleRemoverItem = async (itemId) => {
+    const result = await removerItem(itemId);
+    if (!result?.success) {
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Erro',
+        detail: result?.message || 'Erro ao remover item do carrinho.',
+      });
+    }
   };
 
   const total = formatarValor(itens.reduce((sum, item) => sum + Number(item.subtotal || 0), 0));
@@ -382,7 +403,7 @@ const FinalizarPedido = () => {
             <h2 className="text-xl font-bold mb-4">Finalizar Pedido</h2>
 
             <SelecionarEntidades
-              isAdmin={isAdmin}
+              isAdmin={podeSelecionarVendedor}
               vendedores={vendedores}
               clientes={clientes}
               parceiros={parceiros}
@@ -427,7 +448,7 @@ const FinalizarPedido = () => {
                     emFaltaNoConsignado={itensEmFalta.includes(item.id)}
                     depositosDisponiveis={depositosPorItem[item.id] || []}
                     onAtualizarQuantidade={handleAtualizarQuantidade}
-                    onRemoverItem={removerItem}
+                    onRemoverItem={handleRemoverItem}
                     onAtualizarDeposito={handleAtualizarDeposito}
                     onVerLocalizacao={abrirLocalizacoes}
                   />

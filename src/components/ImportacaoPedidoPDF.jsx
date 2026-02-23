@@ -24,6 +24,15 @@ import ClienteForm from '../components/cliente/ClienteForm';
 import AdicionarProduto from './produto/AdicionarProduto';
 import { normalizeDateToYmd } from '../utils/date';
 
+const TIPOS_IMPORTACAO = [
+  { label: 'Produtos PDF Sierra', value: 'PRODUTOS_PDF_SIERRA', accept: '.pdf' },
+  { label: 'Produtos PDF Avanti', value: 'PRODUTOS_PDF_AVANTI', accept: '.pdf' },
+  { label: 'Produtos PDF Quaker', value: 'PRODUTOS_PDF_QUAKER', accept: '.pdf' },
+  { label: 'Adornos XML NF-e', value: 'ADORNOS_XML_NFE', accept: '.xml,application/xml,text/xml' },
+];
+
+const TIPO_IMPORTACAO_PADRAO = 'PRODUTOS_PDF_SIERRA';
+
 /**
  * Mescla produtos com mesma referência, somando quantidades e valores.
  */
@@ -148,6 +157,7 @@ export default function ImportacaoPedidoPDF() {
   const [itensParaFabrica, setItensParaFabrica] = useState([]);
   const [pedidoSalvoId, setPedidoSalvoId] = useState(null);
   const [percentualVenda, setPercentualVenda] = useState(0);
+  const [tipoImportacao, setTipoImportacao] = useState(TIPO_IMPORTACAO_PADRAO);
 
   // seleção em lote de produtos
   const [itensSelecionados, setItensSelecionados] = useState([]);
@@ -193,8 +203,40 @@ export default function ImportacaoPedidoPDF() {
   const onUpload = async ({ files }) => {
     if (!files?.length) return;
 
+    if (!tipoImportacao) {
+      toast.current?.show({
+        severity: 'warn',
+        summary: 'Tipo obrigatorio',
+        detail: 'Selecione o tipo de importacao antes de enviar o arquivo.',
+      });
+      return;
+    }
+
+    const arquivo = files[0];
+    const nomeArquivo = (arquivo?.name || '').toLowerCase();
+    const tipoEhXml = tipoImportacao === 'ADORNOS_XML_NFE';
+
+    if (tipoEhXml && !nomeArquivo.endsWith('.xml')) {
+      toast.current?.show({
+        severity: 'warn',
+        summary: 'Arquivo invalido',
+        detail: 'Para ADORNOS_XML_NFE, envie um arquivo XML.',
+      });
+      return;
+    }
+
+    if (!tipoEhXml && !nomeArquivo.endsWith('.pdf')) {
+      toast.current?.show({
+        severity: 'warn',
+        summary: 'Arquivo invalido',
+        detail: 'Para importacoes de produtos, envie um arquivo PDF.',
+      });
+      return;
+    }
+
     const formData = new FormData();
-    formData.append('arquivo', files[0]);
+    formData.append('arquivo', arquivo);
+    formData.append('tipo_importacao', tipoImportacao);
 
     setLoading(true);
     setUploadStatus('uploading');
@@ -516,6 +558,7 @@ export default function ImportacaoPedidoPDF() {
     setAbrirPedidoFabrica(false);
     setImportacaoId(null);
     setPercentualVenda(0);
+    setTipoImportacao(TIPO_IMPORTACAO_PADRAO);
   };
 
   const confirmarRemocaoArquivo = () => {
@@ -611,6 +654,7 @@ export default function ImportacaoPedidoPDF() {
 
       const response = await PedidosApi.confirmarImportacaoPdf({
         importacao_id: importacaoId,
+        tipo_importacao: tipoImportacao,
         cliente: tipo === 'venda' ? cliente : {},
         pedido: pedidoPayload,
         entregue,
@@ -759,6 +803,20 @@ export default function ImportacaoPedidoPDF() {
       {/* Upload */}
       <Card className="mb-4" title="Enviar Arquivo PDF">
         <div className="flex flex-column align-items-center gap-3 p-4">
+          <div className="w-full md:w-6">
+            <label className="block text-700 font-medium mb-2">Tipo de importacao</label>
+            <Dropdown
+              value={tipoImportacao}
+              options={TIPOS_IMPORTACAO}
+              onChange={(e) => setTipoImportacao(e.value)}
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Selecione o tipo"
+              className="w-full"
+              disabled={loading}
+            />
+          </div>
+
           <p className="text-center text-muted max-w-60rem">
             Selecione um arquivo PDF com os dados do pedido. O sistema tentará
             extrair informações como produtos, parcelas e observações.
@@ -767,7 +825,7 @@ export default function ImportacaoPedidoPDF() {
           <FileUpload
             ref={fileUploadRef}
             name="arquivo"
-            accept=".pdf"
+            accept={TIPOS_IMPORTACAO.find((tipo) => tipo.value === tipoImportacao)?.accept || '.pdf'}
             mode="advanced"
             customUpload
             uploadHandler={onUpload}
@@ -776,8 +834,8 @@ export default function ImportacaoPedidoPDF() {
             multiple={false}
             maxFileSize={6_000_000}
             chooseOptions={{
-              icon: 'pi pi-file-pdf',
-              label: 'Selecionar PDF',
+              icon: tipoImportacao === 'ADORNOS_XML_NFE' ? 'pi pi-file' : 'pi pi-file-pdf',
+              label: tipoImportacao === 'ADORNOS_XML_NFE' ? 'Selecionar XML' : 'Selecionar PDF',
               className: 'p-button-primary',
               'aria-label': 'Selecionar arquivo PDF para importação',
             }}

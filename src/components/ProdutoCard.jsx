@@ -46,13 +46,11 @@ const ProdutoCard = ({ grupo, estoqueStatus, onDetalhes, onAdicionar, onEditar }
     >
       <button
         type="button"
-        className="p-button p-button-rounded p-button-text p-button-secondary p-button-sm absolute top-0 left-0 m-1 z-2"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          onEditar && onEditar();
-        }}
+        className="p-button p-button-rounded p-button-sm p-button-help p-button-raised absolute top-0 left-0 m-2 z-3"
+        onClick={onEditar}
         title="Editar produto"
+        disabled={!onEditar}
+        aria-label="Editar produto"
       >
         <i className="pi pi-pencil" />
       </button>
@@ -149,7 +147,7 @@ const ProdutoCard = ({ grupo, estoqueStatus, onDetalhes, onAdicionar, onEditar }
         )}
       </div>
 
-      <div className="flex justify-content-between mt-auto">
+      <div className="flex justify-content-end gap-2 mt-auto flex-wrap">
         <button className="p-button p-button-sm p-button-outlined" onClick={onDetalhes}>
           Detalhes
         </button>

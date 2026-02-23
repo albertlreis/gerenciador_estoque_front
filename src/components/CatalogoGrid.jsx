@@ -6,6 +6,7 @@ import ProdutoCard from './ProdutoCard';
 import formatarPreco from '../utils/formatarPreco';
 import getImageSrc from '../utils/getImageSrc';
 import { getQuantidadeDisponivelVariacao } from '../utils/estoqueVariacao';
+import { filtrarVariacoesPorEstoqueStatus } from '../utils/catalogoEstoque';
 
 const estoqueDaVariacao = (variacao) => getQuantidadeDisponivelVariacao(variacao);
 
@@ -112,7 +113,8 @@ const filtrarGruposPorEstoqueStatus = (grupos, estoqueStatus) => {
 
 const CatalogoGrid = ({ produtos, estoqueStatus, onAdicionarAoCarrinho, onEditarProduto }) => {
   const [selectedGroup, setSelectedGroup] = useState(null);
-  const variacoesDetalhe = Array.isArray(selectedGroup?.produto?.variacoes) ? selectedGroup.produto.variacoes : [];
+  const variacoesDetalheBase = Array.isArray(selectedGroup?.produto?.variacoes) ? selectedGroup.produto.variacoes : [];
+  const variacoesDetalhe = filtrarVariacoesPorEstoqueStatus(variacoesDetalheBase, estoqueStatus);
 
   const grupos = useMemo(() => {
     const agrupados = agruparPorReferencia(produtos);
@@ -262,6 +264,10 @@ const CatalogoGrid = ({ produtos, estoqueStatus, onAdicionarAoCarrinho, onEditar
                 </div>
               );
             })}
+
+            {variacoesDetalhe.length === 0 && (
+              <p className="text-sm text-600">Nenhuma variacao disponivel para o filtro selecionado.</p>
+            )}
           </div>
         )}
       </Dialog>

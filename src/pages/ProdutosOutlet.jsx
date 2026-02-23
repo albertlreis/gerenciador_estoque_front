@@ -171,6 +171,27 @@ const ProdutosOutlet = () => {
 
   const categoriaBody = (row) => row?.categoria?.nome || row?.categoria || '-';
 
+  const montarMedidas = (row) => {
+    const altura = row?.altura;
+    const largura = row?.largura;
+    const profundidade = row?.profundidade;
+
+    const algumPreenchido = [altura, largura, profundidade].some((v) => v !== null && v !== undefined && v !== '');
+    if (!algumPreenchido) return null;
+
+    const format = (valor) => (valor === null || valor === undefined || valor === '' ? '-' : valor);
+    return `A ${format(altura)} x L ${format(largura)} x P ${format(profundidade)} cm`;
+  };
+
+  const nomeBody = (row) => {
+    const medidas = montarMedidas(row);
+    if (!medidas) {
+      return row?.nome || '-';
+    }
+
+    return `${row?.nome || '-'} - ${medidas}`;
+  };
+
   const calcularOfertaFallback = (row) => {
     const variacoes = Array.isArray(row?.variacoes) ? row.variacoes : [];
 
@@ -417,7 +438,7 @@ const ProdutosOutlet = () => {
           <Column selectionMode="multiple" headerStyle={{ width: '3rem' }} />
           <Column field="id" header="ID" style={{ width: '90px' }} />
           <Column header="Referencia" body={referenciasBody} />
-          <Column field="nome" header="Nome" />
+          <Column header="Nome" body={nomeBody} style={{ minWidth: '260px' }} />
           <Column header="Categoria" body={categoriaBody} />
           <Column header="Preco de venda" body={precoVendaBody} style={{ width: '150px' }} />
           <Column header="Preco final" body={precoFinalBody} style={{ width: '180px' }} />
@@ -430,3 +451,4 @@ const ProdutosOutlet = () => {
 };
 
 export default ProdutosOutlet;
+
