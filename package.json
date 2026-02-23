@@ -30,6 +30,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
+    "e2e": "playwright test",
+    "e2e:headed": "playwright test --headed",
+    "e2e:report": "playwright show-report",
     "check:menu-encoding": "node scripts/check-menu-encoding.js",
     "eject": "react-scripts eject",
     "postbuild": "node scripts/write-version.js"
@@ -51,5 +54,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
   }
 }
