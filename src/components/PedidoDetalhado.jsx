@@ -7,6 +7,7 @@ import { formatarReal } from '../utils/formatters';
 import { STATUS_MAP } from '../constants/statusPedido';
 import usePermissions from '../hooks/usePermissions';
 import { PERMISSOES } from '../constants/permissoes';
+import api from '../services/apiEstoque';
 
 const severityEntrega = (diasUteisRestantes, atrasado) => {
   if (atrasado) return 'danger';
@@ -18,8 +19,11 @@ const severityEntrega = (diasUteisRestantes, atrasado) => {
 const isEstadoFinal = (status) =>
   ['entrega_cliente', 'finalizado', 'consignado', 'devolucao_consignacao'].includes(status ?? '');
 
-const PedidoDetalhado = ({ visible, onHide, pedido }) => {
+const PedidoDetalhado = ({ visible, onHide, pedido, podeEditar = false, onEditar, onAtualizar, toast }) => {
   const { has } = usePermissions();
+  const fileInputRef = useRef(null);
+  const [uploadingXml, setUploadingXml] = useState(false);
+  const [downloadingXml, setDownloadingXml] = useState(false);
   if (!pedido) return null;
   const podeVerCusto = has([
     PERMISSOES.PEDIDOS.VER_CUSTO,

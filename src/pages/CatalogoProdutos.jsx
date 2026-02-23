@@ -87,6 +87,7 @@ const CatalogoProdutos = () => {
     setDialogVariacaoVisible(true);
   };
 
+  /*
   const abrirEdicaoProduto = async (grupo) => {
     const produtoId = grupo?.produto?.id ?? grupo?.id;
     if (!produtoId) return;
@@ -169,6 +170,7 @@ const CatalogoProdutos = () => {
     return response;
   };
 
+  */
   const handleFiltrosChange = (patch) => {
     setFiltros((prev) => ({ ...prev, ...patch }));
   };

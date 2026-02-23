@@ -46,6 +46,10 @@ const MovimentacoesEstoque = () => {
     const legacyParsed = [true, 1, '1', 'true', 'yes', 'on'].includes(legacyValue);
     return legacyParsed ? 'sem_estoque' : 'all';
   };
+  const formatarPreco = (valor) => Number(valor || 0).toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  });
 
   const toast = useRef(null);
   const [searchParams] = useSearchParams();

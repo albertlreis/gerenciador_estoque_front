@@ -349,6 +349,8 @@ export default function PedidosListagem() {
     }
   };
 
+  const podeEditarPedido = (pedido) => Boolean(podeEditar && pedido?.id);
+
   const carregarDetalhesPedido = async (pedido) => {
     setLoadingDetalhes(true);
     setDetalhesVisivel(true);
@@ -366,12 +368,6 @@ export default function PedidosListagem() {
     } finally {
       setLoadingDetalhes(false);
     }
-  };
-
-  const abrirEdicaoPedido = (pedido) => {
-    if (!podeEditarPedido(pedido)) return;
-    setPedidoParaEditar(pedido);
-    setEditarVisivel(true);
   };
 
   const gerarPdfPedido = async (pedidoId) => {
@@ -455,21 +451,6 @@ export default function PedidosListagem() {
           }
         }}
         toast={toast}
-      />
-
-      <PedidoEditarDialog
-        visible={editarVisivel}
-        pedidoId={pedidoParaEditar?.id}
-        onHide={() => {
-          setEditarVisivel(false);
-          setPedidoParaEditar(null);
-        }}
-        onSalvo={async () => {
-          await fetchPedidos(paginaAtual);
-          if (detalhesVisivel && pedidoParaEditar?.id) {
-            await carregarDetalhesPedido({ id: pedidoParaEditar.id });
-          }
-        }}
       />
 
       <Dialog
