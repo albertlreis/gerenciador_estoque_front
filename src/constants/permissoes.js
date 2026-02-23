@@ -187,4 +187,13 @@ export const PERMISSOES = {
     VISUALIZAR: 'auditoria.visualizar',
   },
 
+  AVISOS: {
+    VISUALIZAR: 'avisos.view',
+    GERENCIAR: 'avisos.manage',
+  },
+
+  VARIACOES: {
+    EDITAR: 'produto_variacoes.editar',
+  },
+
 };

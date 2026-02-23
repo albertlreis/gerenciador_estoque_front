@@ -2,6 +2,9 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useCarrinho } from '../context/CarrinhoContext';
 import { useNavigate, useParams } from 'react-router-dom';
 import { InputTextarea } from 'primereact/inputtextarea';
+import { InputNumber } from 'primereact/inputnumber';
+import { Dialog } from 'primereact/dialog';
+import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 import { confirmDialog, ConfirmDialog } from 'primereact/confirmdialog';
 import SakaiLayout from '../layouts/SakaiLayout';
@@ -17,6 +20,7 @@ import LocalizacoesModal from '../components/LocalizacoesModal';
 import { formatarValor } from '../utils/formatters';
 import FinalizarPedidoSkeleton from "../components/skeletons/FinalizarPedidoSkeleton";
 import { PERMISSOES } from "../constants/permissoes";
+import { patchProdutoVariacao } from '../services/produtoVariacaoService';
 
 import { criarParceiro } from '../services/parceiros';
 import { ParceiroForm } from '../components/ParceiroForm';
@@ -25,6 +29,9 @@ const FinalizarPedido = () => {
   const { user } = useAuth();
   const podeSelecionarVendedor = user?.permissoes?.includes(PERMISSOES.PEDIDOS.SELECIONAR_VENDEDOR)
     || user?.permissoes?.includes(PERMISSOES.CARRINHOS.FINALIZAR);
+  const podeEditarPrecoVariacao = user?.permissoes?.includes(PERMISSOES.VARIACOES.EDITAR)
+    || user?.permissoes?.includes(PERMISSOES.PRODUTOS.EDITAR)
+    || user?.permissoes?.includes(PERMISSOES.PRODUTOS.GERENCIAR);
 
   const { id } = useParams();
   const navigate = useNavigate();
@@ -52,6 +59,11 @@ const FinalizarPedido = () => {
   const [loading, setLoading] = useState(true);
   const [mostrarLocModal, setMostrarLocModal] = useState(false);
   const [itemLocSelecionado, setItemLocSelecionado] = useState(null);
+  const [dialogPrecoVisible, setDialogPrecoVisible] = useState(false);
+  const [itemPrecoSelecionado, setItemPrecoSelecionado] = useState(null);
+  const [novoPreco, setNovoPreco] = useState(null);
+  const [motivoPreco, setMotivoPreco] = useState('');
+  const [savingPreco, setSavingPreco] = useState(false);
 
   // ——— estado do modal de parceiro ———
   const [parceiroFormVisible, setParceiroFormVisible] = useState(false);
@@ -374,6 +386,57 @@ const FinalizarPedido = () => {
     setMostrarLocModal(true);
   };
 
+  const abrirEdicaoPreco = (item) => {
+    setItemPrecoSelecionado(item);
+    setNovoPreco(Number(item?.preco_unitario || 0));
+    setMotivoPreco('');
+    setDialogPrecoVisible(true);
+  };
+
+  const salvarEdicaoPreco = async () => {
+    if (!itemPrecoSelecionado?.id_variacao) return;
+
+    if (!motivoPreco.trim()) {
+      toast.current?.show({
+        severity: 'warn',
+        summary: 'Motivo obrigatório',
+        detail: 'Informe o motivo da alteração de preço.',
+      });
+      return;
+    }
+
+    setSavingPreco(true);
+    try {
+      await patchProdutoVariacao(itemPrecoSelecionado.id_variacao, {
+        preco: Number(novoPreco || 0),
+        audit: {
+          label: 'Alteração de preço no checkout',
+          motivo: motivoPreco.trim(),
+          origin: 'checkout',
+          metadata: {
+            carrinho_id: carrinhoAtual?.id || null,
+          },
+        },
+      });
+
+      await carregarCarrinho(id);
+      setDialogPrecoVisible(false);
+      toast.current?.show({
+        severity: 'success',
+        summary: 'Preço atualizado',
+        detail: 'A alteração foi aplicada no checkout e no catálogo.',
+      });
+    } catch (error) {
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Erro',
+        detail: error?.response?.data?.message || 'Não foi possível alterar o preço da variação.',
+      });
+    } finally {
+      setSavingPreco(false);
+    }
+  };
+
   return (
     <SakaiLayout>
       <Toast ref={toast} />
@@ -394,6 +457,53 @@ const FinalizarPedido = () => {
         onSubmit={onSubmitParceiro}
         loading={parceiroSaving}
       />
+
+      <Dialog
+        header="Editar preço da variação"
+        visible={dialogPrecoVisible}
+        style={{ width: '520px', maxWidth: '95vw' }}
+        onHide={() => setDialogPrecoVisible(false)}
+        modal
+      >
+        <div className="grid formgrid">
+          <div className="field col-12">
+            <label className="block mb-2">Novo preço</label>
+            <InputNumber
+              value={novoPreco}
+              onValueChange={(e) => setNovoPreco(e.value)}
+              mode="currency"
+              currency="BRL"
+              locale="pt-BR"
+              min={0}
+              className="w-full"
+            />
+          </div>
+          <div className="field col-12">
+            <label className="block mb-2">Motivo *</label>
+            <InputTextarea
+              value={motivoPreco}
+              rows={3}
+              onChange={(e) => setMotivoPreco(e.target.value)}
+              placeholder="Descreva o motivo da alteração"
+            />
+          </div>
+          <div className="col-12">
+            <small className="text-600">
+              Alteração atualiza o preço da variação no catálogo.
+            </small>
+          </div>
+        </div>
+
+        <div className="flex justify-content-end gap-2 mt-3">
+          <Button
+            label="Cancelar"
+            outlined
+            onClick={() => setDialogPrecoVisible(false)}
+            disabled={savingPreco}
+          />
+          <Button label="Salvar preço" onClick={salvarEdicaoPreco} loading={savingPreco} />
+        </div>
+      </Dialog>
 
       {loading ? (
         <FinalizarPedidoSkeleton />
@@ -451,6 +561,8 @@ const FinalizarPedido = () => {
                     onRemoverItem={handleRemoverItem}
                     onAtualizarDeposito={handleAtualizarDeposito}
                     onVerLocalizacao={abrirLocalizacoes}
+                    onEditarPreco={abrirEdicaoPreco}
+                    podeEditarPreco={podeEditarPrecoVariacao}
                   />
                 ))
               )}

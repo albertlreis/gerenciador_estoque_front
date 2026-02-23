@@ -7,15 +7,17 @@ import { formatarValor } from '../utils/formatters';
 import getImageSrc from '../utils/getImageSrc';
 
 const ItemPedidoCard = ({
-                          item,
-                          emFalta,
-                          emFaltaNoConsignado,
-                          depositosDisponiveis,
-                          onAtualizarQuantidade,
-                          onRemoverItem,
-                          onAtualizarDeposito,
-                          onVerLocalizacao,
-                        }) => {
+  item,
+  emFalta,
+  emFaltaNoConsignado,
+  depositosDisponiveis,
+  onAtualizarQuantidade,
+  onRemoverItem,
+  onAtualizarDeposito,
+  onVerLocalizacao,
+  onEditarPreco,
+  podeEditarPreco = false,
+}) => {
   const estoqueDisponivel = item.variacao?.estoque_total ?? 0;
 
   return (
@@ -52,15 +54,15 @@ const ItemPedidoCard = ({
         )}
 
         <div className="mb-2">
-          <label className="text-sm block font-medium mb-1">Depósito de saída</label>
+          <label className="text-sm block font-medium mb-1">Deposito de saida</label>
           <Dropdown
             value={item.id_deposito}
             options={depositosDisponiveis}
             optionLabel="nome"
             optionValue="id"
             onChange={(e) => onAtualizarDeposito(item.id, e.value)}
-            placeholder="Selecione o depósito"
-            emptyMessage="Nenhum depósito disponível"
+            placeholder="Selecione o deposito"
+            emptyMessage="Nenhum deposito disponivel"
             className="w-full"
           />
         </div>
@@ -91,19 +93,32 @@ const ItemPedidoCard = ({
             }
           />
           <Button
-            label="Localização"
+            label="Localizacao"
             className="p-button-text p-button-sm"
             icon="pi pi-map-marker"
             onClick={() => onVerLocalizacao(item)}
           />
+          {podeEditarPreco && (
+            <Button
+              label="Editar preco"
+              className="p-button-text p-button-sm"
+              icon="pi pi-dollar"
+              onClick={() => onEditarPreco?.(item)}
+            />
+          )}
         </div>
 
-        {emFalta && <div className="text-sm text-red-600 mb-2">Estoque insuficiente: disponível {estoqueDisponivel}</div>}
+        {emFalta && <div className="text-sm text-red-600 mb-2">Estoque insuficiente: disponivel {estoqueDisponivel}</div>}
 
         <div className="flex justify-content-between text-sm text-gray-700">
           <span>Unit: {formatarValor(item.preco_unitario)}</span>
           <span>Subtotal: {formatarValor(item.subtotal)}</span>
         </div>
+        {podeEditarPreco && (
+          <small className="text-600 block mt-2">
+            Alteracao de preco atualiza a variacao no catalogo.
+          </small>
+        )}
       </div>
     </div>
   );

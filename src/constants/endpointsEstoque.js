@@ -4,6 +4,16 @@ export const ESTOQUE_ENDPOINTS = Object.freeze({
     resumo: '/dashboard/resumo',
   }),
 
+  avisos: Object.freeze({
+    base: '/avisos',
+    byId: (id) => `/avisos/${id}`,
+    ler: (id) => `/avisos/${id}/ler`,
+  }),
+
+  aniversarios: Object.freeze({
+    base: '/aniversarios',
+  }),
+
   configuracoes: Object.freeze({
     listar: '/configuracoes',
     atualizar: (chave) => `/configuracoes/${encodeURIComponent(chave)}`,
@@ -28,6 +38,10 @@ export const ESTOQUE_ENDPOINTS = Object.freeze({
       base: (variacaoId) => `/variacoes/${variacaoId}/outlets`,
       byId: (variacaoId, outletId) => `/variacoes/${variacaoId}/outlets/${outletId}`,
     }),
+  }),
+
+  produtoVariacoes: Object.freeze({
+    byId: (id) => `/produto-variacoes/${id}`,
   }),
 
   outletCatalogo: Object.freeze({

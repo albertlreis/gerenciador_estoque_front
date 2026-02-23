@@ -59,6 +59,7 @@ import ContasFinanceiras from "./pages/financeiro/ContasFinanceiras";
 import TransferenciasEntreContas from "./pages/financeiro/TransferenciasEntreContas";
 import ContaReceberNova from "./pages/financeiro/ContaReceberNova";
 import Auditoria from './pages/Auditoria';
+import MuralAvisos from './pages/MuralAvisos';
 
 const renderProtectedRoute = (element, permissoes) => (
   <PrivateRoute element={<PermissaoRoute element={element} permissoes={permissoes}/>}/>
@@ -259,6 +260,14 @@ const App = () => {
       <Route
         path="/auditoria"
         element={renderProtectedRoute(<Auditoria />, PERMISSOES_AUDITORIA_ANY)}
+      />
+
+      <Route
+        path="/mural"
+        element={renderProtectedRoute(
+          <MuralAvisos />,
+          [PERMISSOES.AVISOS.VISUALIZAR, PERMISSOES.AVISOS.GERENCIAR]
+        )}
       />
 
       {/* Comunicação */}

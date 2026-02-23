@@ -9,6 +9,8 @@ import QuickLinks from './QuickLinks';
 import UltimosPedidosCard from './UltimosPedidosCard';
 import ConsignacoesAlert from './ConsignacoesAlert';
 import ModaisDashboard from './ModaisDashboard';
+import AvisosCard from './AvisosCard';
+import AniversariantesCard from './AniversariantesCard';
 import { PERFIS } from '../../constants/perfis';
 
 const HomeVendedorView = () => {
@@ -40,6 +42,15 @@ const HomeVendedorView = () => {
       />
 
       <QuickLinks perfil={PERFIS.VENDEDOR.slug} hasPermission={has} navigate={navigate} />
+
+      <div className="grid mb-3">
+        <div className="col-12 md:col-6">
+          <AvisosCard />
+        </div>
+        <div className="col-12 md:col-6">
+          <AniversariantesCard />
+        </div>
+      </div>
 
       <div className="grid">
         <div className="col-12 md:col-6">

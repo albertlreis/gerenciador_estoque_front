@@ -17,6 +17,13 @@ const menuItems = (has, user = null) => {
       to: '/'
     },
 
+    has([PERMISSOES.AVISOS?.VISUALIZAR, PERMISSOES.AVISOS?.GERENCIAR]) && {
+      label: 'Mural',
+      key: 'mural',
+      icon: 'pi pi-fw pi-comments',
+      to: '/mural'
+    },
+
     // Agrupa tudo de pedidos (cliente, consignação, importação e fábrica)
     (has(PERMISSOES.PEDIDOS?.VISUALIZAR) ||
       has(PERMISSOES.CONSIGNACOES?.VISUALIZAR) ||
