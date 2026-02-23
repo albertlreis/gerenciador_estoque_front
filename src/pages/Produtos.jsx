@@ -16,6 +16,7 @@ import ProdutoForm from '../components/produto/ProdutoForm';
 import TableActions from '../components/TableActions';
 import { normalizarProdutoPayload } from '../utils/normalizarProdutoPayload';
 import { normalizarBuscaProduto } from '../utils/normalizarBuscaProduto';
+import AuditoriaEntidadePanel from '../components/auditoria/AuditoriaEntidadePanel';
 
 const Produtos = () => {
   const toast = useRef(null);
@@ -344,7 +345,7 @@ const categoriaBodyTemplate = (rowData) =>
       <Dialog
         header={dialogTitle}
         visible={showDialog}
-        style={{width: '800px'}}
+        style={{ width: '90vw', maxWidth: '1100px' }}
         modal
         onHide={() => setShowDialog(false)}
       >
@@ -353,6 +354,16 @@ const categoriaBodyTemplate = (rowData) =>
           onSubmit={handleFormSubmit}
           onCancel={() => setShowDialog(false)}
         />
+
+        {editingProduto?.id && (
+          <div className="mt-4">
+            <AuditoriaEntidadePanel
+              auditableType="Produto"
+              auditableId={editingProduto.id}
+              titulo="Historico do Produto"
+            />
+          </div>
+        )}
       </Dialog>
     </SakaiLayout>
   );

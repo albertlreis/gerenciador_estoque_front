@@ -4,14 +4,28 @@ import { Column } from "primereact/column";
 import { Button } from "primereact/button";
 import { Tag } from "primereact/tag";
 
-export default function TabelaContasReceber({ contas, loading, onBaixar }) {
+export default function TabelaContasReceber({ contas, loading, onBaixar, onVerAuditoria }) {
   const valorFmt = (v) => v?.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) ?? "-";
   const statusTemplate = (row) => {
     const color = { ABERTO: "danger", PARCIAL: "warning", PAGO: "success" }[row.status] || "info";
     return <Tag value={row.status} severity={color} />;
   };
+
   const botoes = (row) => (
-    <Button icon="pi pi-wallet" className="p-button-text p-button-sm" tooltip="Baixar Pagamento" onClick={() => onBaixar(row)} />
+    <div className="flex gap-1">
+      <Button
+        icon="pi pi-wallet"
+        className="p-button-text p-button-sm"
+        tooltip="Baixar Pagamento"
+        onClick={() => onBaixar(row)}
+      />
+      <Button
+        icon="pi pi-history"
+        className="p-button-text p-button-sm"
+        tooltip="Auditoria"
+        onClick={() => onVerAuditoria?.(row)}
+      />
+    </div>
   );
 
   return (
@@ -20,12 +34,12 @@ export default function TabelaContasReceber({ contas, loading, onBaixar }) {
         <Column field="id" header="#" style={{ width: "4rem" }} />
         <Column field="pedido.numero" header="Pedido" body={(r) => r?.pedido?.numero || '-'} />
         <Column field="pedido.cliente" header="Cliente" body={(r) => r?.pedido?.cliente || '-'} />
-        <Column field="descricao" header="Descrição" />
+        <Column field="descricao" header="Descricao" />
         <Column field="data_vencimento" header="Vencimento" />
-        <Column field="valor_liquido" header="Valor Líquido" body={(r) => valorFmt(r.valor_liquido)} />
+        <Column field="valor_liquido" header="Valor Liquido" body={(r) => valorFmt(r.valor_liquido)} />
         <Column field="saldo_aberto" header="Saldo" body={(r) => valorFmt(r.saldo_aberto)} />
         <Column field="status" header="Status" body={statusTemplate} />
-        <Column header="Ações" body={botoes} style={{ textAlign: "center", width: "8rem" }} />
+        <Column header="Acoes" body={botoes} style={{ textAlign: "center", width: "9rem" }} />
       </DataTable>
     </div>
   );

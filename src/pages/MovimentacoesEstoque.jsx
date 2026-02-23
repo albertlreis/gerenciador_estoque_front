@@ -15,6 +15,7 @@ import { ESTOQUE_ENDPOINTS } from '../constants/endpointsEstoque';
 import usePermissions from '../hooks/usePermissions';
 import { PERMISSOES } from '../constants/permissoes';
 import { normalizarBuscaProduto } from '../utils/normalizarBuscaProduto';
+import AuditoriaEntidadePanel from '../components/auditoria/AuditoriaEntidadePanel';
 
 /**
  * Página de Estoque + Movimentações com editor de localização.
@@ -94,6 +95,7 @@ const MovimentacoesEstoque = () => {
   const [movsProduto, setMovsProduto] = useState([]);
   const [movsProdutoFirst, setMovsProdutoFirst] = useState(0);
   const [movsProdutoTotal, setMovsProdutoTotal] = useState(0);
+  const [movimentacaoAuditoriaId, setMovimentacaoAuditoriaId] = useState(null);
   const [loadingDialog, setLoadingDialog] = useState(false);
   const [loadingExportPdf, setLoadingExportPdf] = useState(false);
   const [showOutletDialog, setShowOutletDialog] = useState(false);
@@ -776,6 +778,7 @@ const MovimentacoesEstoque = () => {
               total={totalMovs}
               first={firstMovs}
               onDownloadTransferPdf={baixarPdfTransferencia}
+              onViewAuditoria={(row) => setMovimentacaoAuditoriaId(row?.id ?? null)}
               onPage={(e) => {
                 setFirstMovs(e.first);
                 fetchMovimentacoes({
@@ -809,6 +812,7 @@ const MovimentacoesEstoque = () => {
             total={movsProdutoTotal}
             first={movsProdutoFirst}
             onDownloadTransferPdf={baixarPdfTransferencia}
+            onViewAuditoria={(row) => setMovimentacaoAuditoriaId(row?.id ?? null)}
             onPage={(e) => {
               fetchMovimentacoesProduto({
                 variacaoId: produtoSelecionado?.variacao_id,
@@ -828,6 +832,26 @@ const MovimentacoesEstoque = () => {
           variacao={variacaoOutlet}
           outletEdicao={null}
         />
+
+        <Dialog
+          header={
+            movimentacaoAuditoriaId
+              ? `Auditoria da Movimentacao #${movimentacaoAuditoriaId}`
+              : 'Auditoria da Movimentacao'
+          }
+          visible={Boolean(movimentacaoAuditoriaId)}
+          onHide={() => setMovimentacaoAuditoriaId(null)}
+          style={{ width: '72vw', maxWidth: '1000px' }}
+          modal
+        >
+          {movimentacaoAuditoriaId && (
+            <AuditoriaEntidadePanel
+              auditableType="EstoqueMovimentacao"
+              auditableId={movimentacaoAuditoriaId}
+              titulo="Historico da Movimentacao"
+            />
+          )}
+        </Dialog>
       </div>
     </SakaiLayout>
   );

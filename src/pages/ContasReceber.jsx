@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Toast } from "primereact/toast";
 import { ConfirmPopup } from "primereact/confirmpopup";
 import { Button } from "primereact/button";
+import { Dialog } from "primereact/dialog";
 import SakaiLayout from '../layouts/SakaiLayout';
 
 import FinanceiroApi from "../api/financeiroApi";
@@ -13,6 +14,7 @@ import FiltroContasReceber from "../components/contasReceber/FiltroContasReceber
 import KpiContasReceber from "../components/contasReceber/KpiContasReceber";
 import TabelaContasReceber from "../components/contasReceber/TabelaContasReceber";
 import DialogBaixaReceber from "../components/contasReceber/DialogBaixaReceber";
+import AuditoriaEntidadePanel from "../components/auditoria/AuditoriaEntidadePanel";
 
 export default function ContasReceber() {
   const toast = useRef(null);
@@ -23,6 +25,7 @@ export default function ContasReceber() {
   const [filtros, setFiltros] = useState({});
   const [kpis, setKpis] = useState(null);
   const [baixaDialog, setBaixaDialog] = useState({ visible: false, conta: null });
+  const [contaAuditoria, setContaAuditoria] = useState(null);
 
   // carregar contas
   const carregarContas = async (params = {}) => {
@@ -95,6 +98,7 @@ export default function ContasReceber() {
         contas={contas}
         loading={loading}
         onBaixar={onBaixar}
+        onVerAuditoria={(conta) => setContaAuditoria(conta)}
       />
 
       <DialogBaixaReceber
@@ -103,6 +107,22 @@ export default function ContasReceber() {
         onHide={() => setBaixaDialog({ visible: false, conta: null })}
         onConfirm={onConfirmBaixa}
       />
+
+      <Dialog
+        header={contaAuditoria?.id ? `Auditoria da Conta #${contaAuditoria.id}` : 'Auditoria da Conta'}
+        visible={Boolean(contaAuditoria)}
+        onHide={() => setContaAuditoria(null)}
+        style={{ width: '72vw', maxWidth: '1000px' }}
+        modal
+      >
+        {contaAuditoria?.id && (
+          <AuditoriaEntidadePanel
+            auditableType="ContaReceber"
+            auditableId={contaAuditoria.id}
+            titulo="Historico da Conta a Receber"
+          />
+        )}
+      </Dialog>
     </SakaiLayout>
   );
 }

@@ -8,6 +8,7 @@ import { STATUS_MAP } from '../constants/statusPedido';
 import usePermissions from '../hooks/usePermissions';
 import { PERMISSOES } from '../constants/permissoes';
 import api from '../services/apiEstoque';
+import AuditoriaEntidadePanel from './auditoria/AuditoriaEntidadePanel';
 
 const severityEntrega = (diasUteisRestantes, atrasado) => {
   if (atrasado) return 'danger';
@@ -437,6 +438,14 @@ const PedidoDetalhado = ({ visible, onHide, pedido, podeEditar = false, onEditar
           </div>
         </>
       )}
+
+      <div className="mt-4">
+        <AuditoriaEntidadePanel
+          auditableType="Pedido"
+          auditableId={pedido.id}
+          titulo="Historico de Auditoria do Pedido"
+        />
+      </div>
     </Dialog>
   );
 };

@@ -5,7 +5,15 @@ import { Tag } from 'primereact/tag';
 import { Button } from 'primereact/button';
 import { format } from 'date-fns';
 
-const EstoqueMovimentacoes = ({ data, loading, total, first, onPage, onDownloadTransferPdf }) => {
+const EstoqueMovimentacoes = ({
+  data,
+  loading,
+  total,
+  first,
+  onPage,
+  onDownloadTransferPdf,
+  onViewAuditoria,
+}) => {
   const [sortField, setSortField] = useState(null);
   const [sortOrder, setSortOrder] = useState(null);
   const [rows, setRows] = useState(10);
@@ -139,6 +147,17 @@ const EstoqueMovimentacoes = ({ data, loading, total, first, onPage, onDownloadT
     );
   };
 
+  const auditoriaTemplate = (rowData) => (
+    <Button
+      icon="pi pi-history"
+      className="p-button-text p-button-sm"
+      tooltip="Ver historico de auditoria"
+      tooltipOptions={{ position: 'top' }}
+      disabled={!onViewAuditoria || !rowData?.id}
+      onClick={() => onViewAuditoria?.(rowData)}
+    />
+  );
+
   return (
     <div className="mb-6">
       <h3 className="mb-3">Movimentações Recentes</h3>
@@ -188,6 +207,11 @@ const EstoqueMovimentacoes = ({ data, loading, total, first, onPage, onDownloadT
         <Column header="Tipo" body={(row) => tipoTemplate(row.tipo)} sortable field="tipo" />
         <Column field="quantidade" header="Quantidade" sortable />
         <Column header="PDF" body={pdfTemplate} style={{ width: '70px', textAlign: 'center' }} />
+        <Column
+          header="Auditoria"
+          body={auditoriaTemplate}
+          style={{ width: '80px', textAlign: 'center' }}
+        />
       </DataTable>
     </div>
   );

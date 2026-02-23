@@ -5,6 +5,7 @@ import { Button } from 'primereact/button';
 import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
+import { Dialog } from 'primereact/dialog';
 
 import SakaiLayout from '../layouts/SakaiLayout';
 import { useContasPagar } from '../hooks/useContasPagar';
@@ -17,6 +18,7 @@ import { useAuth } from '../context/AuthContext';
 import { PERMISSOES } from '../constants/permissoes';
 import { formatarReal } from '../utils/formatters';
 import { formatarDataIsoParaBR } from '../utils/formatarData';
+import AuditoriaEntidadePanel from '../components/auditoria/AuditoriaEntidadePanel';
 
 const ROWS = 10;
 
@@ -39,6 +41,7 @@ export default function ContasPagarPage() {
 
   const [dialogPagVisivel, setDialogPagVisivel] = useState(false);
   const [contaPag, setContaPag] = useState(null);
+  const [contaAuditoria, setContaAuditoria] = useState(null);
 
   const [kpis, setKpis] = useState({
     total_liquido: 0,
@@ -211,10 +214,11 @@ export default function ContasPagarPage() {
           <Column header="Ações" body={(row) => (
             <div className="flex gap-2">
               <Button icon="pi pi-dollar" tooltip="Pagamentos" severity="success" outlined onClick={() => abrirPag(row)} disabled={!podePagar && !podeEstornar} />
+              <Button icon="pi pi-history" tooltip="Auditoria" outlined severity="secondary" onClick={() => setContaAuditoria(row)} />
               {podeEditar && <Button icon="pi pi-pencil" tooltip="Editar" onClick={() => editar(row)} />}
               {podeExcluir && <Button icon="pi pi-trash" tooltip="Excluir" severity="danger" outlined onClick={() => excluir(row)} />}
             </div>
-          )} style={{ minWidth: 220 }} />
+          )} style={{ minWidth: 260 }} />
         </DataTable>
       </div>
 
@@ -242,6 +246,22 @@ export default function ContasPagarPage() {
           podeEstornar={podeEstornar}
         />
       )}
+
+      <Dialog
+        header={contaAuditoria?.id ? `Auditoria da Conta #${contaAuditoria.id}` : 'Auditoria da Conta'}
+        visible={Boolean(contaAuditoria)}
+        onHide={() => setContaAuditoria(null)}
+        style={{ width: '72vw', maxWidth: '1000px' }}
+        modal
+      >
+        {contaAuditoria?.id && (
+          <AuditoriaEntidadePanel
+            auditableType="ContaPagar"
+            auditableId={contaAuditoria.id}
+            titulo="Historico da Conta a Pagar"
+          />
+        )}
+      </Dialog>
     </SakaiLayout>
   );
 }
