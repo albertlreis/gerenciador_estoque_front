@@ -8,6 +8,12 @@ import ProdutoAtributos from "../ProdutoAtributos";
 import apiEstoque from '../../services/apiEstoque';
 import usePermissions from "../../hooks/usePermissions";
 import { PERMISSOES } from '../../constants/permissoes';
+import getImageSrc from '../../utils/getImageSrc';
+import {
+  atualizarImagemVariacao,
+  removerImagemVariacao,
+  salvarImagemVariacao,
+} from '../../services/variacaoImagemService';
 
 const ProdutoVariacoes = ({
                             produtoId,
@@ -18,9 +24,13 @@ const ProdutoVariacoes = ({
                             toastRef,
                             loading,
                             setLoading,
-                            onAlterado
+                            onAlterado,
+                            somenteImagens = false,
                           }) => {
   const { has } = usePermissions();
+  const [salvandoImagemId, setSalvandoImagemId] = React.useState(null);
+  const [removendoImagemId, setRemovendoImagemId] = React.useState(null);
+  const PLACEHOLDER_URL = 'https://placehold.co/600x400.jpg';
 
   // Fallback absoluto: se vier null/objeto, vira []
   const lista = Array.isArray(variacoes) ? variacoes : [];
@@ -64,8 +74,6 @@ const ProdutoVariacoes = ({
       { preco: '', custo: '', referencia: '', codigo_barras: '', atributos: [] }
     ]);
   };
-
-  const isVazio = (valor) => valor === null || valor === undefined || valor === '';
 
   const isEmptyValue = (v) => v === null || v === undefined || v === '';
   const isEmptyText = (v) => !v || String(v).trim() === '';
@@ -180,10 +188,106 @@ const ProdutoVariacoes = ({
     }
   };
 
+  const getImagemDraft = (variacao) => {
+    if (variacao?.imagem_url_draft !== undefined && variacao?.imagem_url_draft !== null) {
+      return variacao.imagem_url_draft;
+    }
+    return variacao?.imagem_url || '';
+  };
+
+  const salvarImagemDaVariacao = async (indexReal) => {
+    const variacao = lista[indexReal];
+
+    if (!variacao?.id) {
+      toastRef.current?.show({
+        severity: 'warn',
+        summary: 'Salve a variação primeiro',
+        detail: 'É necessário salvar a variação antes de cadastrar a imagem.',
+        life: 3500,
+      });
+      return;
+    }
+
+    const url = String(getImagemDraft(variacao) || '').trim();
+    if (!url) {
+      toastRef.current?.show({
+        severity: 'warn',
+        summary: 'URL obrigatória',
+        detail: 'Informe a URL da imagem da variação.',
+        life: 3500,
+      });
+      return;
+    }
+
+    try {
+      setSalvandoImagemId(variacao.id);
+      const response = variacao.imagem_url
+        ? await atualizarImagemVariacao(variacao.id, { url })
+        : await salvarImagemVariacao(variacao.id, { url });
+
+      const novaUrl = response?.data?.url || url;
+      updateVariacao(indexReal, 'imagem_url', novaUrl);
+      updateVariacao(indexReal, 'imagem_url_draft', novaUrl);
+
+      toastRef.current?.show({
+        severity: 'success',
+        summary: 'Imagem salva',
+        detail: 'Imagem da variação atualizada com sucesso.',
+        life: 3000,
+      });
+
+      onAlterado && onAlterado();
+    } catch (error) {
+      toastRef.current?.show({
+        severity: 'error',
+        summary: 'Erro ao salvar imagem',
+        detail: error?.response?.data?.message || 'Não foi possível salvar a imagem da variação.',
+        life: 4000,
+      });
+    } finally {
+      setSalvandoImagemId(null);
+    }
+  };
+
+  const removerImagemDaVariacao = async (indexReal) => {
+    const variacao = lista[indexReal];
+
+    if (!variacao?.id) {
+      return;
+    }
+
+    try {
+      setRemovendoImagemId(variacao.id);
+      await removerImagemVariacao(variacao.id);
+
+      updateVariacao(indexReal, 'imagem_url', null);
+      updateVariacao(indexReal, 'imagem_url_draft', '');
+
+      toastRef.current?.show({
+        severity: 'success',
+        summary: 'Imagem removida',
+        detail: 'Imagem da variação removida com sucesso.',
+        life: 3000,
+      });
+
+      onAlterado && onAlterado();
+    } catch (error) {
+      const status = error?.response?.status;
+      toastRef.current?.show({
+        severity: status === 404 ? 'warn' : 'error',
+        summary: status === 404 ? 'Imagem não encontrada' : 'Erro ao remover imagem',
+        detail: error?.response?.data?.message || 'Não foi possível remover a imagem da variação.',
+        life: 4000,
+      });
+    } finally {
+      setRemovendoImagemId(null);
+    }
+  };
+
   const variacoesIncompletas = lista.some(v => isEmptyValue(v.preco) || isEmptyText(v.referencia));
 
   const renderHeader = (v, i) => {
-    const invalido = isEmptyValue(v.preco) || isEmptyText(v.referencia);
+    const invalido = !somenteImagens && (isEmptyValue(v.preco) || isEmptyText(v.referencia));
     const tooltipId = `tooltip-var-${i}`;
     return (
       <div className="flex align-items-center justify-content-between w-full gap-2">
@@ -207,9 +311,11 @@ const ProdutoVariacoes = ({
     return aValido === bValido ? 0 : aValido ? 1 : -1;
   });
 
-  const activeIndex = ordenadas
-    .map((v, i) => (isEmptyValue(v.preco) || isEmptyText(v.referencia) ? i : null))
-    .filter((i) => i !== null);
+  const activeIndex = somenteImagens
+    ? null
+    : ordenadas
+      .map((v, i) => (isEmptyValue(v.preco) || isEmptyText(v.referencia) ? i : null))
+      .filter((i) => i !== null);
 
   return (
     <div className="field col-12">
@@ -218,138 +324,195 @@ const ProdutoVariacoes = ({
           const indexReal = lista.indexOf(v);
           return (
             <AccordionTab key={indexReal} header={renderHeader(v, indexReal)}>
-              <div className="formgrid grid">
-                <div className="field md:col-3">
-                  <label>Preço *</label>
-                  <InputNumber
-                    value={toDecimalOrNull(v.preco)}
-                    onValueChange={(e) => updateVariacao(indexReal, 'preco', e.value)}
-                    mode="currency"
-                    currency="BRL"
-                    locale="pt-BR"
-                    className={isEmptyValue(v.preco) ? 'p-invalid' : ''}
-                  />
-                </div>
-                <div className="field md:col-3">
-                  <label>Custo</label>
-                  <InputNumber
-                    value={toDecimalOrNull(v.custo)}
-                    onValueChange={(e) => updateVariacao(indexReal, 'custo', e.value)}
-                    mode="currency"
-                    currency="BRL"
-                    locale="pt-BR"
-                  />
-                </div>
-                <div className="field md:col-4">
-                  <label>Referência *</label>
-                  <InputText
-                    value={v.referencia}
-                    onChange={(e) => updateVariacao(indexReal, 'referencia', e.target.value)}
-                    className={isEmptyText(v.referencia) ? 'p-invalid' : ''}
-                  />
-                </div>
-                <div className="field md:col-2 text-right">
-                  <Button icon="pi pi-trash" className="p-button-rounded p-button-danger mt-4" type="button" onClick={() => removeVariacao(indexReal)} />
-                </div>
-                <div className="field md:col-6">
-                  <label>Código de Barras</label>
-                  <InputText
-                    value={v.codigo_barras}
-                    onChange={(e) => updateVariacao(indexReal, 'codigo_barras', e.target.value)}
-                  />
-                </div>
-              </div>
-
-              {/* Outlets */}
-              {v.outlets?.length > 0 && (
+              {!somenteImagens && (
                 <>
-                  <h6 className="mt-3 mb-2">Outlets cadastrados</h6>
                   <div className="formgrid grid">
-                    {v.outlets.map((o, j) => (
-                      <div key={j} className="col-12 md:col-6">
-                        <div className="px-3 py-2 surface-100 border-round border-1 border-warning">
-                          <div className="mb-1 text-sm font-semibold text-yellow-900">
-                            {`${o.quantidade} unid • Motivo #${o.motivo?.nome}`}
-                          </div>
-                          {o.formas_pagamento?.length > 0 && (
-                            <ul className="pl-3 mb-2">
-                              {o.formas_pagamento.map((fp, k) => (
-                                <li key={k} className="text-sm">
-                                  {`Forma #${fp.forma_pagamento?.nome}`}: {fp.percentual_desconto}%
-                                  {fp.max_parcelas && ` • até ${fp.max_parcelas}x`}
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                          <div className="flex gap-2 justify-content-end">
-                            {has(PERMISSOES.PRODUTOS.OUTLET_EDITAR) && (
-                              <Button
-                                icon="pi pi-pencil"
-                                className="p-button-rounded p-button-text"
-                                type="button"
-                                onClick={() => abrirDialogOutlet(v, o)}
-                              />
-                            )}
-                            {has(PERMISSOES.PRODUTOS.OUTLET_EXCLUIR) && (
-                              <Button
-                                icon="pi pi-trash"
-                                className="p-button-rounded p-button-text"
-                                type="button"
-                                onClick={() => confirmarExcluirOutlet(v, o)}
-                              />
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                    <div className="field md:col-3">
+                      <label>Preço *</label>
+                      <InputNumber
+                        value={toDecimalOrNull(v.preco)}
+                        onValueChange={(e) => updateVariacao(indexReal, 'preco', e.value)}
+                        mode="currency"
+                        currency="BRL"
+                        locale="pt-BR"
+                        className={isEmptyValue(v.preco) ? 'p-invalid' : ''}
+                      />
+                    </div>
+                    <div className="field md:col-3">
+                      <label>Custo</label>
+                      <InputNumber
+                        value={toDecimalOrNull(v.custo)}
+                        onValueChange={(e) => updateVariacao(indexReal, 'custo', e.value)}
+                        mode="currency"
+                        currency="BRL"
+                        locale="pt-BR"
+                      />
+                    </div>
+                    <div className="field md:col-4">
+                      <label>Referência *</label>
+                      <InputText
+                        value={v.referencia}
+                        onChange={(e) => updateVariacao(indexReal, 'referencia', e.target.value)}
+                        className={isEmptyText(v.referencia) ? 'p-invalid' : ''}
+                      />
+                    </div>
+                    <div className="field md:col-2 text-right">
+                      <Button
+                        icon="pi pi-trash"
+                        className="p-button-rounded p-button-danger mt-4"
+                        type="button"
+                        onClick={() => removeVariacao(indexReal)}
+                      />
+                    </div>
+                    <div className="field md:col-6">
+                      <label>Código de Barras</label>
+                      <InputText
+                        value={v.codigo_barras}
+                        onChange={(e) => updateVariacao(indexReal, 'codigo_barras', e.target.value)}
+                      />
+                    </div>
                   </div>
+
+                  {/* Outlets */}
+                  {v.outlets?.length > 0 && (
+                    <>
+                      <h6 className="mt-3 mb-2">Outlets cadastrados</h6>
+                      <div className="formgrid grid">
+                        {v.outlets.map((o, j) => (
+                          <div key={j} className="col-12 md:col-6">
+                            <div className="px-3 py-2 surface-100 border-round border-1 border-warning">
+                              <div className="mb-1 text-sm font-semibold text-yellow-900">
+                                {`${o.quantidade} unid • Motivo #${o.motivo?.nome}`}
+                              </div>
+                              {o.formas_pagamento?.length > 0 && (
+                                <ul className="pl-3 mb-2">
+                                  {o.formas_pagamento.map((fp, k) => (
+                                    <li key={k} className="text-sm">
+                                      {`Forma #${fp.forma_pagamento?.nome}`}: {fp.percentual_desconto}%
+                                      {fp.max_parcelas && ` • até ${fp.max_parcelas}x`}
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                              <div className="flex gap-2 justify-content-end">
+                                {has(PERMISSOES.PRODUTOS.OUTLET_EDITAR) && (
+                                  <Button
+                                    icon="pi pi-pencil"
+                                    className="p-button-rounded p-button-text"
+                                    type="button"
+                                    onClick={() => abrirDialogOutlet(v, o)}
+                                  />
+                                )}
+                                {has(PERMISSOES.PRODUTOS.OUTLET_EXCLUIR) && (
+                                  <Button
+                                    icon="pi pi-trash"
+                                    className="p-button-rounded p-button-text"
+                                    type="button"
+                                    onClick={() => confirmarExcluirOutlet(v, o)}
+                                  />
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+
+                  {v.id && has(PERMISSOES.PRODUTOS.OUTLET_CADASTRAR) && (
+                    <Button
+                      label="Adicionar Outlet"
+                      icon="pi pi-plus"
+                      className="p-button-sm p-button-warning mt-2 mb-4"
+                      type="button"
+                      onClick={() => abrirDialogOutlet(v)}
+                    />
+                  )}
+
+                  <ProdutoAtributos
+                    atributos={v.atributos || []}
+                    onChange={(j, campo, valor) => updateAtributo(indexReal, j, campo, valor)}
+                    onAdd={() => addAtributo(indexReal)}
+                    onRemove={(j) => removeAtributo(indexReal, j)}
+                  />
                 </>
               )}
 
-              {v.id && has(PERMISSOES.PRODUTOS.OUTLET_CADASTRAR) && (
-                <Button
-                  label="Adicionar Outlet"
-                  icon="pi pi-plus"
-                  className="p-button-sm p-button-warning mt-2 mb-4"
-                  type="button"
-                  onClick={() => abrirDialogOutlet(v)}
-                />
-              )}
-
-              <ProdutoAtributos
-                atributos={v.atributos || []}
-                onChange={(j, campo, valor) => updateAtributo(indexReal, j, campo, valor)}
-                onAdd={() => addAtributo(indexReal)}
-                onRemove={(j) => removeAtributo(indexReal, j)}
-              />
+              <div className="mt-3 border-1 surface-border border-round p-3">
+                <div className="text-sm font-semibold mb-2">Imagem da Variação</div>
+                <div className="grid">
+                  <div className="col-12 md:col-3">
+                    <img
+                      src={v.imagem_url ? getImageSrc(v.imagem_url) : PLACEHOLDER_URL}
+                      alt={v.referencia || `Variação ${indexReal + 1}`}
+                      className="w-full border-round"
+                      style={{ maxHeight: '120px', objectFit: 'cover' }}
+                    />
+                  </div>
+                  <div className="col-12 md:col-9">
+                    <label className="block mb-2">URL da imagem *</label>
+                    <InputText
+                      value={getImagemDraft(v)}
+                      onChange={(e) => updateVariacao(indexReal, 'imagem_url_draft', e.target.value)}
+                      placeholder="https://exemplo.com/imagem.jpg"
+                      className="w-full mb-2"
+                    />
+                    <div className="flex gap-2 flex-wrap">
+                      <Button
+                        type="button"
+                        label="Salvar Imagem"
+                        icon={salvandoImagemId === v.id ? 'pi pi-spin pi-spinner' : 'pi pi-save'}
+                        className="p-button-sm p-button-success"
+                        disabled={!v.id || salvandoImagemId === v.id}
+                        onClick={() => salvarImagemDaVariacao(indexReal)}
+                      />
+                      <Button
+                        type="button"
+                        label="Remover Imagem"
+                        icon={removendoImagemId === v.id ? 'pi pi-spin pi-spinner' : 'pi pi-trash'}
+                        className="p-button-sm p-button-danger"
+                        disabled={!v.id || !v.imagem_url || removendoImagemId === v.id}
+                        onClick={() => removerImagemDaVariacao(indexReal)}
+                      />
+                    </div>
+                    {!v.id && (
+                      <small className="text-color-secondary block mt-2">
+                        Salve a variação primeiro para habilitar o CRUD da imagem.
+                      </small>
+                    )}
+                  </div>
+                </div>
+              </div>
             </AccordionTab>
           );
         })}
       </Accordion>
 
-      <div className="mt-3 flex justify-content-end gap-2">
-        <Button type="button" label="Adicionar Variação" icon="pi pi-plus" className="p-button-secondary"
-                onClick={addVariacao} />
-        <Button
-          type="button"
-          label="Salvar Variações"
-          icon="pi pi-save"
-          className="p-button-success"
-          onClick={() => {
-            if (variacoesIncompletas) {
-              toastRef.current?.show({
-                severity: 'warn',
-                summary: 'Variações incompletas',
-                detail: 'Preencha todos os campos obrigatórios (preço e referência) antes de salvar.',
-                life: 4000
-              });
-              return;
-            }
-            salvarVariacoes();
-          }}
-          disabled={loading}
-        />
-      </div>
+      {!somenteImagens && (
+        <div className="mt-3 flex justify-content-end gap-2">
+          <Button type="button" label="Adicionar Variação" icon="pi pi-plus" className="p-button-secondary"
+                  onClick={addVariacao} />
+          <Button
+            type="button"
+            label="Salvar Variações"
+            icon="pi pi-save"
+            className="p-button-success"
+            onClick={() => {
+              if (variacoesIncompletas) {
+                toastRef.current?.show({
+                  severity: 'warn',
+                  summary: 'Variações incompletas',
+                  detail: 'Preencha todos os campos obrigatórios (preço e referência) antes de salvar.',
+                  life: 4000
+                });
+                return;
+              }
+              salvarVariacoes();
+            }}
+            disabled={loading}
+          />
+        </div>
+      )}
     </div>
   );
 };

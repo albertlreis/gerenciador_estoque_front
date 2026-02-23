@@ -91,7 +91,7 @@ const agruparPorReferencia = (produtos, apenasComEstoque = false) => {
         depositos_tooltip: depositosResumo.tooltip,
         depositos_lista: depositosResumo.lista,
         is_outlet: !!hasOutlet,
-        imagem_principal: produto?.imagem_principal,
+        imagem_url: variacoesRef.find((v) => v?.imagem_url)?.imagem_url || produto?.imagem_principal || null,
       });
     });
   }
@@ -161,9 +161,9 @@ const CatalogoGrid = ({ produtos, estoqueStatus, onAdicionarAoCarrinho, onEditar
           <div className="p-fluid">
             <img
               src={
-                selectedGroup.imagem_principal
-                  ? getImageSrc(selectedGroup.imagem_principal)
-                  : 'https://placehold.co/500x300?text=Sem+Imagem'
+                selectedGroup.imagem_url
+                  ? getImageSrc(selectedGroup.imagem_url)
+                  : 'https://placehold.co/600x400.jpg'
               }
               alt={selectedGroup.produto?.nome}
               style={{ width: '100%', objectFit: 'cover' }}

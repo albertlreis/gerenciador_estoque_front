@@ -26,6 +26,11 @@ const SelecionarVariacaoDialog = ({
   const variacaoSelecionadaDisponivel = isVariacaoDisponivel(variacaoSelecionada);
   const variacoesBase = Array.isArray(produto.variacoes) ? produto.variacoes : [];
   const variacoesExibidas = filtrarVariacoesPorEstoqueStatus(variacoesBase, estoqueStatus);
+  const imagemProdutoDialog =
+    variacaoSelecionada?.imagem_url
+    || variacoesExibidas.find((v) => v?.imagem_url)?.imagem_url
+    || produto.imagem_principal
+    || null;
 
   return (
     <Dialog
@@ -53,7 +58,7 @@ const SelecionarVariacaoDialog = ({
         {/* Imagem do Produto */}
         <div className="col-12 md:col-3 flex justify-content-center align-items-start mb-4 p-0">
           <img
-            src={produto.imagem_principal ? getImageSrc(produto.imagem_principal) : 'https://placehold.co/500x300?text=Sem+Imagem'}
+            src={imagemProdutoDialog ? getImageSrc(imagemProdutoDialog) : 'https://placehold.co/600x400.jpg'}
             alt={produto.nome}
             style={{ maxWidth: '100%', borderRadius: '4px' }}
           />

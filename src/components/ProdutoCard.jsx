@@ -63,9 +63,9 @@ const ProdutoCard = ({ grupo, estoqueStatus, onDetalhes, onAdicionar, onEditar }
 
       <img
         src={
-          grupo?.imagem_principal
-            ? getImageSrc(grupo.imagem_principal)
-            : 'https://placehold.co/500x300?text=Sem+Imagem'
+          grupo?.imagem_url
+            ? getImageSrc(grupo.imagem_url)
+            : 'https://placehold.co/600x400.jpg'
         }
         alt={grupo?.produto?.nome}
         className="w-full mb-2 border-round"

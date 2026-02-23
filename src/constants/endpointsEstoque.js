@@ -23,6 +23,7 @@ export const ESTOQUE_ENDPOINTS = Object.freeze({
 
   variacoes: Object.freeze({
     buscar: '/variacoes',
+    imagem: (variacaoId) => `/variacoes/${variacaoId}/imagem`,
     outlets: Object.freeze({
       base: (variacaoId) => `/variacoes/${variacaoId}/outlets`,
       byId: (variacaoId, outletId) => `/variacoes/${variacaoId}/outlets/${outletId}`,

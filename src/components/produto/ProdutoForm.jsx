@@ -10,7 +10,6 @@ import isEqual from 'lodash/isEqual';
 
 import { useProdutoForm } from '../../hooks/useProdutoForm';
 import ProdutoVariacoes from './ProdutoVariacoes';
-import ProdutoImagens from './ProdutoImagens';
 import apiEstoque from '../../services/apiEstoque';
 import ProdutoManualConservacao from './ProdutoManualConservacao';
 import DialogOutlet from './DialogOutlet';
@@ -47,10 +46,8 @@ const ProdutoForm = ({
     categorias,
     fornecedores,
     variacoes, setVariacoes,
-    existingImages, setExistingImages,
     loading, setLoading,
     toastRef,
-    fileUploadRef,
     atualizarDados,
   } = useProdutoForm(produto);
 
@@ -289,19 +286,23 @@ const ProdutoForm = ({
       <>
         <Toast ref={toastRef} position="top-center" />
 
-        <Panel header="Imagens do Produto">
+        <Panel header="Imagens por Variação">
           <p className="text-sm text-color-secondary mb-3">
-            Você pode alterar apenas as imagens deste produto.
+            Você pode alterar apenas as imagens das variações deste produto.
           </p>
 
           {produto?.id ? (
-            <ProdutoImagens
-              produtoId={produto.id}
-              existingImages={existingImages}
-              setExistingImages={setExistingImages}
+            <ProdutoVariacoes
+              produtoId={produto?.id}
               toastRef={toastRef}
-              fileUploadRef={fileUploadRef}
-              onChanged={onAlterado}
+              loading={loading}
+              setLoading={setLoading}
+              variacoes={variacoes}
+              setVariacoes={setVariacoes}
+              abrirDialogOutlet={abrirDialogOutlet}
+              confirmarExcluirOutlet={confirmarExcluirOutlet}
+              onAlterado={onAlterado}
+              somenteImagens
             />
           ) : (
             <div className="text-center p-4 text-color-secondary">Carregando...</div>
@@ -489,22 +490,11 @@ const ProdutoForm = ({
           />
         </Panel>
 
-        {produto?.id && (
-          <Panel header="Imagens do Produto" className="mt-4">
-            <p className="text-sm text-color-secondary mb-3">
-              As imagens são compartilhadas entre todas as variações do produto.
-            </p>
-
-            <ProdutoImagens
-              produtoId={produto.id}
-              existingImages={existingImages}
-              setExistingImages={setExistingImages}
-              toastRef={toastRef}
-              fileUploadRef={fileUploadRef}
-              onChanged={onAlterado}
-            />
-          </Panel>
-        )}
+        <Panel header="Imagens por Variação" className="mt-4">
+          <p className="text-sm text-color-secondary mb-3">
+            Cada variação possui sua própria imagem (URL). Use os controles em cada variação para salvar ou remover.
+          </p>
+        </Panel>
       </form>
 
       <DialogOutlet
