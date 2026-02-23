@@ -183,4 +183,8 @@ export const PERMISSOES = {
     TEMPLATES: 'comunicacao.templates',
   },
 
+  AUDITORIA: {
+    VISUALIZAR: 'auditoria.visualizar',
+  },
+
 };

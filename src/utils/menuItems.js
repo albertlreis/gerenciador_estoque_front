@@ -227,7 +227,14 @@ const menuItems = (has, user = null) => {
       PERMISSOES.PERMISSOES?.VISUALIZAR,
       PERMISSOES.CATEGORIAS?.VISUALIZAR,
       PERMISSOES.FORNECEDORES?.VISUALIZAR,
-      PERMISSOES.PARCEIROS?.VISUALIZAR
+      PERMISSOES.PARCEIROS?.VISUALIZAR,
+      PERMISSOES.AUDITORIA?.VISUALIZAR,
+      PERMISSOES.PRODUTOS?.GERENCIAR,
+      PERMISSOES.PEDIDOS?.EDITAR,
+      PERMISSOES.ESTOQUE?.MOVIMENTACAO,
+      PERMISSOES.FINANCEIRO?.CONTAS_PAGAR?.VISUALIZAR,
+      PERMISSOES.FINANCEIRO?.CONTAS_RECEBER?.VISUALIZAR,
+      PERMISSOES.FINANCEIRO?.LANCAMENTOS?.VISUALIZAR
     ]) && {
       label: 'Administração',
       key: 'administracao',
@@ -242,6 +249,20 @@ const menuItems = (has, user = null) => {
           key: 'admin-acessos',
           icon: 'pi pi-fw pi-key',
           to: '/acessos'
+        },
+        has([
+          PERMISSOES.AUDITORIA?.VISUALIZAR,
+          PERMISSOES.PRODUTOS?.GERENCIAR,
+          PERMISSOES.PEDIDOS?.EDITAR,
+          PERMISSOES.ESTOQUE?.MOVIMENTACAO,
+          PERMISSOES.FINANCEIRO?.CONTAS_PAGAR?.VISUALIZAR,
+          PERMISSOES.FINANCEIRO?.CONTAS_RECEBER?.VISUALIZAR,
+          PERMISSOES.FINANCEIRO?.LANCAMENTOS?.VISUALIZAR
+        ]) && {
+          label: 'Auditoria',
+          key: 'admin-auditoria',
+          icon: 'pi pi-fw pi-history',
+          to: '/auditoria'
         },
         has(PERMISSOES.CATEGORIAS?.VISUALIZAR) && {
           label: 'Categorias',

@@ -58,6 +58,7 @@ import CategoriasFinanceiras from "./pages/financeiro/CategoriasFinanceiras";
 import ContasFinanceiras from "./pages/financeiro/ContasFinanceiras";
 import TransferenciasEntreContas from "./pages/financeiro/TransferenciasEntreContas";
 import ContaReceberNova from "./pages/financeiro/ContaReceberNova";
+import Auditoria from './pages/Auditoria';
 
 const renderProtectedRoute = (element, permissoes) => (
   <PrivateRoute element={<PermissaoRoute element={element} permissoes={permissoes}/>}/>
@@ -71,6 +72,16 @@ const App = () => {
     PERMISSOES.PERFIS?.VISUALIZAR,
     PERMISSOES.PERMISSOES?.VISUALIZAR,
   ];
+
+  const PERMISSOES_AUDITORIA_ANY = [
+    PERMISSOES.AUDITORIA?.VISUALIZAR,
+    PERMISSOES.PRODUTOS?.GERENCIAR,
+    PERMISSOES.PEDIDOS?.EDITAR,
+    PERMISSOES.ESTOQUE?.MOVIMENTACAO,
+    PERMISSOES.FINANCEIRO?.CONTAS_PAGAR?.VISUALIZAR,
+    PERMISSOES.FINANCEIRO?.CONTAS_RECEBER?.VISUALIZAR,
+    PERMISSOES.FINANCEIRO?.LANCAMENTOS?.VISUALIZAR,
+  ].filter(Boolean);
 
   return (
     <Routes>
@@ -243,6 +254,11 @@ const App = () => {
           <TransferenciasEntreContas />,
           PERMISSOES.FINANCEIRO.LANCAMENTOS.VISUALIZAR
         )}
+      />
+
+      <Route
+        path="/auditoria"
+        element={renderProtectedRoute(<Auditoria />, PERMISSOES_AUDITORIA_ANY)}
       />
 
       {/* Comunicação */}
