@@ -92,6 +92,19 @@ textarea.p-inputtextarea {
   transition: background-color 0.2s ease;
 }
 
+.layout-sidebar .p-panelmenu .p-menuitem > .p-menuitem-content > .p-menuitem-link {
+  padding-left: 1rem;
+}
+
+.layout-sidebar .p-panelmenu .p-menuitem .p-menu-list .p-menuitem > .p-menuitem-content > .p-menuitem-link {
+  padding-left: 2.25rem;
+  font-weight: 450;
+}
+
+.layout-sidebar .p-panelmenu .p-menuitem .p-menu-list .p-menuitem .p-menu-list .p-menuitem > .p-menuitem-content > .p-menuitem-link {
+  padding-left: 3rem;
+}
+
 .layout-sidebar .p-menuitem-link:hover {
   background-color: #e9ecef;
   cursor: pointer;
@@ -142,28 +155,6 @@ textarea.p-inputtextarea {
 .layout-sidebar.collapsed:hover .p-menuitem-text {
   display: inline;
   white-space: nowrap;
-}
-
-/* Tooltip alternativa com texto ao lado do ícone */
-.layout-sidebar.collapsed .p-menuitem-link[title]::after {
-  content: attr(title);
-  position: absolute;
-  left: 80px;
-  background-color: #fff;
-  color: #333;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-  font-size: 0.875rem;
-  z-index: 100;
-}
-
-.layout-sidebar.collapsed .p-menuitem-link:hover::after {
-  opacity: 1;
 }
 
 /* ------------------ TOPO (TOPBAR) ------------------ */
@@ -435,6 +426,24 @@ textarea.p-inputtextarea {
 }
 .tb-assistencias .p-toolbar-group-left {
   flex: 0 0 auto; /* botão fica só na esquerda */
+}
+
+.btn-editar-catalogo {
+  background: #e5e7eb !important;
+  border-color: #d1d5db !important;
+  color: #374151 !important;
+}
+
+.btn-editar-catalogo:hover {
+  background: #d1d5db !important;
+  border-color: #9ca3af !important;
+}
+
+.btn-editar-catalogo:active,
+.btn-editar-catalogo:focus {
+  background: #cbd5e1 !important;
+  border-color: #94a3b8 !important;
+  box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.25) !important;
 }
 
 /* cartões mais consistentes */

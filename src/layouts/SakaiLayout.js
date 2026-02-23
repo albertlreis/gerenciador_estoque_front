@@ -67,7 +67,6 @@ const SakaiLayout = ({ children, defaultSidebarCollapsed = false }) => {
           onKeyDown={options.onKeyDown}
           tabIndex={options.tabIndex}
           className={itemClassName}
-          title={isSidebarCollapsed ? item.label : undefined}
           style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8 }}
         >
           {item.icon && <i className={`${item.icon} p-menuitem-icon`} />}
@@ -85,7 +84,6 @@ const SakaiLayout = ({ children, defaultSidebarCollapsed = false }) => {
           onKeyDown={options.onKeyDown}
           tabIndex={options.tabIndex}
           className={itemClassName}
-          title={isSidebarCollapsed ? item.label : undefined}
           style={{
             position: 'relative',
             display: 'flex',
@@ -126,14 +124,13 @@ const SakaiLayout = ({ children, defaultSidebarCollapsed = false }) => {
         onKeyDown={options.onKeyDown}
         tabIndex={options.tabIndex}
         className={itemClassName}
-        title={isSidebarCollapsed ? item.label : undefined}
         style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}
       >
         {item.icon && <i className={`${item.icon} p-menuitem-icon`} />}
         <span className="p-menuitem-text">{item.label}</span>
       </a>
     );
-  }, [getItemClassName, isSidebarCollapsed, navigate]);
+  }, [getItemClassName, navigate]);
 
   const applyTemplate = useCallback((items) => {
     return (items || []).map((it) => {
