@@ -10,7 +10,6 @@ import usePermissions from "../../hooks/usePermissions";
 import { PERMISSOES } from '../../constants/permissoes';
 import getImageSrc from '../../utils/getImageSrc';
 import {
-  atualizarImagemVariacao,
   removerImagemVariacao,
   salvarImagemVariacao,
 } from '../../services/variacaoImagemService';
@@ -30,6 +29,9 @@ const ProdutoVariacoes = ({
   const { has } = usePermissions();
   const [salvandoImagemId, setSalvandoImagemId] = React.useState(null);
   const [removendoImagemId, setRemovendoImagemId] = React.useState(null);
+  const [arquivosImagem, setArquivosImagem] = React.useState({});
+  const [previewsImagem, setPreviewsImagem] = React.useState({});
+  const previewsImagemRef = React.useRef({});
   const PLACEHOLDER_URL = 'https://placehold.co/600x400.jpg';
 
   // Fallback absoluto: se vier null/objeto, vira []
@@ -40,6 +42,18 @@ const ProdutoVariacoes = ({
     novas[index] = { ...novas[index], [field]: value };
     setVariacoes(novas);
   };
+
+  React.useEffect(() => {
+    previewsImagemRef.current = previewsImagem;
+  }, [previewsImagem]);
+
+  React.useEffect(() => () => {
+    Object.values(previewsImagemRef.current).forEach((preview) => {
+      if (preview) {
+        URL.revokeObjectURL(preview);
+      }
+    });
+  }, []);
 
   const updateAtributo = (varIndex, attrIndex, field, value) => {
     const novas = [...lista];
@@ -188,11 +202,46 @@ const ProdutoVariacoes = ({
     }
   };
 
-  const getImagemDraft = (variacao) => {
-    if (variacao?.imagem_url_draft !== undefined && variacao?.imagem_url_draft !== null) {
-      return variacao.imagem_url_draft;
-    }
-    return variacao?.imagem_url || '';
+  const getVariacaoKey = (variacao, indexReal) => variacao?.id ?? `new-${indexReal}`;
+
+  const selecionarArquivoImagem = (variacao, indexReal, file) => {
+    if (!file) return;
+
+    const key = getVariacaoKey(variacao, indexReal);
+    setArquivosImagem((prev) => ({ ...prev, [key]: file }));
+
+    setPreviewsImagem((prev) => {
+      const atual = prev[key];
+      if (atual) {
+        URL.revokeObjectURL(atual);
+      }
+
+      return {
+        ...prev,
+        [key]: URL.createObjectURL(file),
+      };
+    });
+  };
+
+  const limparArquivoSelecionado = (variacao, indexReal) => {
+    const key = getVariacaoKey(variacao, indexReal);
+
+    setArquivosImagem((prev) => {
+      if (!Object.prototype.hasOwnProperty.call(prev, key)) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+
+    setPreviewsImagem((prev) => {
+      if (!Object.prototype.hasOwnProperty.call(prev, key)) return prev;
+      if (prev[key]) {
+        URL.revokeObjectURL(prev[key]);
+      }
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
   };
 
   const salvarImagemDaVariacao = async (indexReal) => {
@@ -201,19 +250,21 @@ const ProdutoVariacoes = ({
     if (!variacao?.id) {
       toastRef.current?.show({
         severity: 'warn',
-        summary: 'Salve a variação primeiro',
-        detail: 'É necessário salvar a variação antes de cadastrar a imagem.',
+        summary: 'Salve a variacao primeiro',
+        detail: 'E necessario salvar a variacao antes de cadastrar a imagem.',
         life: 3500,
       });
       return;
     }
 
-    const url = String(getImagemDraft(variacao) || '').trim();
-    if (!url) {
+    const key = getVariacaoKey(variacao, indexReal);
+    const arquivo = arquivosImagem[key];
+
+    if (!arquivo) {
       toastRef.current?.show({
         severity: 'warn',
-        summary: 'URL obrigatória',
-        detail: 'Informe a URL da imagem da variação.',
+        summary: 'Arquivo obrigatorio',
+        detail: 'Selecione uma imagem para enviar.',
         life: 3500,
       });
       return;
@@ -221,18 +272,16 @@ const ProdutoVariacoes = ({
 
     try {
       setSalvandoImagemId(variacao.id);
-      const response = variacao.imagem_url
-        ? await atualizarImagemVariacao(variacao.id, { url })
-        : await salvarImagemVariacao(variacao.id, { url });
+      const response = await salvarImagemVariacao(variacao.id, arquivo);
 
-      const novaUrl = response?.data?.url || url;
+      const novaUrl = response?.data?.url || null;
       updateVariacao(indexReal, 'imagem_url', novaUrl);
-      updateVariacao(indexReal, 'imagem_url_draft', novaUrl);
+      limparArquivoSelecionado(variacao, indexReal);
 
       toastRef.current?.show({
         severity: 'success',
         summary: 'Imagem salva',
-        detail: 'Imagem da variação atualizada com sucesso.',
+        detail: 'Imagem da variacao atualizada com sucesso.',
         life: 3000,
       });
 
@@ -241,7 +290,7 @@ const ProdutoVariacoes = ({
       toastRef.current?.show({
         severity: 'error',
         summary: 'Erro ao salvar imagem',
-        detail: error?.response?.data?.message || 'Não foi possível salvar a imagem da variação.',
+        detail: error?.response?.data?.message || 'Nao foi possivel salvar a imagem da variacao.',
         life: 4000,
       });
     } finally {
@@ -261,12 +310,12 @@ const ProdutoVariacoes = ({
       await removerImagemVariacao(variacao.id);
 
       updateVariacao(indexReal, 'imagem_url', null);
-      updateVariacao(indexReal, 'imagem_url_draft', '');
+      limparArquivoSelecionado(variacao, indexReal);
 
       toastRef.current?.show({
         severity: 'success',
         summary: 'Imagem removida',
-        detail: 'Imagem da variação removida com sucesso.',
+        detail: 'Imagem da variacao removida com sucesso.',
         life: 3000,
       });
 
@@ -275,15 +324,14 @@ const ProdutoVariacoes = ({
       const status = error?.response?.status;
       toastRef.current?.show({
         severity: status === 404 ? 'warn' : 'error',
-        summary: status === 404 ? 'Imagem não encontrada' : 'Erro ao remover imagem',
-        detail: error?.response?.data?.message || 'Não foi possível remover a imagem da variação.',
+        summary: status === 404 ? 'Imagem nao encontrada' : 'Erro ao remover imagem',
+        detail: error?.response?.data?.message || 'Nao foi possivel remover a imagem da variacao.',
         life: 4000,
       });
     } finally {
       setRemovendoImagemId(null);
     }
   };
-
   const variacoesIncompletas = lista.some(v => isEmptyValue(v.preco) || isEmptyText(v.referencia));
 
   const renderHeader = (v, i) => {
@@ -441,21 +489,27 @@ const ProdutoVariacoes = ({
               <div className="mt-3 border-1 surface-border border-round p-3">
                 <div className="text-sm font-semibold mb-2">Imagem da Variação</div>
                 <div className="grid">
-                  <div className="col-12 md:col-3">
-                    <img
-                      src={v.imagem_url ? getImageSrc(v.imagem_url) : PLACEHOLDER_URL}
-                      alt={v.referencia || `Variação ${indexReal + 1}`}
-                      className="w-full border-round"
-                      style={{ maxHeight: '120px', objectFit: 'cover' }}
-                    />
+                                    <div className="col-12 md:col-3">
+                    {(() => {
+                      const key = getVariacaoKey(v, indexReal);
+                      const preview = previewsImagem[key];
+                      return (
+                        <img
+                          src={preview || (v.imagem_url ? getImageSrc(v.imagem_url) : PLACEHOLDER_URL)}
+                          alt={v.referencia || `Variacao ${indexReal + 1}`}
+                          className="w-full border-round"
+                          style={{ maxHeight: '120px', objectFit: 'cover' }}
+                        />
+                      );
+                    })()}
                   </div>
                   <div className="col-12 md:col-9">
-                    <label className="block mb-2">URL da imagem *</label>
-                    <InputText
-                      value={getImagemDraft(v)}
-                      onChange={(e) => updateVariacao(indexReal, 'imagem_url_draft', e.target.value)}
-                      placeholder="https://exemplo.com/imagem.jpg"
+                    <label className="block mb-2">Arquivo da imagem *</label>
+                    <input
+                      type="file"
+                      accept="image/*"
                       className="w-full mb-2"
+                      onChange={(e) => selecionarArquivoImagem(v, indexReal, e.target.files?.[0])}
                     />
                     <div className="flex gap-2 flex-wrap">
                       <Button
@@ -518,3 +572,5 @@ const ProdutoVariacoes = ({
 };
 
 export default ProdutoVariacoes;
+
+
