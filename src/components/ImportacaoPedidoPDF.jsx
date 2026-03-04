@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { FileUpload } from 'primereact/fileupload';
 import { Toast } from 'primereact/toast';
+import { Message } from 'primereact/message';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { Button } from 'primereact/button';
 import { Card } from 'primereact/card';
@@ -32,6 +33,18 @@ const TIPOS_IMPORTACAO = [
 ];
 
 const TIPO_IMPORTACAO_PADRAO = 'PRODUTOS_PDF_SIERRA';
+
+/**
+ * Indica se o preview exige inserção manual de itens (retrocompatível).
+ * Usa requer_insercao_manual, itens_extraidos ou itens vazio quando os campos novos não existirem.
+ */
+function manualRequired(responseDados) {
+  if (!responseDados) return false;
+  if (responseDados.requer_insercao_manual === true) return true;
+  if (responseDados.itens_extraidos === false) return true;
+  const itens = responseDados.itens;
+  return Array.isArray(itens) && itens.length === 0;
+}
 
 /**
  * Mescla produtos com mesma referência, somando quantidades e valores.
@@ -333,8 +346,20 @@ export default function ImportacaoPedidoPDF() {
       toast.current?.show({
         severity: 'success',
         summary: 'Sucesso',
-        detail: 'PDF importado com sucesso!',
+        detail: tipoImportacao === 'ADORNOS_XML_NFE' ? 'XML importado com sucesso!' : 'PDF importado com sucesso!',
       });
+
+      if (manualRequired(payload)) {
+        const avisos = Array.isArray(payload.avisos) ? payload.avisos : [];
+        const detalheAvisos = avisos.length > 0 ? ` ${avisos.slice(0, 3).join(' ')}` : '';
+        toast.current?.show({
+          severity: 'warn',
+          summary: 'Itens não extraídos',
+          detail: `Não foi possível extrair os itens automaticamente. Insira os itens manualmente para continuar.${detalheAvisos}`,
+          life: 8000,
+        });
+        setMostrarAdicionarProduto(true);
+      }
     } catch (err) {
       console.error('Erro no upload:', err);
 
@@ -573,7 +598,6 @@ export default function ImportacaoPedidoPDF() {
   };
 
   /** 💾 Confirma importação e salva no banco */
-  /** 💾 Confirma importação e salva no banco */
   const confirmarImportacao = async () => {
     const tipo = pedido?.tipo ?? 'venda';
     const entregue = Boolean(pedido?.entregue);
@@ -582,6 +606,15 @@ export default function ImportacaoPedidoPDF() {
     const dataPrevistaYmd = normalizeDateToYmd(pedido?.data_prevista);
     const diasUteisPrevistos = pedido?.dias_uteis_previstos ?? null;
     const diasCorridosPrevistos = pedido?.dias_corridos_previstos ?? null;
+
+    if (!itens || itens.length === 0) {
+      toast.current?.show({
+        severity: 'warn',
+        summary: 'Itens obrigatórios',
+        detail: 'Adicione ao menos um item ao pedido antes de confirmar.',
+      });
+      return;
+    }
 
     if (tipo === 'venda' && (!clienteSelecionadoId || !cliente?.nome)) {
       toast.current?.show({
@@ -723,11 +756,15 @@ export default function ImportacaoPedidoPDF() {
       }
     } catch (err) {
       console.error('Erro ao confirmar importação:', err);
-      const fieldErrors = err.response?.data?.errors;
+      const data = err.response?.data;
+      const fieldErrors = data?.errors;
       const erroNumeroExterno = fieldErrors?.['pedido.numero_externo']?.[0];
-      let detalhe = 'Erro ao salvar o pedido.';
+      const erroItens = fieldErrors?.itens;
+      let detalhe = data?.mensagem || 'Erro ao salvar o pedido.';
 
-      if (erroNumeroExterno?.includes('has already been taken')) {
+      if (erroItens && Array.isArray(erroItens) && erroItens[0]) {
+        detalhe = erroItens[0];
+      } else if (erroNumeroExterno?.includes('has already been taken')) {
         detalhe =
           'Já existe um pedido com esse número. Verifique se ele já foi importado anteriormente.';
       }
@@ -853,6 +890,13 @@ export default function ImportacaoPedidoPDF() {
       {/* Dados importados */}
       {dados && (
         <>
+          {manualRequired(dados) && (
+            <Message
+              severity="warn"
+              className="w-full mt-4"
+              text="Não foi possível extrair os itens automaticamente. Use o botão «Adicionar produto» para inserir os itens manualmente e depois confirme o pedido."
+            />
+          )}
 
           {/* Pedido */}
           <Card title="Dados do Pedido" className="mt-4 p-4">
