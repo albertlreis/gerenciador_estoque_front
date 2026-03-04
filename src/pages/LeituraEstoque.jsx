@@ -432,9 +432,10 @@ export default function LeituraEstoque() {
       const data = response?.data || {};
       let detalhes = [];
 
-      // 🔹 Captura mensagens conhecidas
+      // 🔹 Captura mensagens conhecidas (inclui error único da API de transferência)
       if (Array.isArray(data.erros)) detalhes = data.erros;
       else if (Array.isArray(data.errors)) detalhes = Object.values(data.errors).flat();
+      else if (typeof data.error === 'string') detalhes = [data.error];
       else if (typeof data.message === 'string') detalhes = [data.message];
       else if (typeof data.mensagem === 'string') detalhes = [data.mensagem];
       else if (response?.statusText) detalhes = [response.statusText];
