@@ -444,7 +444,7 @@ const CatalogoProdutos = () => {
               onAlterado={() => carregarProdutoParaEdicao(produtoEditando?.id, true)}
             />
           ) : (
-            <div className="p-4 text-center text-color-secondary">Produto nÃ£o encontrado.</div>
+            <div className="p-4 text-center text-color-secondary">Produto não encontrado.</div>
           )}
         </OverlayLoading>
       </Dialog>

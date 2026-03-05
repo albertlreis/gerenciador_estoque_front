@@ -242,8 +242,8 @@ const PedidoEditarDialog = ({ visible, pedidoId, onHide, onSalvo }) => {
     if (itensInvalidos.length) {
       toast.current?.show({
         severity: 'warn',
-        summary: 'Itens invÃ¡lidos',
-        detail: 'Informe variaÃ§Ã£o e quantidade para todos os itens.',
+        summary: 'Itens inválidos',
+        detail: 'Informe variação e quantidade para todos os itens.',
       });
       return;
     }
@@ -268,7 +268,7 @@ const PedidoEditarDialog = ({ visible, pedidoId, onHide, onSalvo }) => {
       toast.current?.show({
         severity: 'success',
         summary: 'Pedido atualizado',
-        detail: 'AlteraÃ§Ãµes salvas com sucesso.',
+        detail: 'Alterações salvas com sucesso.',
       });
       onSalvo?.();
       onHide();
@@ -337,7 +337,7 @@ const PedidoEditarDialog = ({ visible, pedidoId, onHide, onSalvo }) => {
               />
             </div>
             <div className="col-12 md:col-4">
-              <label className="block mb-2">Prazo (dias Ãºteis)</label>
+              <label className="block mb-2">Prazo (dias úteis)</label>
               <InputNumber
                 value={pedido.prazo_dias_uteis}
                 onValueChange={(e) => setPedido((prev) => ({ ...prev, prazo_dias_uteis: e.value }))}
@@ -346,7 +346,7 @@ const PedidoEditarDialog = ({ visible, pedidoId, onHide, onSalvo }) => {
               />
             </div>
             <div className="col-12">
-              <label className="block mb-2">ObservaÃ§Ãµes</label>
+              <label className="block mb-2">Observações</label>
               <InputTextarea
                 value={pedido.observacoes}
                 onChange={(e) => setPedido((prev) => ({ ...prev, observacoes: e.target.value }))}
@@ -365,14 +365,14 @@ const PedidoEditarDialog = ({ visible, pedidoId, onHide, onSalvo }) => {
             <div key={item._key} className="border-1 surface-border border-round p-3 mb-3">
               <div className="grid align-items-end">
                 <div className="col-12 md:col-4">
-                  <label className="block mb-2">VariaÃ§Ã£o</label>
+                  <label className="block mb-2">Variação</label>
                   <AutoComplete
                     value={item.variacaoOption}
                     suggestions={sugestoesVariacoes}
                     completeMethod={(e) => buscarVariacoes(e.query)}
                     field="label"
                     dropdown
-                    placeholder="Buscar variaÃ§Ã£o"
+                    placeholder="Buscar variação"
                     onChange={(e) => atualizarItem(item._key, { variacaoOption: e.value })}
                     onSelect={(e) => selecionarVariacao(item._key, e.value)}
                   />
@@ -387,7 +387,7 @@ const PedidoEditarDialog = ({ visible, pedidoId, onHide, onSalvo }) => {
                   />
                 </div>
                 <div className="col-12 md:col-2">
-                  <label className="block mb-2">PreÃ§o unitÃ¡rio</label>
+                  <label className="block mb-2">Preço unitário</label>
                   <InputNumber
                     value={item.preco_unitario}
                     onValueChange={(e) => atualizarItem(item._key, { preco_unitario: e.value || 0 })}
@@ -398,15 +398,15 @@ const PedidoEditarDialog = ({ visible, pedidoId, onHide, onSalvo }) => {
                   />
                 </div>
                 <div className="col-12 md:col-3">
-                  <label className="block mb-2">DepÃ³sito</label>
+                  <label className="block mb-2">Depósito</label>
                   <Dropdown
                     value={item.id_deposito}
                     options={item.depositos}
                     optionLabel="nome"
                     optionValue="id"
                     onChange={(e) => atualizarItem(item._key, { id_deposito: e.value })}
-                    placeholder="Selecione o depÃ³sito"
-                    emptyMessage="Nenhum depÃ³sito disponÃ­vel"
+                    placeholder="Selecione o depósito"
+                    emptyMessage="Nenhum depósito disponível"
                     className="w-full"
                   />
                 </div>
