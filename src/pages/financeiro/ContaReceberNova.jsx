@@ -188,8 +188,8 @@ export default function ContaReceberNova() {
         juros: Number(form.juros || 0),
         multa: Number(form.multa || 0),
         forma_recebimento: form.forma_recebimento || null,
-        categoria_id: form.categoria_id || null,
-        centro_custo_id: form.centro_custo_id || null,
+        categoria_id: form.categoria_id ? Number(form.categoria_id) : null,
+        centro_custo_id: form.centro_custo_id ? Number(form.centro_custo_id) : null,
         observacoes: form.observacoes?.trim() || null,
       };
 

@@ -154,6 +154,8 @@ export default function ContaPagarForm({ visible, onHide, onSaved, conta }) {
         ...form,
         data_emissao: form.data_emissao ? form.data_emissao.toISOString().slice(0, 10) : null,
         data_vencimento: form.data_vencimento ? form.data_vencimento.toISOString().slice(0, 10) : null,
+        categoria_id: form.categoria_id ? Number(form.categoria_id) : null,
+        centro_custo_id: form.centro_custo_id ? Number(form.centro_custo_id) : null,
       };
       if (isEdicao) await apiFinanceiro.put(`/financeiro/contas-pagar/${conta.id}`, payload);
       else await apiFinanceiro.post('/financeiro/contas-pagar', payload);
