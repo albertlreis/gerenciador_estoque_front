@@ -9,6 +9,7 @@ import QuickLinks from './QuickLinks';
 import UltimosPedidosCard from './UltimosPedidosCard';
 import ConsignacoesAlert from './ConsignacoesAlert';
 import ModaisDashboard from './ModaisDashboard';
+import AvisosAniversariosCard from './AvisosAniversariosCard';
 import { PERFIS } from '../../constants/perfis';
 
 const HomeVendedorView = () => {
@@ -20,7 +21,8 @@ const HomeVendedorView = () => {
     kpis, ultimosPedidos, consignacoesVencendo,
     pedidosMes, clientesMes,
     loadingKpis, loadingPedidos, loadingConsignacoes,
-    fetchResumoDashboard
+    fetchResumoDashboard,
+    avisosNaoLidos, aniversariantesHoje, aniversariantesProximos7, aniversariantesProximos30,
   } = useDashboardData();
 
   return (
@@ -40,6 +42,14 @@ const HomeVendedorView = () => {
       />
 
       <QuickLinks perfil={PERFIS.VENDEDOR.slug} hasPermission={has} navigate={navigate} />
+
+      <AvisosAniversariosCard
+        avisosNaoLidos={avisosNaoLidos}
+        aniversariantesHoje={aniversariantesHoje}
+        aniversariantesProximos7={aniversariantesProximos7}
+        aniversariantesProximos30={aniversariantesProximos30}
+        onAbrirMural={() => navigate('/avisos')}
+      />
 
       <div className="grid">
         <div className="col-12 md:col-6">

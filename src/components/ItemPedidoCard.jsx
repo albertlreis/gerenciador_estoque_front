@@ -15,6 +15,8 @@ const ItemPedidoCard = ({
                           onRemoverItem,
                           onAtualizarDeposito,
                           onVerLocalizacao,
+                          onEditarPreco,
+                          podeEditarPreco = false,
                         }) => {
   const estoqueDisponivel = item.variacao?.estoque_total ?? 0;
 
@@ -96,6 +98,14 @@ const ItemPedidoCard = ({
             icon="pi pi-map-marker"
             onClick={() => onVerLocalizacao(item)}
           />
+          {podeEditarPreco && (
+            <Button
+              label="Editar preço"
+              className="p-button-text p-button-sm"
+              icon="pi pi-dollar"
+              onClick={() => onEditarPreco(item)}
+            />
+          )}
         </div>
 
         {emFalta && <div className="text-sm text-red-600 mb-2">Estoque insuficiente: disponível {estoqueDisponivel}</div>}
