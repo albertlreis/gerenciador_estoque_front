@@ -12,7 +12,7 @@ export default function SelectOrCreate({
   loading = false,
   disabled = false,
   filter = true,
-  createLabel = 'Cadastrar',
+  createLabel = '+ Cadastrar novo',
   dialogTitle = 'Cadastrar item',
   onCreate,
 }) {

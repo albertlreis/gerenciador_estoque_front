@@ -218,7 +218,7 @@ export default function ContaPagarForm({ visible, onHide, onSaved, conta }) {
             options={formasPagamento}
             loading={loadingCatalogos}
             placeholder="Selecione"
-            createLabel="Cadastrar"
+            createLabel="+ Cadastrar novo"
             dialogTitle="Cadastrar forma de pagamento"
             onCreate={createFormaPagamento}
           />
@@ -231,7 +231,7 @@ export default function ContaPagarForm({ visible, onHide, onSaved, conta }) {
             options={centrosCusto}
             loading={loadingCatalogos}
             placeholder="Selecione"
-            createLabel="Cadastrar"
+            createLabel="+ Cadastrar novo"
             dialogTitle="Cadastrar centro de custo"
             onCreate={createCentroCusto}
           />
@@ -245,7 +245,7 @@ export default function ContaPagarForm({ visible, onHide, onSaved, conta }) {
             options={categorias}
             loading={loadingCatalogos}
             placeholder="Selecione"
-            createLabel="Cadastrar"
+            createLabel="+ Cadastrar novo"
             dialogTitle="Cadastrar categoria financeira"
             onCreate={createCategoria}
           />

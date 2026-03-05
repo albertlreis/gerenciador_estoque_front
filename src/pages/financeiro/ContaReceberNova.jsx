@@ -333,7 +333,7 @@ export default function ContaReceberNova() {
               onChange={(value) => setForm((s) => ({ ...s, forma_recebimento: value || '' }))}
               loading={catalogLoading}
               placeholder="Selecione"
-              createLabel="Cadastrar"
+              createLabel="+ Cadastrar novo"
               dialogTitle="Cadastrar forma de recebimento"
               onCreate={createFormaRecebimento}
             />
@@ -347,7 +347,7 @@ export default function ContaReceberNova() {
               onChange={(value) => setForm((s) => ({ ...s, categoria_id: value }))}
               loading={catalogLoading}
               placeholder="Selecione"
-              createLabel="Cadastrar"
+              createLabel="+ Cadastrar novo"
               dialogTitle="Cadastrar categoria financeira"
               onCreate={createCategoria}
             />
@@ -361,7 +361,7 @@ export default function ContaReceberNova() {
               onChange={(value) => setForm((s) => ({ ...s, centro_custo_id: value }))}
               loading={catalogLoading}
               placeholder="Selecione"
-              createLabel="Cadastrar"
+              createLabel="+ Cadastrar novo"
               dialogTitle="Cadastrar centro de custo"
               onCreate={createCentroCusto}
             />
