@@ -20,6 +20,7 @@ import ProdutoImportadoCard from './importacaoPedido/ProdutoImportadoCard';
 import ProdutoImportadoListItem from './importacaoPedido/ProdutoImportadoListItem';
 import FormularioPedido from './importacaoPedido/FormularioPedido';
 import TabelaParcelas from './importacaoPedido/TabelaParcelas';
+import { buildPreviewItemKey, normalizePreviewItems } from './importacaoPedido/normalizePreviewItems';
 import PedidoFabricaForm from './PedidoFabricaForm';
 import ClienteForm from '../components/cliente/ClienteForm';
 import AdicionarProduto from './produto/AdicionarProduto';
@@ -44,43 +45,6 @@ function manualRequired(responseDados) {
   if (responseDados.itens_extraidos === false) return true;
   const itens = responseDados.itens;
   return Array.isArray(itens) && itens.length === 0;
-}
-
-/**
- * Mescla produtos com mesma referência, somando quantidades e valores.
- */
-function mesclarProdutosRepetidos(itens) {
-  const mapa = {};
-
-  (itens || []).forEach((item) => {
-    const ref = (item.ref || item.codigo || '').trim();
-    if (!ref) return;
-
-    if (!mapa[ref]) {
-      mapa[ref] = { ...item, ref };
-    } else {
-      const qtdAtual = Number(mapa[ref].quantidade || 0);
-      const qtdNova = Number(item.quantidade || 0);
-      const novaQuantidade = qtdAtual + qtdNova;
-      const custoAtual = Number(mapa[ref].custo_unitario ?? 0);
-      const custoNovo = Number(item.custo_unitario ?? 0);
-      const vendaAtual = Number(mapa[ref].valor ?? mapa[ref].preco_unitario ?? 0);
-      const vendaNova = Number(item.valor ?? item.preco_unitario ?? 0);
-
-      mapa[ref].quantidade = novaQuantidade;
-      mapa[ref].custo_unitario =
-        novaQuantidade > 0
-          ? Number(((custoAtual * qtdAtual + custoNovo * qtdNova) / novaQuantidade).toFixed(2))
-          : 0;
-      mapa[ref].valor =
-        novaQuantidade > 0
-          ? Number(((vendaAtual * qtdAtual + vendaNova * qtdNova) / novaQuantidade).toFixed(2))
-          : 0;
-      mapa[ref].preco_unitario = mapa[ref].valor;
-    }
-  });
-
-  return Object.values(mapa);
 }
 
 const toNumber = (value) => {
@@ -282,53 +246,9 @@ export default function ImportacaoPedidoPDF() {
       };
 
       // ================================
-      // ITENS (normaliza + mescla refs iguais)
+      // ITENS (normaliza sem deduplicar)
       // ================================
-      const itensNormalizadosBase = (payload.itens || []).map((item) => ({
-        quantidade: toNumber(item.quantidade ?? 0),
-        custo_unitario: roundCurrency(
-          item.custo_unitario ??
-            item.preco_unitario ??
-            item.preco ??
-            0,
-        ),
-        ref: item.ref || item.codigo || '',
-        nome: item.nome || item.descricao || '',
-        nome_completo: item.nome_completo || '',
-        valor: roundCurrency(
-          item.valor ??
-            item.preco_venda ??
-            item.preco_unitario ??
-            item.preco ??
-            0,
-        ),
-        preco_unitario: roundCurrency(
-          item.valor ??
-            item.preco_venda ??
-            item.preco_unitario ??
-            item.preco ??
-            0,
-        ),
-        preco: roundCurrency(item.preco ?? item.preco_unitario ?? 0),
-        unidade: item.unidade || 'PC',
-
-        id_categoria: item.id_categoria ?? null,
-        categoria: item.categoria ?? null,
-        produto_id: item.produto_id ?? null,
-        id_variacao: item.id_variacao ?? null,
-        variacao_nome: item.variacao_nome ?? null,
-
-        tipo: 'PEDIDO',
-        enviar_fabrica: false,
-
-        atributos: item.atributos || {},
-        atributos_raw: item.atributos_raw || [],
-        fixos: item.fixos || {},
-
-        id_deposito: null,
-      }));
-
-      const itensNormalizados = mesclarProdutosRepetidos(itensNormalizadosBase);
+      const itensNormalizados = normalizePreviewItems(payload.itens || []);
 
       // ================================
       // Atribuir ao estado
@@ -1035,7 +955,7 @@ export default function ImportacaoPedidoPDF() {
             {itens.map((item, index) =>
               item.id_variacao ? (
                 <ProdutoImportadoListItem
-                  key={index}
+                  key={buildPreviewItemKey(item, index)}
                   item={item}
                   index={index}
                   depositos={depositos}
@@ -1046,7 +966,7 @@ export default function ImportacaoPedidoPDF() {
                 />
               ) : (
                 <ProdutoImportadoCard
-                  key={index}
+                  key={buildPreviewItemKey(item, index)}
                   item={item}
                   index={index}
                   categorias={categoriasNumericas}
