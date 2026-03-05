@@ -7,7 +7,6 @@ import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { InputText } from 'primereact/inputtext';
 import { InputSwitch } from 'primereact/inputswitch';
-import { InputNumber } from 'primereact/inputnumber';
 import { Dropdown } from 'primereact/dropdown';
 
 import SakaiLayout from '../../layouts/SakaiLayout';
@@ -18,7 +17,6 @@ const empty = {
   slug: '',
   tipo: 'despesa',
   categoria_pai_id: null,
-  ordem: null,
   ativo: true,
   padrao: false,
 };
@@ -105,7 +103,6 @@ export default function CategoriasFinanceiras() {
         slug: data?.slug || '',
         tipo: data?.tipo || 'despesa',
         categoria_pai_id: data?.categoria_pai_id ?? null,
-        ordem: data?.ordem ?? null,
         ativo: data?.ativo ?? true,
         padrao: data?.padrao ?? false,
       });
@@ -129,7 +126,6 @@ export default function CategoriasFinanceiras() {
 
     // normaliza vazios
     if (payload.categoria_pai_id === '') payload.categoria_pai_id = null;
-    if (payload.ordem === '') payload.ordem = null;
 
     return payload;
   };
@@ -233,7 +229,6 @@ export default function CategoriasFinanceiras() {
             <Column field="nome" header="Nome" />
             <Column field="tipo" header="Tipo" style={{ width: 140 }} />
             <Column header="Pai" body={parentLabel} style={{ width: 240 }} />
-            <Column field="ordem" header="Ordem" style={{ width: 110 }} />
             <Column header="Ativo" body={(r) => (r.ativo ? 'Sim' : 'Não')} style={{ width: 100 }} />
             <Column header="Padrão" body={(r) => (r.padrao ? 'Sim' : 'Não')} style={{ width: 110 }} />
             <Column header="Ações" body={actions} style={{ width: 140 }} />
@@ -280,15 +275,6 @@ export default function CategoriasFinanceiras() {
                   });
                 }}
                 options={tipoOptions}
-              />
-            </div>
-
-            <div className="col-12 md:col-3">
-              <label className="block text-500 text-sm mb-1">Ordem</label>
-              <InputNumber
-                className="w-full"
-                value={form.ordem}
-                onValueChange={(e) => setForm((s) => ({ ...s, ordem: e.value }))}
               />
             </div>
 

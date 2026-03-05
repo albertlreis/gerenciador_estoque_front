@@ -6,7 +6,6 @@ import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { InputText } from 'primereact/inputtext';
 import { InputSwitch } from 'primereact/inputswitch';
-import { InputNumber } from 'primereact/inputnumber';
 import { Dropdown } from 'primereact/dropdown';
 import { confirmDialog } from 'primereact/confirmdialog';
 
@@ -17,7 +16,6 @@ const empty = {
   nome: '',
   slug: '',
   centro_custo_pai_id: null,
-  ordem: null,
   ativo: true,
   padrao: false,
 };
@@ -77,7 +75,6 @@ export default function CentrosCusto() {
       nome: row.nome || '',
       slug: row.slug || '',
       centro_custo_pai_id: row.centro_custo_pai_id ?? null,
-      ordem: row.ordem ?? null,
       ativo: !!row.ativo,
       padrao: !!row.padrao,
     });
@@ -169,7 +166,6 @@ export default function CentrosCusto() {
           <DataTable value={items} loading={loading} rowHover responsiveLayout="scroll" emptyMessage="Nenhum registro">
             <Column field="nome" header="Nome" />
             <Column header="Pai" body={parentLabel} style={{ width: 220 }} />
-            <Column field="ordem" header="Ordem" style={{ width: 120 }} />
             <Column header="Ativo" body={(r) => (r.ativo ? 'Sim' : 'Não')} style={{ width: 100 }} />
             <Column header="Padrão" body={(r) => (r.padrao ? 'Sim' : 'Não')} style={{ width: 110 }} />
             <Column header="Ações" body={actions} style={{ width: 140 }} />
@@ -192,11 +188,6 @@ export default function CentrosCusto() {
             <div className="col-12 md:col-8">
               <label className="block text-500 text-sm mb-1">Nome</label>
               <InputText className="w-full" value={form.nome} onChange={(e) => setForm((s) => ({ ...s, nome: e.target.value }))} />
-            </div>
-
-            <div className="col-12 md:col-4">
-              <label className="block text-500 text-sm mb-1">Ordem</label>
-              <InputNumber className="w-full" value={form.ordem} onValueChange={(e) => setForm((s) => ({ ...s, ordem: e.value }))} />
             </div>
 
             <div className="col-12 md:col-8">
