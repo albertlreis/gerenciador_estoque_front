@@ -2,19 +2,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Dialog } from 'primereact/dialog';
 import { InputNumber } from 'primereact/inputnumber';
 import { Calendar } from 'primereact/calendar';
-import { Dropdown } from 'primereact/dropdown';
 import { FileUpload } from 'primereact/fileupload';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
 import apiFinanceiro from '../../services/apiFinanceiro';
-
-const FORMAS = [
-  { label: 'PIX', value: 'PIX' },
-  { label: 'Boleto', value: 'BOLETO' },
-  { label: 'TED', value: 'TED' },
-  { label: 'Dinheiro', value: 'DINHEIRO' },
-  { label: 'Cartão', value: 'CARTAO' },
-];
+import SelectOrCreate from '../financeiro/SelectOrCreate';
 
 export default function ContaPagarPagamentoDialog({ visible, onHide, conta, onAfterChange, podePagar, podeEstornar }) {
   const toast = useRef(null);
@@ -24,6 +16,8 @@ export default function ContaPagarPagamentoDialog({ visible, onHide, conta, onAf
   const [forma, setForma] = useState('PIX');
   const [arquivo, setArquivo] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [formasLoading, setFormasLoading] = useState(false);
+  const [formasPagamento, setFormasPagamento] = useState([]);
 
   const [contas, setContas] = useState([]);
   const [contaFinanceiraId, setContaFinanceiraId] = useState(null);
@@ -38,11 +32,20 @@ export default function ContaPagarPagamentoDialog({ visible, onHide, conta, onAf
 
     (async () => {
       try {
-        const { data } = await apiFinanceiro.get('/financeiro/contas-financeiras', { params: { ativo: true } });
-        const arr = Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []);
-        const opts = arr.map((c) => ({ label: c.nome, value: c.id, raw: c }));
-        setContas(opts);
-        setContaFinanceiraId(opts?.[0]?.value ?? null);
+        const [{ data: contasData }, { data: formasData }] = await Promise.all([
+          apiFinanceiro.get('/financeiro/contas-financeiras', { params: { ativo: true } }),
+          apiFinanceiro.get('/financeiro/formas-pagamento', { params: { ativo: true } }),
+        ]);
+
+        const contasArr = Array.isArray(contasData?.data) ? contasData.data : (Array.isArray(contasData) ? contasData : []);
+        const contasOpts = contasArr.map((c) => ({ label: c.nome, value: c.id, raw: c }));
+        setContas(contasOpts);
+        setContaFinanceiraId(contasOpts?.[0]?.value ?? null);
+
+        const formasArr = Array.isArray(formasData?.data) ? formasData.data : [];
+        const formaOpts = formasArr.map((f) => ({ label: f.nome, value: f.nome }));
+        setFormasPagamento(formaOpts);
+        setForma((prev) => prev || formaOpts?.[0]?.value || 'PIX');
       } catch (e) {
         // não bloqueia o dialog, mas avisa
         toast.current?.show({ severity: 'warn', summary: 'Atenção', detail: 'Não foi possível carregar contas financeiras.' });
@@ -51,6 +54,25 @@ export default function ContaPagarPagamentoDialog({ visible, onHide, conta, onAf
       }
     })();
   }, [visible, conta?.id]);
+
+  const createFormaPagamento = async (nome) => {
+    setFormasLoading(true);
+    try {
+      const res = await apiFinanceiro.post('/financeiro/formas-pagamento', { nome, ativo: true });
+      const created = res?.data?.data;
+      if (!created?.nome) return forma;
+
+      const option = { label: created.nome, value: created.nome };
+      setFormasPagamento((prev) => [...prev.filter((o) => o.value !== option.value), option]);
+      toast.current?.show({ severity: 'success', summary: 'OK', detail: 'Forma de pagamento cadastrada.' });
+      return option.value;
+    } catch (e) {
+      toast.current?.show({ severity: 'error', summary: 'Erro', detail: e?.response?.data?.message || e.message });
+      return forma;
+    } finally {
+      setFormasLoading(false);
+    }
+  };
 
   const registrar = async () => {
     if (!podePagar) return;
@@ -110,7 +132,15 @@ export default function ContaPagarPagamentoDialog({ visible, onHide, conta, onAf
         </div>
         <div className="col-4">
           <label>Forma</label>
-          <Dropdown value={forma} onChange={(e) => setForma(e.value)} options={FORMAS} className="w-full" />
+          <SelectOrCreate
+            value={forma}
+            onChange={setForma}
+            options={formasPagamento}
+            loading={formasLoading}
+            createLabel="Cadastrar"
+            dialogTitle="Cadastrar forma de pagamento"
+            onCreate={createFormaPagamento}
+          />
         </div>
 
         <div className="col-12">

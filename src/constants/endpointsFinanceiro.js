@@ -4,6 +4,7 @@ export const FINANCEIRO_ENDPOINTS = Object.freeze({
   catalogos: Object.freeze({
     categoriasFinanceiras: '/financeiro/categorias-financeiras',
     contasFinanceiras: '/financeiro/contas-financeiras',
+    formasPagamento: '/financeiro/formas-pagamento',
   }),
 
   centrosCusto: '/financeiro/centros-custo',

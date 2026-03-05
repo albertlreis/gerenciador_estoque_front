@@ -11,6 +11,10 @@ export const FinanceiroApi = {
       apiFinanceiro.get(FINANCEIRO_ENDPOINTS.catalogos.categoriasFinanceiras, { params }),
     contasFinanceiras: (params) =>
       apiFinanceiro.get(FINANCEIRO_ENDPOINTS.catalogos.contasFinanceiras, { params }),
+    formasPagamento: (params) =>
+      apiFinanceiro.get(FINANCEIRO_ENDPOINTS.catalogos.formasPagamento, { params }),
+    criarFormaPagamento: (payload) =>
+      apiFinanceiro.post(FINANCEIRO_ENDPOINTS.catalogos.formasPagamento, payload),
   },
 
   centrosCusto: (params) => apiFinanceiro.get(FINANCEIRO_ENDPOINTS.centrosCusto, { params }),
