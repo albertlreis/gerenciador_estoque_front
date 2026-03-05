@@ -4,21 +4,13 @@ import { Toast } from 'primereact/toast';
 import { InputText } from 'primereact/inputtext';
 import { InputNumber } from 'primereact/inputnumber';
 import { Calendar } from 'primereact/calendar';
-import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
 
 import SakaiLayout from '../../layouts/SakaiLayout';
 import FinanceiroApi from '../../api/financeiroApi';
 import { useFinanceiroCatalogos } from '../../hooks/useFinanceiroCatalogos';
 import apiFinanceiro from '../../services/apiFinanceiro';
-
-const formasRecebimento = [
-  { label: 'PIX', value: 'PIX' },
-  { label: 'Boleto', value: 'BOLETO' },
-  { label: 'TED', value: 'TED' },
-  { label: 'Dinheiro', value: 'DINHEIRO' },
-  { label: 'Cartão', value: 'CARTAO' },
-];
+import SelectOrCreate from '../../components/financeiro/SelectOrCreate';
 
 const toYmd = (d) => {
   if (!d) return null;
@@ -36,6 +28,8 @@ export default function ContaReceberNova() {
   const { loadCategorias } = useFinanceiroCatalogos();
   const [categoriaOpts, setCategoriaOpts] = useState([]);
   const [centroCustoOpts, setCentroCustoOpts] = useState([]);
+  const [formasRecebimento, setFormasRecebimento] = useState([]);
+  const [catalogLoading, setCatalogLoading] = useState(false);
 
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
@@ -58,6 +52,7 @@ export default function ContaReceberNova() {
 
   useEffect(() => {
     (async () => {
+      setCatalogLoading(true);
       try {
         const cats = await loadCategorias({ tipo: 'receita', ativo: true, tree: false });
         setCategoriaOpts(cats || []);
@@ -72,9 +67,67 @@ export default function ContaReceberNova() {
       } catch {
         setCentroCustoOpts([]);
       }
+
+      try {
+        const res = await apiFinanceiro.get('/financeiro/formas-pagamento', { params: { ativo: true } });
+        const list = res?.data?.data || [];
+        setFormasRecebimento(list.map((c) => ({ label: c.nome, value: c.nome })));
+      } catch {
+        setFormasRecebimento([]);
+      } finally {
+        setCatalogLoading(false);
+      }
     })();
     // eslint-disable-next-line
   }, []);
+
+  const createCategoria = async (nome) => {
+    try {
+      const res = await apiFinanceiro.post('/financeiro/categorias-financeiras', { nome, tipo: 'receita', ativo: true });
+      const created = res?.data?.data;
+      if (!created?.id) return form.categoria_id;
+
+      const option = { label: created.nome, value: created.id, raw: created };
+      setCategoriaOpts((prev) => [...prev.filter((o) => o.value !== option.value), option]);
+      toast.current?.show({ severity: 'success', summary: 'OK', detail: 'Categoria financeira cadastrada.' });
+      return option.value;
+    } catch (e) {
+      toast.current?.show({ severity: 'error', summary: 'Erro', detail: e?.response?.data?.message || e.message });
+      return form.categoria_id;
+    }
+  };
+
+  const createCentroCusto = async (nome) => {
+    try {
+      const res = await apiFinanceiro.post('/financeiro/centros-custo', { nome, ativo: true });
+      const created = res?.data?.data;
+      if (!created?.id) return form.centro_custo_id;
+
+      const option = { label: created.nome, value: created.id, raw: created };
+      setCentroCustoOpts((prev) => [...prev.filter((o) => o.value !== option.value), option]);
+      toast.current?.show({ severity: 'success', summary: 'OK', detail: 'Centro de custo cadastrado.' });
+      return option.value;
+    } catch (e) {
+      toast.current?.show({ severity: 'error', summary: 'Erro', detail: e?.response?.data?.message || e.message });
+      return form.centro_custo_id;
+    }
+  };
+
+  const createFormaRecebimento = async (nome) => {
+    try {
+      const res = await apiFinanceiro.post('/financeiro/formas-pagamento', { nome, ativo: true });
+      const created = res?.data?.data;
+      if (!created?.nome) return form.forma_recebimento;
+
+      const option = { label: created.nome, value: created.nome };
+      setFormasRecebimento((prev) => [...prev.filter((o) => o.value !== option.value), option]);
+      toast.current?.show({ severity: 'success', summary: 'OK', detail: 'Forma de recebimento cadastrada.' });
+      return option.value;
+    } catch (e) {
+      toast.current?.show({ severity: 'error', summary: 'Erro', detail: e?.response?.data?.message || e.message });
+      return form.forma_recebimento;
+    }
+  };
 
   const valorLiquido = useMemo(() => {
     const bruto = Number(form.valor_bruto || 0);
@@ -274,36 +327,43 @@ export default function ContaReceberNova() {
 
           <div className="col-12 md:col-4">
             <label className="block mb-1">Forma de Recebimento</label>
-            <Dropdown
+            <SelectOrCreate
               value={form.forma_recebimento || null}
               options={formasRecebimento}
-              onChange={(e) => setForm((s) => ({ ...s, forma_recebimento: e.value || '' }))}
+              onChange={(value) => setForm((s) => ({ ...s, forma_recebimento: value || '' }))}
+              loading={catalogLoading}
               placeholder="Selecione"
-              showClear
+              createLabel="Cadastrar"
+              dialogTitle="Cadastrar forma de recebimento"
+              onCreate={createFormaRecebimento}
             />
           </div>
 
           <div className="col-12 md:col-4">
             <label className="block mb-1">Categoria</label>
-            <Dropdown
+            <SelectOrCreate
               value={form.categoria_id || null}
               options={categoriaOpts}
-              onChange={(e) => setForm((s) => ({ ...s, categoria_id: e.value }))}
+              onChange={(value) => setForm((s) => ({ ...s, categoria_id: value }))}
+              loading={catalogLoading}
               placeholder="Selecione"
-              showClear
-              filter
+              createLabel="Cadastrar"
+              dialogTitle="Cadastrar categoria financeira"
+              onCreate={createCategoria}
             />
           </div>
 
           <div className="col-12 md:col-4">
             <label className="block mb-1">Centro de Custo</label>
-            <Dropdown
+            <SelectOrCreate
               value={form.centro_custo_id || null}
               options={centroCustoOpts}
-              onChange={(e) => setForm((s) => ({ ...s, centro_custo_id: e.value }))}
+              onChange={(value) => setForm((s) => ({ ...s, centro_custo_id: value }))}
+              loading={catalogLoading}
               placeholder="Selecione"
-              showClear
-              filter
+              createLabel="Cadastrar"
+              dialogTitle="Cadastrar centro de custo"
+              onCreate={createCentroCusto}
             />
           </div>
 
