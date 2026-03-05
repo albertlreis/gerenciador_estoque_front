@@ -144,26 +144,28 @@ textarea.p-inputtextarea {
   white-space: nowrap;
 }
 
-/* Tooltip alternativa com texto ao lado do ícone */
-.layout-sidebar.collapsed .p-menuitem-link[title]::after {
-  content: attr(title);
-  position: absolute;
-  left: 80px;
-  background-color: #fff;
-  color: #333;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-  font-size: 0.875rem;
-  z-index: 100;
+.layout-sidebar .p-panelmenu .p-submenu-list .p-menuitem-link {
+  padding-left: 1.75rem;
 }
 
-.layout-sidebar.collapsed .p-menuitem-link:hover::after {
-  opacity: 1;
+.layout-sidebar .p-panelmenu .p-submenu-list .p-submenu-list .p-menuitem-link {
+  padding-left: 2.5rem;
+}
+
+.catalogo-edit-btn {
+  background: #e5e7eb !important;
+  border: 1px solid #d1d5db !important;
+  color: #374151 !important;
+}
+
+.catalogo-edit-btn:hover {
+  background: #d1d5db !important;
+  border-color: #9ca3af !important;
+}
+
+.catalogo-edit-btn:active {
+  background: #9ca3af !important;
+  border-color: #6b7280 !important;
 }
 
 /* ------------------ TOPO (TOPBAR) ------------------ */
