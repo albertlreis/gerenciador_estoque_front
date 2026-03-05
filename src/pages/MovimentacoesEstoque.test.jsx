@@ -13,6 +13,11 @@ jest.mock('../services/apiEstoque', () => ({
   default: { get: jest.fn() },
 }));
 
+jest.mock('../context/AuthContext', () => ({
+  __esModule: true,
+  useAuth: () => ({ user: { permissoes: [] } }),
+}));
+
 jest.mock('react-router-dom', () => ({
   useSearchParams: () => [mockSearchParams, mockSetSearchParams],
 }), { virtual: true });

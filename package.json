@@ -55,6 +55,12 @@
       "last 1 safari version"
     ]
   },
+  "jest": {
+    "transformIgnorePatterns": [
+      "/node_modules/(?!axios)/",
+      "^.+\\.module\\.(css|sass|scss)$"
+    ]
+  },
   "devDependencies": {
     "@playwright/test": "^1.58.2"
   }
