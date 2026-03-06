@@ -25,6 +25,11 @@ import DialogDevolucao from "../components/DialogDevolucao";
 import usePermissions from '../hooks/usePermissions';
 import { PERMISSOES } from '../constants/permissoes';
 
+const getFilenameFromDisposition = (disposition, fallback) => {
+  const match = disposition?.match(/filename="?([^"]+)"?/i);
+  return match?.[1] || fallback;
+};
+
 addLocale('pt-BR', {
   firstDayOfWeek: 0,
   dayNames: ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'],
@@ -383,7 +388,10 @@ export default function PedidosListagem() {
 
       const link = document.createElement('a');
       link.href = url;
-      link.download = `roteiro_pedido_${pedidoId}.pdf`;
+      link.download = getFilenameFromDisposition(
+        response.headers['content-disposition'],
+        `roteiro-de-consignacao-${pedidoId}.pdf`
+      );
       link.click();
 
       window.URL.revokeObjectURL(url);
@@ -557,14 +565,14 @@ export default function PedidosListagem() {
             body={(row) => {
               const disabled = loading || loadingPdfId === row.id;
 
-              if (row.status !== 'consignado') return null;
+              if (!['consignado', 'devolucao_consignacao'].includes(row.status)) return null;
 
               return (
                 <Button
                   icon={loadingPdfId === row.id ? 'pi pi-spin pi-spinner' : 'pi pi-file-pdf'}
                   severity="danger"
                   onClick={() => gerarPdfPedido(row.id)}
-                  tooltip={row.status === 'consignado' ? 'Roteiro de consignação (PDF)' : 'Roteiro do pedido (PDF)'}
+                  tooltip={row.status === 'devolucao_consignacao' ? 'Roteiro de devolução (PDF)' : 'Roteiro de consignação (PDF)'}
                   loading={loadingPdfId === row.id}
                   disabled={disabled}
                 />

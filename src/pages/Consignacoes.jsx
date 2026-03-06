@@ -15,6 +15,11 @@ import CalendarBR from "../components/CalendarBR";
 import { formatarDataParaISO } from "../utils/formatters";
 import { STATUS_CONSIGNACAO, STATUS_CONSIGNACAO_OPTIONS } from '../constants/statusConsignacao';
 
+const getFilenameFromDisposition = (disposition, fallback) => {
+  const match = disposition?.match(/filename="?([^"]+)"?/i);
+  return match?.[1] || fallback;
+};
+
 const Consignacoes = () => {
   const { user } = useAuth();
   const isAdmin = user?.perfis?.includes(PERFIS.ADMINISTRADOR.slug);
@@ -119,7 +124,10 @@ const Consignacoes = () => {
 
       const link = document.createElement('a');
       link.href = url;
-      link.download = `roteiro_consignacao_${pedidoId}.pdf`;
+      link.download = getFilenameFromDisposition(
+        response.headers['content-disposition'],
+        `roteiro-de-consignacao-${pedidoId}.pdf`
+      );
       link.click();
 
       window.URL.revokeObjectURL(url);
