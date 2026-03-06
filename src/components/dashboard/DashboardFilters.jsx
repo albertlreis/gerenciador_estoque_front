@@ -12,7 +12,7 @@ export default function DashboardFilters({ filters, onChange, onRefresh, allowCo
   return (
     <div className="surface-card p-3 border-round shadow-1 mb-3">
       <div className="grid">
-        <div className="col-12 md:col-3">
+        <div className="col-12 md:col-2">
           <label className="text-700 text-sm block mb-1">Período</label>
           <select
             className="w-full p-2 border-1 surface-border border-round"
@@ -25,9 +25,24 @@ export default function DashboardFilters({ filters, onChange, onRefresh, allowCo
           </select>
         </div>
 
+        <div className="col-12 md:col-2">
+          <label className="text-700 text-sm block mb-1">Depósito</label>
+          <input
+            className="w-full p-2 border-1 surface-border border-round"
+            type="number"
+            min="1"
+            placeholder="Todos"
+            value={filters.deposito_id || ''}
+            onChange={(event) => onChange({
+              ...filters,
+              deposito_id: event.target.value ? Number(event.target.value) : null,
+            })}
+          />
+        </div>
+
         {filters.period === 'custom' ? (
           <>
-            <div className="col-12 md:col-3">
+            <div className="col-12 md:col-2">
               <label className="text-700 text-sm block mb-1">Início</label>
               <input
                 className="w-full p-2 border-1 surface-border border-round"
@@ -36,7 +51,7 @@ export default function DashboardFilters({ filters, onChange, onRefresh, allowCo
                 onChange={(event) => onChange({ ...filters, inicio: event.target.value })}
               />
             </div>
-            <div className="col-12 md:col-3">
+            <div className="col-12 md:col-2">
               <label className="text-700 text-sm block mb-1">Fim</label>
               <input
                 className="w-full p-2 border-1 surface-border border-round"
