@@ -9,10 +9,14 @@ import QuickActions from '../../../../components/dashboard/QuickActions';
 import DashboardFilters from '../../../../components/dashboard/DashboardFilters';
 import EmptyState from '../../../../components/dashboard/EmptyState';
 import { buildSeriesData, buildSeriesDataWithCompare } from '../chartHelpers';
+import usePermissions from '../../../../hooks/usePermissions';
+import { PERMISSOES } from '../../../../constants/permissoes';
+import { filterDashboardActions } from '../homeConfig';
 
 export default function VendedorHome() {
   const navigate = useNavigate();
-  const { data, loading, error, empty, filters, setFilters, refresh } = useDashboardVendedor();
+  const { has } = usePermissions();
+  const { data, loading, error, filters, setFilters, refresh } = useDashboardVendedor();
 
   const kpis = data?.kpis || {};
   const pendencias = data?.pendencias || {};
@@ -70,39 +74,50 @@ export default function VendedorHome() {
     );
   }
 
-  if (empty) {
-    return (
-      <EmptyState
-        title="Sem dados para o período selecionado"
-        description="Crie um pedido para iniciar os indicadores."
-        actionLabel="Novo pedido"
-        onAction={() => navigate('/catalogo')}
-      />
-    );
-  }
-
   return (
     <div>
       <DashboardFilters filters={filters} onChange={setFilters} onRefresh={refresh} allowCompare />
 
       <div className="grid">
         <div className="col-12 md:col-6 xl:col-3">
-          <KpiCard title="Vendas no período" kpi={kpis.vendas_total} currency onClick={() => navigate('/pedidos')} />
+          <KpiCard
+            title="Vendas no período"
+            kpi={kpis.vendas_total}
+            currency
+            onClick={has(PERMISSOES.PEDIDOS.VISUALIZAR) ? () => navigate('/pedidos') : undefined}
+          />
         </div>
         <div className="col-12 md:col-6 xl:col-3">
-          <KpiCard title="Pedidos no período" kpi={kpis.pedidos_total} onClick={() => navigate('/pedidos')} />
+          <KpiCard
+            title="Pedidos no período"
+            kpi={kpis.pedidos_total}
+            onClick={has(PERMISSOES.PEDIDOS.VISUALIZAR) ? () => navigate('/pedidos') : undefined}
+          />
         </div>
         <div className="col-12 md:col-6 xl:col-3">
-          <KpiCard title="Ticket médio" kpi={kpis.ticket_medio} currency onClick={() => navigate('/pedidos')} />
+          <KpiCard
+            title="Ticket médio"
+            kpi={kpis.ticket_medio}
+            currency
+            onClick={has(PERMISSOES.PEDIDOS.VISUALIZAR) ? () => navigate('/pedidos') : undefined}
+          />
         </div>
         <div className="col-12 md:col-6 xl:col-3">
-          <KpiCard title="Clientes únicos" kpi={kpis.clientes_unicos} onClick={() => navigate('/clientes')} />
+          <KpiCard
+            title="Clientes únicos"
+            kpi={kpis.clientes_unicos}
+            onClick={has(PERMISSOES.CLIENTES.VISUALIZAR) ? () => navigate('/clientes') : undefined}
+          />
         </div>
       </div>
 
       <div className="grid mt-1">
         <div className="col-12 md:col-4">
-          <PendingCard title="Pedidos em aberto" value={pendencias.pedidos_em_aberto_qtd} onClick={() => navigate('/pedidos')} />
+          <PendingCard
+            title="Pedidos em aberto"
+            value={pendencias.pedidos_em_aberto_qtd}
+            onClick={has(PERMISSOES.PEDIDOS.VISUALIZAR) ? () => navigate('/pedidos') : undefined}
+          />
         </div>
         <div className="col-12 md:col-8">
           <PendingList
@@ -155,14 +170,39 @@ export default function VendedorHome() {
 
       <div className="mt-3">
         <QuickActions
-          actions={[
-            { label: 'Novo pedido', icon: 'pi pi-plus', onClick: () => navigate('/catalogo'), primary: true },
-            { label: 'Catálogo', icon: 'pi pi-book', onClick: () => navigate('/catalogo') },
-            { label: 'Buscar cliente', icon: 'pi pi-search', onClick: () => navigate('/clientes') },
-            { label: 'Cadastrar cliente', icon: 'pi pi-user-plus', onClick: () => navigate('/clientes') },
-            { label: 'Meus pedidos', icon: 'pi pi-shopping-cart', onClick: () => navigate('/pedidos') },
-            { label: 'Importar pedido', icon: 'pi pi-upload', onClick: () => navigate('/pedidos/importar') },
-          ]}
+          actions={filterDashboardActions([
+            {
+              label: 'Novo pedido',
+              icon: 'pi pi-plus',
+              onClick: () => navigate('/catalogo'),
+              primary: true,
+              permission: PERMISSOES.PRODUTOS.CATALOGO,
+            },
+            {
+              label: 'Catálogo',
+              icon: 'pi pi-book',
+              onClick: () => navigate('/catalogo'),
+              permission: PERMISSOES.PRODUTOS.CATALOGO,
+            },
+            {
+              label: 'Buscar cliente',
+              icon: 'pi pi-search',
+              onClick: () => navigate('/clientes'),
+              permission: PERMISSOES.CLIENTES.VISUALIZAR,
+            },
+            {
+              label: 'Cadastrar cliente',
+              icon: 'pi pi-user-plus',
+              onClick: () => navigate('/clientes'),
+              permission: PERMISSOES.CLIENTES.VISUALIZAR,
+            },
+            {
+              label: 'Meus pedidos',
+              icon: 'pi pi-shopping-cart',
+              onClick: () => navigate('/pedidos'),
+              permission: PERMISSOES.PEDIDOS.VISUALIZAR,
+            },
+          ], has)}
         />
       </div>
     </div>

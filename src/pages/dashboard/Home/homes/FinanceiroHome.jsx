@@ -6,10 +6,14 @@ import PendingList from '../../../../components/dashboard/PendingList';
 import QuickActions from '../../../../components/dashboard/QuickActions';
 import DashboardFilters from '../../../../components/dashboard/DashboardFilters';
 import EmptyState from '../../../../components/dashboard/EmptyState';
+import usePermissions from '../../../../hooks/usePermissions';
+import { PERMISSOES } from '../../../../constants/permissoes';
+import { filterDashboardActions } from '../homeConfig';
 
 export default function FinanceiroHome() {
   const navigate = useNavigate();
-  const { data, loading, error, empty, filters, setFilters, refresh } = useDashboardFinanceiro();
+  const { has } = usePermissions();
+  const { data, loading, error, filters, setFilters, refresh } = useDashboardFinanceiro();
 
   const kpis = data?.kpis || {};
   const pendencias = data?.pendencias || {};
@@ -29,33 +33,46 @@ export default function FinanceiroHome() {
     );
   }
 
-  if (empty) {
-    return (
-      <EmptyState
-        title="Sem dados financeiros para o período"
-        description="Ajuste os filtros ou cadastre novos lançamentos."
-        actionLabel="Ir para lançamentos"
-        onAction={() => navigate('/financeiro/lancamentos')}
-      />
-    );
-  }
-
   return (
     <div>
-      <DashboardFilters filters={filters} onChange={setFilters} onRefresh={refresh} />
+      <DashboardFilters
+        filters={filters}
+        onChange={setFilters}
+        onRefresh={refresh}
+        showPeriodFilter={false}
+        showDepositoFilter={false}
+      />
 
       <div className="grid">
         <div className="col-12 md:col-6 xl:col-3">
-          <KpiCard title="A receber vencido (R$)" kpi={kpis.receber_vencido_valor} currency onClick={() => navigate('/financeiro/contas-receber')} />
+          <KpiCard
+            title="A receber vencido (R$)"
+            kpi={kpis.receber_vencido_valor}
+            currency
+            onClick={has(PERMISSOES.FINANCEIRO.CONTAS_RECEBER.VISUALIZAR) ? () => navigate('/financeiro/contas-receber') : undefined}
+          />
         </div>
         <div className="col-12 md:col-6 xl:col-3">
-          <KpiCard title="A receber vencido (qtd)" kpi={kpis.receber_vencido_qtd} onClick={() => navigate('/financeiro/contas-receber')} />
+          <KpiCard
+            title="A receber vencido (qtd)"
+            kpi={kpis.receber_vencido_qtd}
+            onClick={has(PERMISSOES.FINANCEIRO.CONTAS_RECEBER.VISUALIZAR) ? () => navigate('/financeiro/contas-receber') : undefined}
+          />
         </div>
         <div className="col-12 md:col-6 xl:col-3">
-          <KpiCard title="A pagar vencido (R$)" kpi={kpis.pagar_vencido_valor} currency onClick={() => navigate('/financeiro/contas-pagar')} />
+          <KpiCard
+            title="A pagar vencido (R$)"
+            kpi={kpis.pagar_vencido_valor}
+            currency
+            onClick={has(PERMISSOES.FINANCEIRO.CONTAS_PAGAR.VISUALIZAR) ? () => navigate('/financeiro/contas-pagar') : undefined}
+          />
         </div>
         <div className="col-12 md:col-6 xl:col-3">
-          <KpiCard title="A pagar vencido (qtd)" kpi={kpis.pagar_vencido_qtd} onClick={() => navigate('/financeiro/contas-pagar')} />
+          <KpiCard
+            title="A pagar vencido (qtd)"
+            kpi={kpis.pagar_vencido_qtd}
+            onClick={has(PERMISSOES.FINANCEIRO.CONTAS_PAGAR.VISUALIZAR) ? () => navigate('/financeiro/contas-pagar') : undefined}
+          />
         </div>
       </div>
 
@@ -88,13 +105,39 @@ export default function FinanceiroHome() {
 
       <div className="mt-3">
         <QuickActions
-          actions={[
-            { label: 'Contas a Receber', icon: 'pi pi-wallet', onClick: () => navigate('/financeiro/contas-receber'), primary: true },
-            { label: 'Contas a Pagar', icon: 'pi pi-credit-card', onClick: () => navigate('/financeiro/contas-pagar') },
-            { label: 'Lançamentos', icon: 'pi pi-list', onClick: () => navigate('/financeiro/lancamentos') },
-            { label: 'Transferências', icon: 'pi pi-arrow-right-arrow-left', onClick: () => navigate('/financeiro/transferencias') },
-            { label: 'Exportar', icon: 'pi pi-download', onClick: () => navigate('/relatorios') },
-          ]}
+          actions={filterDashboardActions([
+            {
+              label: 'Contas a Receber',
+              icon: 'pi pi-wallet',
+              onClick: () => navigate('/financeiro/contas-receber'),
+              primary: true,
+              permission: PERMISSOES.FINANCEIRO.CONTAS_RECEBER.VISUALIZAR,
+            },
+            {
+              label: 'Contas a Pagar',
+              icon: 'pi pi-credit-card',
+              onClick: () => navigate('/financeiro/contas-pagar'),
+              permission: PERMISSOES.FINANCEIRO.CONTAS_PAGAR.VISUALIZAR,
+            },
+            {
+              label: 'Lançamentos',
+              icon: 'pi pi-list',
+              onClick: () => navigate('/financeiro/lancamentos'),
+              permission: PERMISSOES.FINANCEIRO.LANCAMENTOS.VISUALIZAR,
+            },
+            {
+              label: 'Transferências',
+              icon: 'pi pi-arrow-right-arrow-left',
+              onClick: () => navigate('/financeiro/transferencias'),
+              permission: PERMISSOES.FINANCEIRO.LANCAMENTOS.VISUALIZAR,
+            },
+            {
+              label: 'Exportar',
+              icon: 'pi pi-download',
+              onClick: () => navigate('/relatorios'),
+              permission: PERMISSOES.RELATORIOS.VISUALIZAR,
+            },
+          ], has)}
         />
       </div>
     </div>

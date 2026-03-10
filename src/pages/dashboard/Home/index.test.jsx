@@ -12,6 +12,12 @@ jest.mock('./homes/AdminHome', () => () => <div>Admin Home</div>);
 jest.mock('./homes/FinanceiroHome', () => () => <div>Financeiro Home</div>);
 jest.mock('./homes/EstoquistaHome', () => () => <div>Estoque Home</div>);
 jest.mock('./homes/VendedorHome', () => () => <div>Vendedor Home</div>);
+jest.mock('../../../components/dashboard/EmptyState', () => ({ title, description }) => (
+  <div>
+    <span>{title}</span>
+    <span>{description}</span>
+  </div>
+));
 
 describe('DashboardHome', () => {
   it('renderiza Home de administrador quando houver múltiplos perfis', () => {
@@ -30,5 +36,11 @@ describe('DashboardHome', () => {
     mockUser = { perfis: ['Vendedor'], permissoes: [] };
     render(<DashboardHome />);
     expect(screen.getByText('Vendedor Home')).toBeInTheDocument();
+  });
+
+  it('exibe estado sem dashboard quando não houver perfil compatível', () => {
+    mockUser = { perfis: ['Desenvolvedor'], permissoes: ['home.visualizar'] };
+    render(<DashboardHome />);
+    expect(screen.getByText('Nenhum dashboard disponível')).toBeInTheDocument();
   });
 });

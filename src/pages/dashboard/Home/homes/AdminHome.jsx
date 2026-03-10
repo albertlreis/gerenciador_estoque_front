@@ -9,10 +9,14 @@ import QuickActions from '../../../../components/dashboard/QuickActions';
 import DashboardFilters from '../../../../components/dashboard/DashboardFilters';
 import EmptyState from '../../../../components/dashboard/EmptyState';
 import { buildSeriesData, buildSeriesDataWithCompare } from '../chartHelpers';
+import usePermissions from '../../../../hooks/usePermissions';
+import { PERMISSOES } from '../../../../constants/permissoes';
+import { filterDashboardActions } from '../homeConfig';
 
 export default function AdminHome() {
   const navigate = useNavigate();
-  const { data, loading, error, empty, filters, setFilters, refresh } = useDashboardAdmin();
+  const { has } = usePermissions();
+  const { data, loading, error, filters, setFilters, refresh } = useDashboardAdmin();
 
   const kpis = data?.kpis || {};
   const pendencias = data?.pendencias || {};
@@ -71,33 +75,40 @@ export default function AdminHome() {
     );
   }
 
-  if (empty) {
-    return (
-      <EmptyState
-        title="Sem dados para o período selecionado"
-        description="Ajuste os filtros ou inicie um novo pedido."
-        actionLabel="Novo pedido"
-        onAction={() => navigate('/catalogo')}
-      />
-    );
-  }
-
   return (
     <div>
       <DashboardFilters filters={filters} onChange={setFilters} onRefresh={refresh} allowCompare />
 
       <div className="grid">
         <div className="col-12 md:col-6 xl:col-3">
-          <KpiCard title="Vendas no período" kpi={kpis.vendas_total} currency onClick={() => navigate('/pedidos')} />
+          <KpiCard
+            title="Vendas no período"
+            kpi={kpis.vendas_total}
+            currency
+            onClick={has(PERMISSOES.PEDIDOS.VISUALIZAR) ? () => navigate('/pedidos') : undefined}
+          />
         </div>
         <div className="col-12 md:col-6 xl:col-3">
-          <KpiCard title="Pedidos no período" kpi={kpis.pedidos_total} onClick={() => navigate('/pedidos')} />
+          <KpiCard
+            title="Pedidos no período"
+            kpi={kpis.pedidos_total}
+            onClick={has(PERMISSOES.PEDIDOS.VISUALIZAR) ? () => navigate('/pedidos') : undefined}
+          />
         </div>
         <div className="col-12 md:col-6 xl:col-3">
-          <KpiCard title="Ticket médio" kpi={kpis.ticket_medio} currency onClick={() => navigate('/pedidos')} />
+          <KpiCard
+            title="Ticket médio"
+            kpi={kpis.ticket_medio}
+            currency
+            onClick={has(PERMISSOES.PEDIDOS.VISUALIZAR) ? () => navigate('/pedidos') : undefined}
+          />
         </div>
         <div className="col-12 md:col-6 xl:col-3">
-          <KpiCard title="Clientes únicos" kpi={kpis.clientes_unicos} onClick={() => navigate('/clientes')} />
+          <KpiCard
+            title="Clientes únicos"
+            kpi={kpis.clientes_unicos}
+            onClick={has(PERMISSOES.CLIENTES.VISUALIZAR) ? () => navigate('/clientes') : undefined}
+          />
         </div>
       </div>
 
@@ -106,21 +117,21 @@ export default function AdminHome() {
           <PendingCard
             title="Itens com entrega pendente"
             value={pendencias.itens_entrega_pendente_qtd}
-            onClick={() => navigate('/pedidos?entrega_pendente=1')}
+            onClick={has(PERMISSOES.PEDIDOS.VISUALIZAR) ? () => navigate('/pedidos?entrega_pendente=1') : undefined}
           />
         </div>
         <div className="col-12 md:col-4">
           <PendingCard
             title="Consignações vencendo"
             value={pendencias.consignacoes_vencendo_qtd}
-            onClick={() => navigate('/consignacoes?status=pendente')}
+            onClick={has(PERMISSOES.CONSIGNACOES.VISUALIZAR) ? () => navigate('/consignacoes?status=pendente') : undefined}
           />
         </div>
         <div className="col-12 md:col-4">
           <PendingCard
             title="Pedidos em aberto"
             value={pendencias.pedidos_em_aberto_qtd}
-            onClick={() => navigate('/pedidos')}
+            onClick={has(PERMISSOES.PEDIDOS.VISUALIZAR) ? () => navigate('/pedidos') : undefined}
           />
         </div>
         <div className="col-12">
@@ -162,15 +173,51 @@ export default function AdminHome() {
 
       <div className="mt-3">
         <QuickActions
-          actions={[
-            { label: 'Novo pedido', icon: 'pi pi-plus', onClick: () => navigate('/catalogo'), primary: true },
-            { label: 'Importar pedido', icon: 'pi pi-upload', onClick: () => navigate('/pedidos/importar') },
-            { label: 'Produtos', icon: 'pi pi-box', onClick: () => navigate('/produtos') },
-            { label: 'Estoque', icon: 'pi pi-warehouse', onClick: () => navigate('/movimentacoes-estoque') },
-            { label: 'Usuários/Acessos', icon: 'pi pi-users', onClick: () => navigate('/acessos/usuarios') },
-            { label: 'Relatórios', icon: 'pi pi-chart-bar', onClick: () => navigate('/relatorios') },
-            { label: 'Configurações', icon: 'pi pi-cog', onClick: () => navigate('/configuracoes') },
-          ]}
+          actions={filterDashboardActions([
+            {
+              label: 'Novo pedido',
+              icon: 'pi pi-plus',
+              onClick: () => navigate('/catalogo'),
+              primary: true,
+              permission: PERMISSOES.PRODUTOS.CATALOGO,
+            },
+            {
+              label: 'Importar pedido',
+              icon: 'pi pi-upload',
+              onClick: () => navigate('/pedidos/importar'),
+              permission: PERMISSOES.PEDIDOS.IMPORTAR,
+            },
+            {
+              label: 'Produtos',
+              icon: 'pi pi-box',
+              onClick: () => navigate('/produtos'),
+              permission: PERMISSOES.PRODUTOS.VISUALIZAR,
+            },
+            {
+              label: 'Estoque',
+              icon: 'pi pi-warehouse',
+              onClick: () => navigate('/movimentacoes-estoque'),
+              permission: PERMISSOES.ESTOQUE.MOVIMENTACAO,
+            },
+            {
+              label: 'Usuários/Acessos',
+              icon: 'pi pi-users',
+              onClick: () => navigate('/acessos/usuarios'),
+              permission: PERMISSOES.USUARIOS.VISUALIZAR,
+            },
+            {
+              label: 'Relatórios',
+              icon: 'pi pi-chart-bar',
+              onClick: () => navigate('/relatorios'),
+              permission: PERMISSOES.RELATORIOS.VISUALIZAR,
+            },
+            {
+              label: 'Configurações',
+              icon: 'pi pi-cog',
+              onClick: () => navigate('/configuracoes'),
+              permission: PERMISSOES.CONFIGURACOES.VISUALIZAR,
+            },
+          ], has)}
         />
       </div>
     </div>

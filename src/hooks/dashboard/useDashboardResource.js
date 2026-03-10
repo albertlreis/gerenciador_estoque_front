@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 const defaultFilters = {
   period: 'month',
@@ -36,68 +36,60 @@ const hasMeaningfulData = (response) => {
 };
 
 export default function useDashboardResource(fetcher, options = {}) {
+  const allowCompare = options.allowCompare ?? false;
+  const normalizeResponse = options.normalizeResponse;
+
   const [filters, setFilters] = useState({ ...defaultFilters, ...(options.initialFilters || {}) });
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const requestIdRef = useRef(0);
+
+  const buildParams = useCallback((override = {}) => {
+    const params = {
+      ...filters,
+      ...override,
+    };
+
+    if (!allowCompare) {
+      delete params.compare;
+    }
+
+    return params;
+  }, [allowCompare, filters]);
+
+  const applyResponse = useCallback((response) => {
+    const payload = response?.data ?? null;
+    return typeof normalizeResponse === 'function'
+      ? normalizeResponse(payload)
+      : payload;
+  }, [normalizeResponse]);
 
   const fetchData = useCallback(async (override = {}) => {
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     setError(null);
 
     try {
-      const params = {
-        ...filters,
-        ...override,
-      };
+      const response = await fetcher(buildParams(override));
 
-      if (!options.allowCompare) {
-        delete params.compare;
+      if (requestId === requestIdRef.current) {
+        setData(applyResponse(response));
       }
-
-      const response = await fetcher(params);
-      setData(response?.data ?? null);
     } catch (err) {
-      setError(err);
+      if (requestId === requestIdRef.current) {
+        setError(err);
+      }
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
-  }, [fetcher, filters, options.allowCompare]);
+  }, [applyResponse, buildParams, fetcher]);
 
   useEffect(() => {
-    let mounted = true;
-
-    const run = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const params = { ...filters };
-        if (!options.allowCompare) {
-          delete params.compare;
-        }
-
-        const response = await fetcher(params);
-        if (mounted) {
-          setData(response?.data ?? null);
-        }
-      } catch (err) {
-        if (mounted) {
-          setError(err);
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    run();
-
-    return () => {
-      mounted = false;
-    };
-  }, [fetcher, filters, options.allowCompare]);
+    fetchData();
+  }, [fetchData]);
 
   const refresh = useCallback(() => fetchData({ fresh: 1 }), [fetchData]);
 

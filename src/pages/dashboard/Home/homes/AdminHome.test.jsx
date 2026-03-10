@@ -45,7 +45,7 @@ describe('AdminHome states', () => {
     expect(screen.getByText('Falha ao carregar o dashboard')).toBeInTheDocument();
   });
 
-  it('exibe empty state quando não há dados', () => {
+  it('mantém a estrutura do dashboard quando os dados vêm zerados', () => {
     mockHook.mockReturnValue({
       data: { kpis: {}, pendencias: {}, series: {} },
       loading: false,
@@ -57,6 +57,7 @@ describe('AdminHome states', () => {
     });
 
     render(<AdminHome />);
-    expect(screen.getByText('Sem dados para o período selecionado')).toBeInTheDocument();
+    expect(screen.getByText('Ações rápidas')).toBeInTheDocument();
+    expect(screen.getByText('Sem série de pedidos')).toBeInTheDocument();
   });
 });
