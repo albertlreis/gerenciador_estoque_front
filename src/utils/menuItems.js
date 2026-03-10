@@ -1,5 +1,6 @@
 import { PERMISSOES } from '../constants/permissoes';
 import isDeveloperUser from './isDeveloperUser';
+import { getDashboardProfileKey } from '../pages/dashboard/Home/homeConfig';
 
 /**
  * Gera os itens de menu com base nas permissões do usuário.
@@ -9,6 +10,8 @@ import isDeveloperUser from './isDeveloperUser';
 const menuItems = (has, user = null) => {
   const canImportarEstoqueDev =
     has(PERMISSOES.ESTOQUE?.IMPORTAR_PLANILHA_DEV) || isDeveloperUser(user);
+  const dashboardProfile = getDashboardProfileKey(user);
+  const canShowImportarPedido = has(PERMISSOES.PEDIDOS?.IMPORTAR) && dashboardProfile !== 'vendedor';
   return [
     {
       label: 'Dashboard',
@@ -20,7 +23,7 @@ const menuItems = (has, user = null) => {
     // Agrupa tudo de pedidos (cliente, consignação, importação e fábrica)
     (has(PERMISSOES.PEDIDOS?.VISUALIZAR) ||
       has(PERMISSOES.CONSIGNACOES?.VISUALIZAR) ||
-      has(PERMISSOES.PEDIDOS?.IMPORTAR) ||
+      canShowImportarPedido ||
       has(PERMISSOES.PEDIDOS_FABRICA?.VISUALIZAR)
     ) && {
       label: 'Pedidos',
@@ -39,7 +42,7 @@ const menuItems = (has, user = null) => {
           icon: 'pi pi-undo',
           to: '/consignacoes'
         },
-        has(PERMISSOES.PEDIDOS?.IMPORTAR) && {
+        canShowImportarPedido && {
           label: 'Importar Pedido',
           key: 'pedidos-importar',
           icon: 'pi pi-fw pi-upload',
