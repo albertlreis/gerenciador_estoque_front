@@ -39,6 +39,10 @@ const useDashboardData = () => {
   const [tipoGrafico, setTipoGrafico] = useState('bar');
 
   const [consignacoesVencendo, setConsignacoesVencendo] = useState([]);
+  const [avisosNaoLidos, setAvisosNaoLidos] = useState(0);
+  const [aniversariantesHoje, setAniversariantesHoje] = useState([]);
+  const [aniversariantesProximos7, setAniversariantesProximos7] = useState([]);
+  const [aniversariantesProximos30, setAniversariantesProximos30] = useState([]);
 
   useEffect(() => {
     carregarDashboard();
@@ -58,6 +62,7 @@ const useDashboardData = () => {
         fetchEstoqueBaixo(),
         carregarConsignacoesVencendo(),
         fetchSugestoesOutlet(),
+        fetchAvisosEAniversarios(),
       ]);
     } catch (error) {
       console.error('Erro ao carregar dados do dashboard:', error);
@@ -193,6 +198,42 @@ const useDashboardData = () => {
 
   const handleAtualizarGrafico = () => fetchEstatisticas();
 
+  const fetchAvisosEAniversarios = async () => {
+    try {
+      const [{ data: avisosData }, { data: aniversariosData }] = await Promise.all([
+        apiEstoque.get('/avisos', { params: { ativos: 1, per_page: 100 } }),
+        apiEstoque.get('/aniversarios', { params: { tipo: 'todos', dias: 30 } }),
+      ]);
+
+      const avisos = Array.isArray(avisosData?.data) ? avisosData.data : [];
+      setAvisosNaoLidos(avisos.filter((a) => !a?.lido).length);
+
+      const aniversarioLista = Array.isArray(aniversariosData) ? aniversariosData : [];
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+
+      const classificados = aniversarioLista
+        .map((item) => {
+          const data = new Date(item.proximo_aniversario);
+          data.setHours(0, 0, 0, 0);
+          const diff = Math.round((data.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+          return { ...item, _diffDias: diff };
+        })
+        .filter((item) => item._diffDias >= 0)
+        .sort((a, b) => a._diffDias - b._diffDias || String(a.nome).localeCompare(String(b.nome)));
+
+      setAniversariantesHoje(classificados.filter((i) => i._diffDias === 0));
+      setAniversariantesProximos7(classificados.filter((i) => i._diffDias > 0 && i._diffDias <= 7));
+      setAniversariantesProximos30(classificados.filter((i) => i._diffDias > 0 && i._diffDias <= 30));
+    } catch (err) {
+      console.error('Erro ao carregar avisos/aniversarios', err);
+      setAvisosNaoLidos(0);
+      setAniversariantesHoje([]);
+      setAniversariantesProximos7([]);
+      setAniversariantesProximos30([]);
+    }
+  };
+
   return {
     kpis,
     ultimosPedidos,
@@ -222,6 +263,10 @@ const useDashboardData = () => {
     diasLimiteOutlet,
     loadingSugestoesOutlet,
     fetchResumoDashboard,
+    avisosNaoLidos,
+    aniversariantesHoje,
+    aniversariantesProximos7,
+    aniversariantesProximos30,
   };
 };
 

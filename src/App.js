@@ -45,6 +45,7 @@ import ComunicacaoRequestShow from "./pages/ComunicacaoRequestShow";
 import ComunicacaoMessages from "./pages/ComunicacaoMessages";
 import ComunicacaoMessageShow from "./pages/ComunicacaoMessageShow";
 import ContasReceber from "./pages/ContasReceber";
+import AvisosMural from './pages/AvisosMural';
 import FinanceiroDashboard from "./pages/FinanceiroDashboard";
 import FinanceiroLancamentos from "./pages/FinanceiroLancamentos";
 import FinanceiroDespesasRecorrentes from "./pages/FinanceiroDespesasRecorrentes";
@@ -154,6 +155,7 @@ const App = () => {
         )}
       />
       <Route path="/consignacoes" element={renderProtectedRoute(<Consignacoes/>, PERMISSOES.CONSIGNACOES.VISUALIZAR)}/>
+      <Route path="/avisos" element={renderProtectedRoute(<AvisosMural/>, PERMISSOES.AVISOS.VIEW)}/>
       <Route path="/configuracoes"
              element={renderProtectedRoute(<Configuracoes/>, PERMISSOES.CONFIGURACOES.VISUALIZAR)}/>
       <Route path="/monitoramento/cache"

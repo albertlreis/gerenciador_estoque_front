@@ -2,12 +2,16 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useCarrinho } from '../context/CarrinhoContext';
 import { useNavigate, useParams } from 'react-router-dom';
 import { InputTextarea } from 'primereact/inputtextarea';
+import { InputNumber } from 'primereact/inputnumber';
 import { Toast } from 'primereact/toast';
 import { confirmDialog, ConfirmDialog } from 'primereact/confirmdialog';
+import { Dialog } from 'primereact/dialog';
+import { Button } from 'primereact/button';
 import SakaiLayout from '../layouts/SakaiLayout';
 import api from '../services/apiEstoque';
 import { useAuth } from '../context/AuthContext';
 import AuthApi from '../api/authApi';
+import usePermissions from '../hooks/usePermissions';
 
 import ResumoPedidoCard from '../components/ResumoPedidoCard';
 import ItemPedidoCard from '../components/ItemPedidoCard';
@@ -23,8 +27,14 @@ import { ParceiroForm } from '../components/ParceiroForm';
 
 const FinalizarPedido = () => {
   const { user } = useAuth();
+  const { has } = usePermissions();
   const podeSelecionarVendedor = user?.permissoes?.includes(PERMISSOES.PEDIDOS.SELECIONAR_VENDEDOR)
     || user?.permissoes?.includes(PERMISSOES.CARRINHOS.FINALIZAR);
+  const podeEditarPrecoVariacao = has([
+    PERMISSOES.PRODUTO_VARIACOES.EDITAR,
+    PERMISSOES.PRODUTOS.EDITAR,
+    PERMISSOES.PRODUTOS.GERENCIAR,
+  ]);
 
   const { id } = useParams();
   const navigate = useNavigate();
@@ -52,6 +62,11 @@ const FinalizarPedido = () => {
   const [loading, setLoading] = useState(true);
   const [mostrarLocModal, setMostrarLocModal] = useState(false);
   const [itemLocSelecionado, setItemLocSelecionado] = useState(null);
+  const [precoDialogVisible, setPrecoDialogVisible] = useState(false);
+  const [itemPrecoEdicao, setItemPrecoEdicao] = useState(null);
+  const [novoPreco, setNovoPreco] = useState(null);
+  const [motivoPreco, setMotivoPreco] = useState('');
+  const [savingPreco, setSavingPreco] = useState(false);
 
   // ——— estado do modal de parceiro ———
   const [parceiroFormVisible, setParceiroFormVisible] = useState(false);
@@ -374,6 +389,64 @@ const FinalizarPedido = () => {
     setMostrarLocModal(true);
   };
 
+  const abrirEdicaoPreco = (item) => {
+    setItemPrecoEdicao(item);
+    setNovoPreco(Number(item.preco_unitario || 0));
+    setMotivoPreco('');
+    setPrecoDialogVisible(true);
+  };
+
+  const salvarEdicaoPreco = async () => {
+    if (!itemPrecoEdicao) return;
+
+    const motivo = (motivoPreco || '').trim();
+    if (motivo.length === 0) {
+      toast.current?.show({
+        severity: 'warn',
+        summary: 'Motivo obrigatório',
+        detail: 'Informe o motivo da alteração de preço.',
+      });
+      return;
+    }
+
+    if (novoPreco == null || Number(novoPreco) < 0) {
+      toast.current?.show({
+        severity: 'warn',
+        summary: 'Preço inválido',
+        detail: 'Informe um preço maior ou igual a zero.',
+      });
+      return;
+    }
+
+    setSavingPreco(true);
+    try {
+      await api.patch(`/produto-variacoes/${itemPrecoEdicao.id_variacao}`, {
+        preco: Number(novoPreco),
+        audit: {
+          label: 'Alteração de preço no checkout',
+          motivo,
+          origin: 'checkout',
+          metadata: {
+            carrinho_id: carrinhoAtual?.id,
+          },
+        },
+      });
+
+      await carregarCarrinho(id);
+      setPrecoDialogVisible(false);
+      toast.current?.show({
+        severity: 'success',
+        summary: 'Preço atualizado',
+        detail: 'Preço da variação atualizado no catálogo e no carrinho.',
+      });
+    } catch (err) {
+      const msg = err?.response?.data?.message || 'Não foi possível atualizar o preço da variação.';
+      toast.current?.show({ severity: 'error', summary: 'Erro', detail: msg });
+    } finally {
+      setSavingPreco(false);
+    }
+  };
+
   return (
     <SakaiLayout>
       <Toast ref={toast} />
@@ -394,6 +467,45 @@ const FinalizarPedido = () => {
         onSubmit={onSubmitParceiro}
         loading={parceiroSaving}
       />
+
+      <Dialog
+        header="Editar preço da variação"
+        visible={precoDialogVisible}
+        onHide={() => setPrecoDialogVisible(false)}
+        style={{ width: '560px' }}
+        footer={(
+          <div className="flex justify-content-end gap-2">
+            <Button label="Cancelar" className="p-button-text" onClick={() => setPrecoDialogVisible(false)} />
+            <Button label="Salvar preço" icon="pi pi-check" onClick={salvarEdicaoPreco} loading={savingPreco} />
+          </div>
+        )}
+      >
+        <p className="text-sm text-700 mt-0">
+          Esta alteração atualiza o preço da variação no catálogo e sincroniza carrinhos em rascunho.
+        </p>
+        <div className="mb-3">
+          <label className="block mb-2 font-medium">Novo preço</label>
+          <InputNumber
+            value={novoPreco}
+            onValueChange={(e) => setNovoPreco(e.value)}
+            mode="currency"
+            currency="BRL"
+            locale="pt-BR"
+            min={0}
+            className="w-full"
+          />
+        </div>
+        <div>
+          <label className="block mb-2 font-medium">Motivo</label>
+          <InputTextarea
+            rows={3}
+            value={motivoPreco}
+            onChange={(e) => setMotivoPreco(e.target.value)}
+            className="w-full"
+            placeholder="Ex.: negociação pontual com cliente"
+          />
+        </div>
+      </Dialog>
 
       {loading ? (
         <FinalizarPedidoSkeleton />
@@ -451,6 +563,8 @@ const FinalizarPedido = () => {
                     onRemoverItem={handleRemoverItem}
                     onAtualizarDeposito={handleAtualizarDeposito}
                     onVerLocalizacao={abrirLocalizacoes}
+                    onEditarPreco={abrirEdicaoPreco}
+                    podeEditarPreco={podeEditarPrecoVariacao}
                   />
                 ))
               )}

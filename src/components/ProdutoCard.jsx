@@ -46,7 +46,7 @@ const ProdutoCard = ({ grupo, estoqueStatus, onDetalhes, onAdicionar, onEditar }
     >
       <button
         type="button"
-        className="p-button p-button-rounded p-button-sm p-button-secondary p-button-raised absolute top-0 left-0 m-2 z-3"
+        className="p-button p-button-rounded p-button-sm p-button-raised absolute top-0 left-0 m-2 z-3 catalogo-edit-btn"
         onClick={onEditar}
         title="Editar produto"
         disabled={!onEditar}

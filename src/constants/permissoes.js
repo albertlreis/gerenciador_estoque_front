@@ -68,6 +68,10 @@ export const PERMISSOES = {
     SELECIONAR_VENDEDOR: 'pedidos.selecionar_vendedor',
   },
 
+  PRODUTO_VARIACOES: {
+    EDITAR: 'produto_variacoes.editar',
+  },
+
   PEDIDOS_FABRICA: {
     VISUALIZAR: 'pedidos_fabrica.visualizar',
     CRIAR: 'pedidos_fabrica.criar',
@@ -181,6 +185,11 @@ export const PERMISSOES = {
   COMUNICACAO: {
     VISUALIZAR: 'comunicacao.visualizar',
     TEMPLATES: 'comunicacao.templates',
+  },
+
+  AVISOS: {
+    VIEW: 'avisos.view',
+    MANAGE: 'avisos.manage',
   },
 
 };

@@ -48,7 +48,7 @@ const menuItems = (has, user = null) => {
       ].filter(Boolean)
     },
 
-    has(PERMISSOES.CLIENTES?.VISUALIZAR) && {
+    (has(PERMISSOES.CLIENTES?.VISUALIZAR) || has(PERMISSOES.AVISOS?.VIEW)) && {
       label: 'Relacionamentos',
       key: 'relacionamentos',
       icon: 'pi pi-fw pi-users',
@@ -58,8 +58,15 @@ const menuItems = (has, user = null) => {
           key: 'relacionamentos-clientes',
           icon: 'pi pi-fw pi-user',
           to: '/clientes'
-        }
+        },
+        has(PERMISSOES.AVISOS?.VIEW) && {
+          label: 'Mural de Avisos',
+          key: 'relacionamentos-avisos',
+          icon: 'pi pi-fw pi-megaphone',
+          to: '/avisos'
+        },
       ]
+        .filter(Boolean)
     },
 
     has([

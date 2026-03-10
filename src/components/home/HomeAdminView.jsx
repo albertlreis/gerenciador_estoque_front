@@ -10,6 +10,7 @@ import QuickLinks from './QuickLinks';
 import UltimosPedidosCard from './UltimosPedidosCard';
 import ConsignacoesAlert from './ConsignacoesAlert';
 import ModaisDashboard from './ModaisDashboard';
+import AvisosAniversariosCard from './AvisosAniversariosCard';
 import {PERFIS} from "../../constants/perfis";
 
 const HomeAdminView = () => {
@@ -26,6 +27,7 @@ const HomeAdminView = () => {
     loadingKpis, loadingPedidos, loadingEstatisticas,
     consignacoesVencendo, loadingConsignacoes, fetchResumoDashboard,
     sugestoesOutlet, diasLimiteOutlet, loadingSugestoesOutlet,
+    avisosNaoLidos, aniversariantesHoje, aniversariantesProximos7, aniversariantesProximos30,
   } = useDashboardData();
 
   return (
@@ -47,6 +49,14 @@ const HomeAdminView = () => {
       />
 
       <QuickLinks perfil={PERFIS.ADMINISTRADOR.slug} hasPermission={has} navigate={navigate}/>
+
+      <AvisosAniversariosCard
+        avisosNaoLidos={avisosNaoLidos}
+        aniversariantesHoje={aniversariantesHoje}
+        aniversariantesProximos7={aniversariantesProximos7}
+        aniversariantesProximos30={aniversariantesProximos30}
+        onAbrirMural={() => navigate('/avisos')}
+      />
 
       <ChartsSection
         perfil={PERFIS.ADMINISTRADOR.slug}
